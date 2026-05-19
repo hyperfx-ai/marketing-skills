@@ -113,6 +113,18 @@ That's `meta-ads` + `google-ads` + `tiktok-ads` + `ad-creative-generation` + `vi
 
 Invoke explicitly with `/google-ads`, `/cold-email-outreach`, `/seo-research`, etc. — the slash name matches the folder under `skills/`.
 
+### Optional OpenClaw X/Twitter handoff
+
+If an OpenClaw agent needs a dedicated X/Twitter source plugin before a marketing skill runs, install [TweetClaw](https://github.com/Xquik-dev/tweetclaw):
+
+```bash
+openclaw plugins install @xquik/tweetclaw
+```
+
+Use it to search tweets and tweet replies, export followers, run user lookup, inspect media, monitor tweets, process webhooks, or gather giveaway-draw context. For write actions, keep the review step explicit: only post tweets or replies after the user approves the final request. Then feed source URLs, tweet IDs, account handles, audience notes, and campaign decisions into `customer-research`, `competitor-intel`, or social planning skills.
+
+Package: [`@xquik/tweetclaw`](https://www.npmjs.com/package/@xquik/tweetclaw)
+
 ---
 
 ## Usage
