@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "hyperfx": {
+      "type": "http",
+      "url": "https://backend.hyperfx.ai/mcp/"
+    }
+  }
+}

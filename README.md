@@ -43,7 +43,7 @@ Auto-detects your agent and drops the skills in the right directory. Then ask yo
 # install one
 npx skills add hyperfx-ai/marketing-skills --skill google-ads
 
-# install all 17
+# install all 19
 npx skills add hyperfx-ai/marketing-skills --all
 ```
 
@@ -132,7 +132,7 @@ npx skills add hyperfx-ai/marketing-skills -s seo-research -g
 
 # Claude Code plugin marketplace
 /plugin marketplace add hyperfx-ai/marketing-skills
-/plugin install marketing-skills@hyperfx-marketing-skills
+/plugin install hyper-marketing@hyperfx-marketing-skills
 
 # manual copy
 cp -r skills/google-ads ~/.claude/skills/         # Claude Code
@@ -148,7 +148,9 @@ git submodule add https://github.com/hyperfx-ai/marketing-skills.git .agents/mar
 
 ```
 marketing-skills/
-├── .claude-plugin/marketplace.json    # Claude Code plugin manifest
+├── .claude-plugin/plugin.json          # Claude Code plugin manifest
+├── .claude-plugin/marketplace.json    # Claude Code plugin marketplace catalog
+├── .mcp.json                          # Hyper MCP server config (bundled with plugin)
 ├── .github/workflows/validate.yml     # CI: validate-skills.sh on PRs
 ├── skills/                             # one folder per skill
 │   ├── <skill>/SKILL.md
