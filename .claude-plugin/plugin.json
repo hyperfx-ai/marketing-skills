@@ -2,7 +2,7 @@
   "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
   "name": "hyper-marketing",
   "displayName": "Hyper Marketing",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Connect the Hyper MCP to run marketing end-to-end from Claude — Google, Meta, TikTok, Pinterest, Amazon & LinkedIn ads, organic social, SEO & AI-search research, competitor intel, ad creative, email, and analytics. 19 skills wrapping 100+ integrations and 500+ marketing tools.",
   "author": {
     "name": "Hyper AI",

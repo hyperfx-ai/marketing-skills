@@ -23,7 +23,7 @@ If `hyperai info` fails, stop and tell the user to authenticate the CLI before c
 | --- | --- |
 | Confirm auth/workspace | `hyperai info` |
 | Find tools by intent or raw MCP name | `hyperai search "<intent or raw tool name>" --json --signature` |
-| Browse friendly aliases | `hyperai describe <namespace>` |
+| Browse friendly aliases in a namespace | `hyperai describe <namespace>` |
 | Inspect a friendly alias schema | `hyperai describe <alias path> --parameters` |
 | Call a friendly alias | `hyperai call <alias path> --json '{...}'` |
 | Inspect a raw toolkit tool | `hyperai tools describe <toolkit> <tool_name> --parameters` |
@@ -60,6 +60,36 @@ hyperai tools call gmail gmail_send_message --json '{...}'
 ```
 
 Never assume `hyperai call gmail_send_message` will work.
+
+## Describe progression
+
+Use `describe` progressively. Start broad, then narrow to the exact alias before calling:
+
+```bash
+hyperai describe gmail
+hyperai describe gmail messages send --parameters
+hyperai call gmail messages send --to person@example.com --subject "Hello" --body "Hi"
+```
+
+For friendly aliases, use `hyperai describe <namespace>` and `hyperai describe <alias path> --parameters`. Do not use `hyperai tools describe gmail` for namespace browsing; `tools describe` is the raw toolkit form and needs both toolkit and raw tool name.
+
+## Structured arguments
+
+Flags are safest for simple scalar fields:
+
+```bash
+hyperai call gmail messages send --to person@example.com --subject "cli test" --body "this is a test"
+```
+
+Use `--json` for arrays, objects, nested schemas, and model-specific tools. Do not pass arrays or objects as string flags unless the live schema explicitly says the field is a string.
+
+```bash
+hyperai describe images generate nano-banana --parameters
+hyperai call images generate nano-banana \
+  --json '{"requests":[{"prompt":"a cat wearing a propeller hat"}],"model":"pro"}'
+```
+
+If validation says an object field was received as a string, retry with `--json` after re-reading `describe --parameters`.
 
 ## Workflow
 
@@ -130,6 +160,30 @@ Raw fallback:
 hyperai tools describe meta_business meta_business_list_ad_accounts --parameters
 hyperai tools call meta_business meta_business_list_ad_accounts --json '{"detail":"id_only"}'
 ```
+
+Image generation:
+
+```bash
+# Default image generation alias accepts the prompt positionally.
+hyperai call images generate "a cat wearing a propeller hat" --quality draft --output json
+
+# Model-specific image tools often need JSON because their schema is nested.
+hyperai describe images generate nano-banana --parameters
+hyperai call images generate nano-banana \
+  --json '{"requests":[{"prompt":"a cat wearing a propeller hat"}],"model":"pro"}' \
+  --output json
+```
+
+Meta ads performance:
+
+```bash
+hyperai search "meta ads insights" --json --signature
+hyperai call meta-ads ad-accounts list --output json
+hyperai describe meta-ads insights get --parameters
+hyperai call meta-ads insights get --json '{"object_id":"act_<ad_account_id>","object_type":"account","date_range":"last_month"}'
+```
+
+Always list ad accounts first when the user asks for account-level performance and did not provide an `act_...` account id.
 
 ## Rules
 
