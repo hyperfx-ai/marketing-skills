@@ -4,10 +4,13 @@ on:
   pull_request:
     paths:
       - "skills/**"
+      - ".claude-plugin/**"
       - "README.md"
       - "AGENTS.md"
+      - "CONTRIBUTING.md"
       - "validate-skills.sh"
       - ".github/workflows/validate.yml"
+      - ".github/workflows/release.yml"
   push:
     branches: [main]
 

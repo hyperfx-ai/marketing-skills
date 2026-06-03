@@ -45,6 +45,12 @@ skills/<skill-name>/
 
 The script checks frontmatter, name/folder match, length, the Requirements section, and a banned-strings list. CI runs the same check on every PR.
 
+## Releasing
+
+The current release version lives in both `.claude-plugin/plugin.json` and `.claude-plugin/marketplace.json`. Keep those versions in sync.
+
+When a commit lands on `main`, the release workflow validates the skills, reads that version, creates the matching `v<version>` tag if it does not exist, and creates a GitHub Release. If the tag/release already exists, the workflow skips it. To publish a new release, bump both manifest versions in the PR before merging.
+
 ## Reporting issues
 
 Open an issue with:

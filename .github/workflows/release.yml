@@ -1,0 +1,122 @@
+name: Release
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: marketing-skills-release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: tag-and-release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Validate skills
+        run: |
+          chmod +x ./validate-skills.sh
+          ./validate-skills.sh
+
+      - name: Read plugin version
+        id: version
+        run: |
+          python3 <<'PY'
+          import json
+          import os
+          import re
+          import sys
+
+          with open(".claude-plugin/plugin.json", "r", encoding="utf-8") as handle:
+              plugin = json.load(handle)
+          with open(".claude-plugin/marketplace.json", "r", encoding="utf-8") as handle:
+              marketplace = json.load(handle)
+
+          name = plugin.get("name")
+          version = str(plugin.get("version", "")).strip()
+          if not re.fullmatch(r"\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?", version):
+              print(f"Invalid .claude-plugin/plugin.json version: {version!r}", file=sys.stderr)
+              sys.exit(1)
+
+          matches = [
+              entry
+              for entry in marketplace.get("plugins", [])
+              if entry.get("name") == name
+          ]
+          if len(matches) != 1:
+              print(
+                  f"Expected exactly one marketplace entry for plugin {name!r}, found {len(matches)}",
+                  file=sys.stderr,
+              )
+              sys.exit(1)
+          marketplace_version = str(matches[0].get("version", "")).strip()
+          if marketplace_version != version:
+              print(
+                  "Version mismatch: "
+                  f".claude-plugin/plugin.json has {version}, "
+                  f".claude-plugin/marketplace.json has {marketplace_version}",
+                  file=sys.stderr,
+              )
+              sys.exit(1)
+
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as output:
+              print(f"version={version}", file=output)
+              print(f"tag=v{version}", file=output)
+          PY
+
+      - name: Check release state
+        id: release_state
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.version.outputs.tag }}
+        run: |
+          git fetch --force --tags origin
+
+          if git rev-parse -q --verify "refs/tags/${TAG}" >/dev/null; then
+            echo "tag_exists=true" >> "${GITHUB_OUTPUT}"
+          else
+            echo "tag_exists=false" >> "${GITHUB_OUTPUT}"
+          fi
+
+          if gh release view "${TAG}" --repo "${GITHUB_REPOSITORY}" >/dev/null 2>&1; then
+            echo "release_exists=true" >> "${GITHUB_OUTPUT}"
+          else
+            echo "release_exists=false" >> "${GITHUB_OUTPUT}"
+          fi
+
+      - name: Create version tag
+        if: steps.release_state.outputs.tag_exists == 'false'
+        env:
+          TAG: ${{ steps.version.outputs.tag }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "${TAG}" -m "marketing-skills ${TAG}"
+          git push origin "refs/tags/${TAG}"
+
+      - name: Create GitHub release
+        if: steps.release_state.outputs.release_exists == 'false'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.version.outputs.tag }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          gh release create "${TAG}" \
+            --repo "${GITHUB_REPOSITORY}" \
+            --title "Hyper Marketing Skills ${VERSION}" \
+            --generate-notes
+
+      - name: Report existing release
+        if: steps.release_state.outputs.release_exists == 'true'
+        env:
+          TAG: ${{ steps.version.outputs.tag }}
+        run: |
+          echo "::notice title=Release skipped::${TAG} already has a GitHub release. Bump .claude-plugin/plugin.json and .claude-plugin/marketplace.json to release a new version."
