@@ -1,6 +1,8 @@
 ---
 name: email-lifecycle
 description: Plan, build, and run lifecycle email programs through the Hyper MCP — welcome / onboarding, nurture, re-engagement, win-back, and abandoned-cart sequences across whichever provider fits (Klaviyo for ecommerce, Resend for SaaS / dev tools, Beehiiv for newsletters, Gmail for low-volume ops). Use when the user wants to build an email sequence, set up a welcome flow, recover lapsed users, send a broadcast, manage a list / audience / segment, or asks about lifecycle / drip / nurture campaigns.
+metadata:
+  version: 1.0.0
 ---
 
 # Email Lifecycle

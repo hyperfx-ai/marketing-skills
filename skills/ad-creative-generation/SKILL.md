@@ -1,6 +1,8 @@
 ---
 name: ad-creative-generation
 description: Generate on-brand ad creatives — visuals + copy — for Google, Meta (Facebook / Instagram), and other paid platforms via the Hyper MCP. Extracts brand identity from a website, writes ad copy variants, and produces brand-consistent images using reference-based image generation. Use when the user asks for ad creative, ad copy variants, RSA headlines, Meta ad creative, display ads, carousel ads, or A/B test variants.
+metadata:
+  version: 1.0.0
 ---
 
 # Ad Creative Generation

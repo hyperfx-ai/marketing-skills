@@ -4,6 +4,7 @@
 # - `name` matches the folder name.
 # - SKILL.md is <= 500 lines.
 # - Description includes a "Use when" trigger phrase and is 50-500 chars.
+# - Frontmatter declares metadata.version (semantic version).
 # - Body contains a Requirements section pointing at app.hyperfx.ai/mcp.
 # - No banned internal references slipped through (hyper_cache_, seti., etc.).
 
@@ -74,6 +75,14 @@ for skill_dir in "${SKILLS_DIR}"/*/; do
             echo "FAIL ${skill_name}: description must include a trigger phrase ('Use when' or 'when the user')" >&2
             errors=$((errors + 1))
         fi
+    fi
+
+    # Required: metadata.version (semantic version) for clean per-skill versioning.
+    # Per the Agent Skills open standard, Hyper-specific fields live under the
+    # `metadata:` map; version is `metadata.version`.
+    if ! printf '%s\n' "${frontmatter}" | grep -qE '^[[:space:]]+version:[[:space:]]*"?[0-9]+\.[0-9]+\.[0-9]+'; then
+        echo "FAIL ${skill_name}: missing metadata.version (semantic version, e.g. 1.0.0)" >&2
+        errors=$((errors + 1))
     fi
 
     # Length cap: 500 lines.

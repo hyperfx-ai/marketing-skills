@@ -1,6 +1,8 @@
 ---
 name: video-generation
 description: End-to-end AI video production through the Hyper MCP — text-to-video and image-to-video generation (Sora, Veo, Seedance), scene chaining, video analysis, transcription, subtitles, TikTok / karaoke captions, voiceover (TTS), audio mixing, clipping, stitching, and text overlays. Use when the user asks to generate a video, create UGC, scene-chain, add captions or subtitles, add narration, stitch clips, clip a podcast highlight, or do any AI video editing.
+metadata:
+  version: 1.0.0
 ---
 
 # Video Generation & Editing

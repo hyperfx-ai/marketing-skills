@@ -1,6 +1,8 @@
 ---
 name: image-generation
 description: Generate images through the Hyper MCP with the unified `images_generate` tool — text-to-image, image-to-image, and branded ad creatives — choosing the model (gpt-image-2, nano-banana, nano-banana-pro, seedream-4.5) per task. Use when the user asks to generate an image, create an ad creative, do an image-to-image edit, render text inside an image, or produce a print-quality poster.
+metadata:
+  version: 1.0.0
 ---
 
 # Image Generation

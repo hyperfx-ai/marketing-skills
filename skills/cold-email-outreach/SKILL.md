@@ -1,6 +1,8 @@
 ---
 name: cold-email-outreach
 description: Run end-to-end B2B cold-email outreach through the Hyper MCP — enrich prospects with Apollo, scrape per-prospect signals from company sites and LinkedIn, draft personalized emails using proven hook frameworks, send via Gmail with safe defaults, and route replies into labeled folders. Use when the user wants to write cold emails, run an outbound sequence, prospect a list, build a follow-up cadence, "reach out to leads," or asks why nobody is replying to their cold emails.
+metadata:
+  version: 1.0.0
 ---
 
 # Cold Email Outreach

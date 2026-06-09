@@ -1,6 +1,8 @@
 ---
 name: youtube-transcript
 description: Fetch and work with YouTube video transcripts and content. Use when the user pastes a YouTube URL and wants a transcript, summary, blog post, social post, quote extraction, show notes, or any other text derived from a video. Also use when the user wants to repurpose video content, research competitor videos, extract key points without watching, pull timestamps, translate a video, or analyze what someone said in a YouTube video.
+metadata:
+  version: 1.0.0
 ---
 
 # YouTube Transcript

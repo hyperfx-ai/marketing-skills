@@ -1,6 +1,8 @@
 ---
 name: meta-ads
 description: Plan and create Meta (Facebook + Instagram) advertising campaigns end-to-end via the Hyper MCP, defaulting to Advantage+ automation. Use when the user wants to launch Meta ads, Facebook ads, Instagram ads, Advantage+ campaigns, carousel ads, dynamic creative ads, set up Meta conversion tracking, or build Meta performance dashboards. Also triggers on phrases like meta campaign, facebook campaign, advantage+, or meta blueprint.
+metadata:
+  version: 1.0.0
 ---
 
 # Meta Ads

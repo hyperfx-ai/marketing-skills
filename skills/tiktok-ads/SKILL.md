@@ -1,6 +1,8 @@
 ---
 name: tiktok-ads
 description: Plan and create TikTok advertising campaigns end-to-end via the Hyper MCP, with strict parameter validation for objective-specific requirements. Use when the user wants to launch TikTok ads, set up TikTok traffic or reach campaigns, configure conversions or app-promotion campaigns, upload TikTok video creatives, or analyze TikTok ad performance. Also triggers on tiktok marketing, tiktok campaign, tiktok ppc, or tiktok ads manager.
+metadata:
+  version: 1.0.0
 ---
 
 # TikTok Ads

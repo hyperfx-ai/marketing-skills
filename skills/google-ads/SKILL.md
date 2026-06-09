@@ -1,6 +1,8 @@
 ---
 name: google-ads
 description: Plan and create new Google Ads campaigns end-to-end via the Hyper MCP. Use when the user wants to launch Search, Display, or Performance Max campaigns, or mentions Google Ads, AdWords, search ads, display ads, Performance Max, PMax, PPC, Google campaigns, Google blueprint, search term reports, negative keywords, or manager accounts (MCC). For ongoing optimization, search-term cleanup, conversion diagnosis, or restructuring existing accounts, defer to a future `google-ads-operator` sibling skill.
+metadata:
+  version: 1.0.0
 ---
 
 # Google Ads

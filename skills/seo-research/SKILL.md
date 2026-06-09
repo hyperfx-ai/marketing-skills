@@ -1,6 +1,8 @@
 ---
 name: seo-research
 description: Data-driven SEO research and analysis through the Hyper MCP — keyword research, competitor analysis, content planning, AI search visibility (ChatGPT, Claude, Perplexity, Google AI Overviews), backlink trends, search intent classification, page speed / Core Web Vitals, and full site audits. Use when the user asks for an SEO audit, keyword research, content strategy, competitor benchmarks, brand visibility in AI search, ranking history, or any organic search analysis.
+metadata:
+  version: 1.0.0
 ---
 
 # SEO Research
