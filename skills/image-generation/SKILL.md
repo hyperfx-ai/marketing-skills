@@ -1,23 +1,6 @@
 ---
 name: image-generation
-description: Generate images with images_generate — text-to-image, image-to-image, and branded ad creatives — choosing the right model per task
-use_cases:
-  - Generate images with AI
-  - Create ad creatives with text
-  - Image-to-image generation
-  - Style transfer
-  - High-resolution image production
-triggers:
-  - image
-  - generate image
-  - create image
-  - ad creative
-  - image with text
-requires_toolkits:
-  - image_gen
-suggested_toolkits:
-  - file_manager
-  - firecrawl
+description: Generate images through the Hyper MCP with the unified `images_generate` tool — text-to-image, image-to-image, and branded ad creatives — choosing the model (gpt-image-2, nano-banana, nano-banana-pro, seedream-4.5) per task. Use when the user asks to generate an image, create an ad creative, do an image-to-image edit, render text inside an image, or produce a print-quality poster.
 ---
 
 # Image Generation
@@ -25,6 +8,12 @@ suggested_toolkits:
 Generate images with the `images_generate` tool. It handles text-to-image,
 image-to-image (pass `reference_images`), and multi-image composition. By default
 (`model="auto"`) it picks the best model for the request; set `model` to choose one.
+
+## Requirements
+
+This skill assumes the [Hyper MCP](https://app.hyperfx.ai/mcp) is connected to your
+agent so the `images_generate` tool is available. For brand-consistent ad creative
+work, Firecrawl must also be configured under your Hyper integrations.
 
 ## Call shape
 
@@ -56,6 +45,9 @@ specific model:
 | Readable text inside the image (posters, labels, infographics) or search-grounded scenes | `nano-banana-pro` |
 | Product photography, material/fabric fidelity, accurate spatial depth | `seedream-4.5` |
 
+See [references/image-prompting.md](references/image-prompting.md) for per-model
+prompt-writing tips.
+
 ## Branded / website ad creatives — extract branding first
 
 If the user gives a website URL and wants on-brand creatives:
@@ -69,16 +61,15 @@ If the user gives a website URL and wants on-brand creatives:
 The branding result's `file` field is a JSON data file, NOT an image — never pass it
 as a reference. Only `logo.file_id` and `images.*.file_id` are usable images.
 
-## Workflows (prefer these for product / marketplace work)
+## Higher-level workflows
 
-When the request is more specific than "generate an image", reach for a workflow
-tool — it preserves product identity and returns structured results.
+For multi-shot product or marketplace work, prefer the workflow tools — they preserve
+product identity and return structured results:
 
-| Goal | Tool | Reference |
-|------|------|-----------|
-| Multi-shot product photography (studio, lifestyle, hero, carousel, ad pack) | `images_product_photoshoots_create` | [references/product-photoshoot.md](references/product-photoshoot.md) |
-| Marketplace listing image set (Amazon main + secondary, A+ modules, Shopify) | `images_marketplace_cards_create` | [references/marketplace-cards.md](references/marketplace-cards.md) |
-| Prompt-writing tips per model | — | [references/image-prompting.md](references/image-prompting.md) |
+- `images_product_photoshoots_create` — multi-shot product photography (studio,
+  lifestyle, hero, carousel, ad pack).
+- `images_marketplace_cards_create` — marketplace listing image sets (Amazon main +
+  secondary, A+ modules, Shopify).
 
 ## Reminders
 
