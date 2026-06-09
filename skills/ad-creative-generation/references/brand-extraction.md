@@ -50,7 +50,7 @@ The logo provides brand mark consistency. The screenshot shows the actual produc
 By default, compose: **logo + headline + realistic product screenshot**. Describe the product screenshot based on `brand.screenshot.description`, not guessed.
 
 ```python
-openai_image_edit(
+images_generate(
     requests=[{
         "prompt": (
             "Social media ad creative for [company name]. "
@@ -61,7 +61,6 @@ openai_image_edit(
         ),
         "reference_images": reference_images
     }],
-    size="1024x1024",
     quality="high"
 )
 ```

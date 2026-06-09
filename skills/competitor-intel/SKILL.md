@@ -43,7 +43,7 @@ If none of those tool prefixes appear in the agent's tool list (`firecrawl_*`, `
 | Community / sentiment — Reddit | `scrape_reddit`, `scrape_reddit_leads` |
 | Ecommerce competitor specifics | `scrape_ecommerce_products`, `scrape_ecommerce_reviews` |
 | Demand / trend signals | `scrape_google_trends`, `hyperseo_search_volume`, `hyperseo_search_intent` |
-| Optional: comparison-page assets | `openai_image_generation`, `nano_banana_image_generation`, `seedream_image_generation`, `nano_banana_multi_turn` |
+| Optional: comparison-page assets | `images_generate` |
 
 ## Critical rules
 

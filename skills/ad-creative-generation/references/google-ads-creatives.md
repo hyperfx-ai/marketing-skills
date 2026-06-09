@@ -91,7 +91,7 @@ Every creative needs three layers: **brand** (logo), **copy** (headline), and **
 Square (1:1):
 
 ```python
-openai_image_edit(
+images_generate(
     requests=[{
         "prompt": (
             "Display ad creative for [company name]. "
@@ -101,7 +101,6 @@ openai_image_edit(
         ),
         "reference_images": [brand.logo.file_id, brand.screenshot.file_id]
     }],
-    size="1024x1024",
     quality="high"
 )
 ```
@@ -109,7 +108,7 @@ openai_image_edit(
 Landscape (1.91:1):
 
 ```python
-openai_image_edit(
+images_generate(
     requests=[{
         "prompt": (
             "Wide display ad creative for [company name]. "
@@ -119,7 +118,6 @@ openai_image_edit(
         ),
         "reference_images": [brand.logo.file_id, brand.screenshot.file_id]
     }],
-    size="1536x1024",
     quality="high"
 )
 ```

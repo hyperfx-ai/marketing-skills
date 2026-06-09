@@ -15,7 +15,7 @@ This skill assumes the [Hyper MCP](https://app.hyperfx.ai/mcp) is connected to y
 
 | Group | Tools |
 |-------|-------|
-| Generation | `generate_video`, `sora_remix_video`, `sora_delete_video` |
+| Generation | `videos_generate`, `sora_remix_video`, `sora_delete_video` |
 | Analysis | `analyze_video`, `capture_video_frame`, `transcribe_video` |
 | Subtitles & captions | `generate_subtitles`, `burn_subtitles`, `burn_highlighted_captions` |
 | Audio | `text_to_speech`, `add_audio_to_video` |
@@ -31,7 +31,7 @@ This skill assumes the [Hyper MCP](https://app.hyperfx.ai/mcp) is connected to y
 
 | Tool | Purpose | Runs in Background |
 |------|---------|-------------------|
-| `generate_video` | Generate video from text / image prompt | Yes |
+| `videos_generate` | Generate video from text / image prompt | Yes |
 | `sora_remix_video` | Modify existing Sora video | Yes |
 | `sora_delete_video` | Delete a Sora video | No |
 | `capture_video_frame` | Extract frame as image | No |
@@ -71,7 +71,7 @@ analyze_video(file_id="...", question="Does this match: [original prompt]?")
 Always review generated videos before delivering to the user:
 
 ```python
-result = generate_video(prompt="...", model="veo-3.1-generate-preview")
+result = videos_generate(prompt="...", model="veo-3.1-generate-preview")
 review = analyze_video(file_id="video_file_id", analysis_type="quality_review")
 # If issues found, regenerate with adjustments. If quality is good, proceed to editing.
 ```
@@ -96,14 +96,14 @@ To create seamless multi-scene videos:
 ### Scene 1 (text-to-video)
 
 ```python
-generate_video(prompt="...", model="veo-3.1-generate-preview")
+videos_generate(prompt="...", model="veo-3.1-generate-preview")
 ```
 
 ### Scene 2+ (image-to-video)
 
 ```python
 capture_video_frame(video_file_id="scene1_file_id", frame_position="last")
-generate_video(prompt="continuation: ...", image_file_id="captured_frame_id")
+videos_generate(prompt="continuation: ...", image_file_id="captured_frame_id")
 ```
 
 Repeat: extract last frame → generate next scene.
@@ -251,7 +251,7 @@ clip_video(
 Complete workflow for producing UGC-style content:
 
 1. **Script:** plan scenes, dialogue, and visual style
-2. **Generate:** create each scene with `generate_video`
+2. **Generate:** create each scene with `videos_generate`
 3. **Review:** use `analyze_video` to check each scene for quality
 4. **Chain:** extract last frames with `capture_video_frame`, generate next scenes
 5. **Stitch:** combine all scenes with `stitch_videos`
@@ -263,7 +263,7 @@ Complete workflow for producing UGC-style content:
 ### Example: Narrated UGC Video
 
 ```python
-generate_video(prompt="...", model="veo-3.1-generate-preview")
+videos_generate(prompt="...", model="veo-3.1-generate-preview")
 
 audio = text_to_speech(text="Your narration script here...", voice="nova")
 

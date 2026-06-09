@@ -107,13 +107,12 @@ Carousel ads display up to 10 scrollable cards, each with its own image, headlin
 Generate all cards in a single batch. Each card should have the brand logo, a short headline for that card's feature, and a relevant product screenshot.
 
 ```python
-openai_image_edit(
+images_generate(
     requests=[
         {"prompt": "Card 1 for [company]. Logo at top. Headline: '[feature 1]'. Below: product screenshot showing [feature 1 UI]. Match brand style.", "reference_images": [logo_id, screenshot_id]},
         {"prompt": "Card 2 for [company]. Logo at top. Headline: '[feature 2]'. Below: product screenshot showing [feature 2 UI]. Same style as card 1.", "reference_images": [logo_id, screenshot_id]},
         {"prompt": "Card 3 for [company]. Logo at top. Headline: '[feature 3]'. Below: product screenshot showing [feature 3 UI]. Same style as card 1.", "reference_images": [logo_id, screenshot_id]},
     ],
-    size="1024x1024",
     quality="high"
 )
 ```
@@ -162,7 +161,7 @@ Every creative needs three layers: **brand** (logo), **copy** (headline + sublin
 ### Feed Creative (1:1)
 
 ```python
-openai_image_edit(
+images_generate(
     requests=[{
         "prompt": (
             "Social media ad creative for [company name]. "
@@ -173,7 +172,6 @@ openai_image_edit(
         ),
         "reference_images": [brand.logo.file_id, brand.screenshot.file_id]
     }],
-    size="1024x1024",
     quality="high"
 )
 ```
@@ -181,7 +179,7 @@ openai_image_edit(
 ### Story Creative (9:16)
 
 ```python
-openai_image_edit(
+images_generate(
     requests=[{
         "prompt": (
             "Vertical story ad creative for [company name]. "
@@ -192,7 +190,6 @@ openai_image_edit(
         ),
         "reference_images": [brand.logo.file_id, brand.screenshot.file_id]
     }],
-    size="1024x1536",
     quality="high"
 )
 ```
@@ -202,8 +199,7 @@ openai_image_edit(
 When the creative needs large, readable text baked into the image, use Nano Banana for better text rendering:
 
 ```python
-nano_banana_image_generation(
-    model="pro",
+images_generate(
     requests=[{
         "prompt": (
             "Ad creative for [company name]. "
@@ -214,6 +210,5 @@ nano_banana_image_generation(
         "reference_images": [brand.logo.file_id, brand.screenshot.file_id]
     }],
     aspect_ratio="1:1",
-    image_size="2K"
 )
 ```
