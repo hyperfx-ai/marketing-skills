@@ -1,6 +1,23 @@
 ---
 name: image-generation
 description: Choose the right image generation tool through the Hyper MCP — OpenAI (gpt-image-2), Nano Banana (Gemini), Seedream (ByteDance via fal.ai) — for ad creatives, branded compositions, text-heavy assets, photorealistic product shots, image-to-image edits, and high-resolution output. Use when the user asks to generate an image, create an ad creative, do an image-to-image edit, render text inside an image, or produce a print-quality poster.
+use_cases:
+  - Generate images with AI
+  - Create ad creatives with text
+  - Image-to-image generation
+  - Style transfer
+  - High-resolution image production
+triggers:
+  - image
+  - generate image
+  - create image
+  - ad creative
+  - image with text
+requires_toolkits:
+  - image_gen
+suggested_toolkits:
+  - file_manager
+  - firecrawl
 ---
 
 # Image Generation

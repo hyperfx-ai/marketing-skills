@@ -43,7 +43,7 @@ Auto-detects your agent and drops the skills in the right directory. Then ask yo
 # install one
 npx skills add hyperfx-ai/marketing-skills --skill google-ads
 
-# install all 20
+# install all 35
 npx skills add hyperfx-ai/marketing-skills --all
 ```
 
@@ -77,12 +77,13 @@ That's `meta-ads` + `google-ads` + `tiktok-ads` + `ad-creative-generation` + `vi
 | Skill | What it does | Required integrations |
 |---|---|---|
 | **Paid ads** | | |
-| [`google-ads`](skills/google-ads) | Plan and launch Google Ads campaigns — Search, Display, and Performance Max. | Google Ads |
-| [`meta-ads`](skills/meta-ads) | Plan and launch Meta ad campaigns across Facebook and Instagram. | Meta Business, Firecrawl |
+| [`google-ads`](skills/google-ads) | Plan and launch Google Ads campaigns — Search, Display, Performance Max — and report on existing accounts with GAQL-backed evidence. | Google Ads |
+| [`meta-ads`](skills/meta-ads) | Plan and launch Meta ad campaigns across Facebook and Instagram, audit accounts, and build insight dashboards. | Meta Business, Firecrawl |
 | [`meta-ads-library`](skills/meta-ads-library) | Research competitor ads in the Meta Ads Library. | Apify |
 | [`amazon-ads`](skills/amazon-ads) | Plan and launch Amazon Sponsored Products campaigns. | Amazon Ads |
 | [`tiktok-ads`](skills/tiktok-ads) | Plan and launch TikTok ad campaigns across all objectives. | TikTok Marketing |
 | [`pinterest-ads`](skills/pinterest-ads) | Plan and launch Pinterest ad campaigns across all objectives. | Pinterest Ads |
+| [`openai-ads`](skills/openai-ads) | Manage OpenAI Ads campaigns — account discovery, chat_card creatives, status flow, insights. | OpenAI Ads |
 | **Social media** | | |
 | [`tiktok`](skills/tiktok) | Publish videos, photos, and carousels to TikTok. | TikTok (Login Kit) |
 | [`instagram`](skills/instagram) | Publish posts, Reels, Stories, and carousels. Moderate comments, send DMs, pull insights. | Instagram (Business Login) |
@@ -91,16 +92,35 @@ That's `meta-ads` + `google-ads` + `tiktok-ads` + `ad-creative-generation` + `vi
 | [`seo-research`](skills/seo-research) | Keyword research, SERP and AI Overview analysis, competitor benchmarks, AI search visibility, backlinks, site audits. | HyperSEO toolkit |
 | [`competitor-intel`](skills/competitor-intel) | Research competitors end-to-end — site, social, search rank, AI-search citations, mentions — and produce battle cards, weekly digests, or board-prep updates. | Firecrawl + at least one of HyperSEO or Apify scrapers |
 | [`customer-research`](skills/customer-research) | Mine Reddit, YouTube comments, G2/Capterra, Twitter, and TikTok to surface what customers actually say — build personas, VOC quote banks, JTBD maps, and synthesis reports. | Apify scrapers toolkit (Reddit, Twitter, YouTube, TikTok, Instagram) |
-| [`youtube-transcript`](skills/youtube-transcript) | Fetch the transcript of any YouTube video and turn it into blog posts, social content, summaries, show notes, quote extractions, or timestamped chapters. | YouTube toolkit |
+| [`youtube`](skills/youtube) | Fetch transcripts and turn them into blog posts, social content, summaries, or show notes; create high-CTR thumbnails and SEO titles/descriptions. | YouTube toolkit (+ image gen, sandbox for thumbnails) |
+| [`reddit`](skills/reddit) | Research Reddit discussions with high signal — pain points, intent discovery, trend tracking. | Reddit scraper |
 | **Creative** | | |
 | [`ad-creative-generation`](skills/ad-creative-generation) | Generate ad copy and on-brand images for Google and Meta placements. | Firecrawl + image gen toolkit |
 | [`image-generation`](skills/image-generation) | Generate and edit images — picks the right model for text-heavy creatives, photoreal product shots, or high-res output. | Image gen toolkit |
 | [`video-generation`](skills/video-generation) | Generate AI video and prep it for distribution — text/image-to-video, captions, voiceover, stitching, overlays. | Video gen toolkit |
+| **Strategy & orchestration** | | |
+| [`gtm`](skills/gtm) | GTM operating system — choose the focus (content, community, ads), write the marketing plan, run brand audits, and orchestrate the channel skills. | CMO toolkit + sandbox, Firecrawl, HyperSEO |
 | **Outbound & lifecycle** | | |
 | [`cold-email-outreach`](skills/cold-email-outreach) | Run end-to-end B2B cold outreach — prospect, enrich, personalize, send, follow up, route replies. | Gmail + Apollo (Firecrawl + LinkedIn scraper bundled) |
 | [`email-lifecycle`](skills/email-lifecycle) | Build welcome, nurture, re-engagement, win-back, and abandoned-cart email programs. | At least one of Klaviyo, Resend, Beehiiv, or Gmail |
+| **Messaging & comms** | | |
+| [`gmail`](skills/gmail) | Manage Gmail end-to-end — send, reply, drafts, labels, attachments, inbox organization. | Gmail |
+| [`slack`](skills/slack) | Slack messaging, Block Kit formatting, file sharing, channel management. | Slack |
+| [`twilio`](skills/twilio) | SMS, WhatsApp, voice calls, phone numbers, and OTP verification. | Twilio |
 | **Analytics** | | |
 | [`analytics-insights`](skills/analytics-insights) | Drive GA4, Google Tag Manager, Search Console, and BigQuery from chat — tracking plans, reports, conversions, container audits, BigQuery export queries. | At least one of GA4, GTM, GSC, or BigQuery |
+| **Documents & production** | | |
+| [`documents`](skills/documents) | Generate professional PDFs — reports, invoices, proposals, factsheets — and convert Markdown to styled PDFs. | Sandbox |
+| [`slides`](skills/slides) | Themed slide decks with reveal.js — in-browser preview, PPTX export. | Sandbox |
+| **Workspace & platform** | | |
+| [`sandbox`](skills/sandbox) | Execute code, build webapps, process files, and analyze data in the Hyper sandbox. | Sandbox |
+| [`database`](skills/database) | Hyper Database (PostgreSQL) for analytics, dashboards, data apps, and structured storage. | Hyper Database |
+| [`google-sheets`](skills/google-sheets) | Read, map, and write Google Sheets safely without shifting columns or clobbering ranges. | Google Sheets |
+| [`browser`](skills/browser) | Web browser automation, including authenticated sessions. | Web browsing toolkit |
+| [`agents`](skills/agents) | Manage agents — schedule tasks, update settings, create agents, delegate work. | Agents toolkit |
+| [`skill-creation`](skills/skill-creation) | Create new skills with the right folder structure and frontmatter. | — |
+| **Other** | | |
+| [`polymarket-trading`](skills/polymarket-trading) | Trade Polymarket prediction markets with a safe workflow and risk management. | Polymarket |
 | **Execution** | | |
 | [`hyper-cli`](skills/hyper-cli) | Run these marketing skills through the Hyper CLI (beta), translating raw MCP tool names into CLI aliases or raw toolkit calls. | Hyper CLI + the integrations required by the sibling skill |
 
@@ -212,17 +232,17 @@ Near-term skills and surfaces:
 
 - [x] `hyper-cli` (beta) — run these skills through the Hyper CLI from a terminal, cron job, or shell pipeline.
 - [ ] `google-ads-operator` — production Google Ads account operation and optimization.
-- [ ] `meta-account-audit` — Meta account diagnostics, spend checks, and performance recommendations.
+- [x] `meta-account-audit` — shipped inside [`meta-ads`](skills/meta-ads) (`references/account-audit.md`).
 - [ ] `social-carousel` — carousel planning, copy, and export for social channels.
-- [ ] `cmo` — executive marketing reporting and cross-channel performance summaries.
-- [ ] `reddit-research` — focused Reddit research workflows for VOC, market maps, and positioning.
-- [ ] `slide-generation` — turn research, reports, and campaign plans into presentation decks.
-- [ ] `pdf-generation` — generate polished marketing reports and briefs.
+- [x] `cmo` — shipped as [`gtm`](skills/gtm) (decision layer + execution orchestration).
+- [x] `reddit-research` — shipped as [`reddit`](skills/reddit).
+- [x] `slide-generation` — shipped as [`slides`](skills/slides).
+- [x] `pdf-generation` — shipped as [`documents`](skills/documents), markdown-to-PDF included.
 - [ ] `copywriting` — general-purpose marketing copy workflows.
 - [ ] `lead-generation` — prospect sourcing, enrichment, scoring, and handoff.
 - [ ] `crm-revops` — CRM hygiene, routing, attribution, and pipeline operations.
-- [ ] `google-sheets-writing` — structured spreadsheet creation and reporting.
-- [ ] `gmail-email-management` — inbox triage, labeling, reply drafting, and operational email workflows.
+- [x] `google-sheets-writing` — shipped as [`google-sheets`](skills/google-sheets).
+- [x] `gmail-email-management` — shipped as [`gmail`](skills/gmail).
 - [ ] `figma` — design workflow support for ad creative, landing pages, and campaign assets.
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) to contribute a skill.

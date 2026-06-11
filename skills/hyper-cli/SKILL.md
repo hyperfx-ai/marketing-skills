@@ -1,6 +1,16 @@
 ---
 name: hyper-cli
 description: Use the Hyper CLI to run Hyper marketing skills from a terminal. Use when the user wants to use `hyperai`, inspect live tool schemas, translate MCP tool names from a skill into CLI commands, switch connected accounts, or run marketing tools outside an MCP-native agent host.
+use_cases:
+  - Run Hyper marketing skills from a terminal
+  - Inspect live tool schemas from the CLI
+  - Trace and debug Hyper tool calls locally
+triggers:
+  - hyperai
+  - hyper cli
+  - cli
+suggested_toolkits:
+  - sandbox
 ---
 
 # Hyper CLI

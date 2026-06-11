@@ -1,6 +1,34 @@
 ---
 name: meta-ads
 description: Plan and create Meta (Facebook + Instagram) advertising campaigns end-to-end via the Hyper MCP, defaulting to Advantage+ automation. Use when the user wants to launch Meta ads, Facebook ads, Instagram ads, Advantage+ campaigns, carousel ads, dynamic creative ads, set up Meta conversion tracking, or build Meta performance dashboards. Also triggers on phrases like meta campaign, facebook campaign, advantage+, or meta blueprint.
+use_cases:
+  - Create Meta Ads campaigns
+  - Create Facebook ads
+  - Create Instagram ads
+  - Configure Advantage+ campaigns
+  - Upload Meta ad creative media
+  - Preview Meta ad creatives
+  - Analyze Meta ad performance
+  - Build Meta Ads dashboards
+  - Query cached Meta insights data
+  - Set up carousel and dynamic creative ads
+triggers:
+  - meta ads
+  - facebook ads
+  - instagram ads
+  - meta campaign
+  - facebook campaign
+  - instagram campaign
+  - advantage+
+  - meta dashboard
+  - facebook dashboard
+requires_toolkits:
+  - meta_ads
+suggested_toolkits:
+  - firecrawl
+  - file_manager
+  - hyper_database
+  - sandbox
 ---
 
 # Meta Ads
@@ -390,3 +418,12 @@ The workflow is complete when:
 3. The user has given explicit approval to activate.
 
 Only then call `meta_business_update_campaign(campaign_id="<id>", status="ACTIVE")` to go live. Never activate without this confirmation.
+
+## Beyond campaign creation
+
+| Task | Reference |
+| --- | --- |
+| Full account audit (structure, performance, ad sets, creatives, recommendations) | `references/account-audit.md` |
+| Cached insights, 90-day ad-level insights, dashboard workflow | `references/insights-and-dashboards.md` |
+| Competitor ad research in the Meta Ad Library | [`meta-ads-library`](../meta-ads-library) |
+| Generating ad creatives and copy variants | [`ad-creative-generation`](../ad-creative-generation) |

@@ -1,13 +1,29 @@
 ---
 name: tiktok-ads
 description: Plan and create TikTok advertising campaigns end-to-end via the Hyper MCP, with strict parameter validation for objective-specific requirements. Use when the user wants to launch TikTok ads, set up TikTok traffic or reach campaigns, configure conversions or app-promotion campaigns, upload TikTok video creatives, or analyze TikTok ad performance. Also triggers on tiktok marketing, tiktok campaign, tiktok ppc, or tiktok ads manager.
+use_cases:
+  - Create TikTok ad campaigns
+  - Set up TikTok traffic campaigns
+  - Configure TikTok reach campaigns
+  - Upload TikTok video ads
+  - Analyze TikTok ad performance
+  - TikTok brand awareness campaigns
+triggers:
+  - tiktok
+  - tiktok ads
+  - tiktok campaign
+  - tiktok marketing
+requires_toolkits:
+  - tiktok_marketing
+suggested_toolkits:
+  - file_manager
 ---
 
 # TikTok Ads
 
 Strategic guide for managing TikTok advertising campaigns. Research deeply, validate parameters carefully, and guide users through the platform's strict objective-specific requirements.
 
-This skill is for **paid TikTok ads** (the TikTok Marketing API surface). For organic TikTok video posting, see the future `tiktok-posting` sibling skill.
+This skill is for **paid TikTok ads** (the TikTok Marketing API surface). For organic TikTok video posting, see the [`tiktok`](../tiktok) skill.
 
 ## Requirements
 

@@ -1,6 +1,21 @@
 ---
 name: tiktok
 description: Publish organic TikTok content (videos, photos, carousels) through the TikTok-compliant interactive posting form via the Hyper MCP. Use when the user wants to post a video to TikTok, share photos on TikTok, upload to TikTok, or any phrase like "post this to TikTok" / "share on TikTok" / "put this on my TikTok". For paid TikTok advertising campaigns, use the `tiktok-ads` skill instead.
+use_cases:
+  - Post a video to TikTok
+  - Post photos to TikTok
+  - Share media on TikTok with privacy controls
+  - Complete TikTok branded content disclosures
+triggers:
+  - tiktok post
+  - post to tiktok
+  - upload to tiktok
+  - share on tiktok
+  - tiktok content
+requires_toolkits:
+  - tiktok
+suggested_toolkits:
+  - file_manager
 ---
 
 # TikTok

@@ -1,6 +1,30 @@
 ---
 name: instagram
 description: Manage Instagram professional accounts via the Hyper MCP — publish photos, Reels, Stories, and carousels; moderate comments and mentions; send Direct Messages; pull account and media insights. Uses the Instagram API with Instagram Login (Business Login). Use when the user mentions Instagram posts, Reels, Stories, carousels, IG DMs, Instagram comments, mentions, profile, or analytics. For paid Instagram advertising, use `meta-ads`.
+use_cases:
+  - Post photos, Reels, Stories, and carousels to Instagram
+  - Manage Instagram Direct Messages
+  - Moderate comments on Instagram posts
+  - Get Instagram account and media insights
+  - View Instagram profile and media library
+  - Reply to Instagram mentions and tags
+triggers:
+  - instagram post
+  - post to instagram
+  - instagram dm
+  - instagram message
+  - instagram comment
+  - instagram insights
+  - instagram analytics
+  - instagram profile
+  - instagram story
+  - instagram reel
+  - instagram carousel
+requires_toolkits:
+  - instagram_toolkit
+suggested_toolkits:
+  - file_manager
+  - sandbox
 ---
 
 # Instagram

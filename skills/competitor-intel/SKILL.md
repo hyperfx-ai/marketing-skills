@@ -1,6 +1,27 @@
 ---
 name: competitor-intel
 description: Run end-to-end competitor research and monitoring through the Hyper MCP — pick the set, scrape every public surface (site, blog, pricing, organic social, search rank, mentions, demand) via Firecrawl + HyperSEO + the Apify scrapers, diff against last run, and synthesize a brief. Use when the user wants to research competitors, build a battle card or comparison page, run a weekly digest, or asks "what's [competitor] doing?" or "how do we compare?".
+use_cases:
+  - Pick and track a competitor set
+  - Scrape competitor sites, blogs, and pricing pages
+  - Monitor competitor search rankings and mentions
+  - Diff competitor changes against the last run
+  - Build a battle card or comparison page
+  - Run a weekly competitor digest
+triggers:
+  - competitor research
+  - competitor analysis
+  - competitive intel
+  - battle card
+  - comparison page
+  - what are competitors doing
+requires_toolkits:
+  - firecrawl
+  - hyperseo
+suggested_toolkits:
+  - sandbox
+  - file_manager
+  - hyper_database
 ---
 
 # Competitor Intel

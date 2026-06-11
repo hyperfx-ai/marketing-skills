@@ -1,16 +1,52 @@
 ---
-name: youtube-transcript
-description: Fetch and work with YouTube video transcripts and content. Use when the user pastes a YouTube URL and wants a transcript, summary, blog post, social post, quote extraction, show notes, or any other text derived from a video. Also use when the user wants to repurpose video content, research competitor videos, extract key points without watching, pull timestamps, translate a video, or analyze what someone said in a YouTube video.
+name: youtube
+description: Work with YouTube content end to end — fetch transcripts and turn them into summaries, blog posts, social content, quotes, or show notes; create high-CTR thumbnails (with the user's face from an upload), clone the style of top-ranking thumbnails; and produce SEO-optimised titles + descriptions. Use when the user pastes a YouTube URL, wants to repurpose video content, research competitor videos, make or refresh a thumbnail, or package a video for upload.
+use_cases:
+  - Get the transcript of a YouTube video
+  - Summarize a YouTube video or extract key points without watching
+  - Turn a video into a blog post, LinkedIn post, or show notes
+  - Pull verbatim quotes with timestamps
+  - Generate a YouTube thumbnail from a video idea, transcript, or YouTube URL
+  - Research the top-performing thumbnails for a search term and clone their style
+  - Add the user's face (uploaded as an image) to a thumbnail
+  - Produce an SEO-optimised title set and description for an upcoming video
+triggers:
+  - youtube
+  - youtube transcript
+  - youtube video
+  - video summary
+  - repurpose video
+  - show notes
+  - thumbnail
+  - youtube thumbnail
+  - thumbnail clone
+  - SEO titles
+  - video description
+  - youtube title
+requires_toolkits:
+  - youtube_toolkit
+suggested_toolkits:
+  - image_gen
+  - sandbox
+  - file_manager
 ---
 
-# YouTube Transcript
+# YouTube
 
-Fetch the full transcript of any YouTube video and turn it into whatever the user needs — summaries, blog posts, social content, quotes, show notes, or raw text.
+Fetch the full transcript of any YouTube video and turn it into whatever the user needs — summaries, blog posts, social content, quotes, show notes, or raw text. Then package videos for upload: high-CTR thumbnails, SEO titles, and descriptions.
+
+## Routing
+
+| User intent | Where to go |
+| --- | --- |
+| Transcript, summary, repurposing, quotes, chapters | This guide (below) |
+| Thumbnails, style cloning, SEO titles/descriptions | `references/thumbnails.md` |
 
 ## Requirements
 
 - **Hyper MCP installed.** [https://app.hyperfx.ai/mcp](https://app.hyperfx.ai/mcp)
 - **YouTube toolkit enabled** at [https://app.hyperfx.ai/integrations](https://app.hyperfx.ai/integrations) — provides `youtube_transcript` and `youtube_reader`.
+- Thumbnail workflows additionally need the image generation and sandbox toolkits.
 
 If `youtube_transcript` is not in the tool list, stop and tell the user to enable the YouTube toolkit in Hyper.
 
@@ -88,6 +124,10 @@ Once you have the text, ask the user what they need — or infer it from context
 | Repurpose for email | Rewrite as a narrative email — opening hook, key insight, CTA. |
 | Research / competitive analysis | Summarize what the speaker claims, what products they recommend, and what pain points they describe. |
 
+## Thumbnails and SEO packaging
+
+For making or refreshing thumbnails, cloning the style of top-ranking thumbnails, adding the user's face, and generating SEO titles/descriptions, read `references/thumbnails.md`. Every thumbnail workflow is a sandbox script under `scripts/` (`generate_thumbnail.py`, `research_top_thumbnails.py`, `clone_top_thumbnail_style.py`, `analyze_thumbnail_concepts.py`, `generate_seo_titles.py`, `generate_seo_description.py`) — the reference doc is the routing table and the rules for using them.
+
 ## Example outputs
 
 **Input:** `"Get the transcript of https://www.youtube.com/watch?v=NZLAdOL9fP8 and write a LinkedIn post from it"`
@@ -104,12 +144,12 @@ Once you have the text, ask the user what they need — or infer it from context
 1. Call `youtube_transcript(video_id_or_url="[URL]")`
 2. Return 4–6 bullet points of key takeaways, without padding or filler
 
-**Input:** `"Pull the timestamps for each section of this video"`
+**Input:** `"Make me a thumbnail like the top videos for 'AI agents'"`
 
 **Flow:**
-1. Call `youtube_transcript(video_id_or_url="[URL]")`
-2. Use the `segments` array to identify topic shifts
-3. Return a chapter list: `00:00 — Intro`, `01:23 — Feature demo`, etc.
+1. Read `references/thumbnails.md`
+2. Run `scripts/clone_top_thumbnail_style.py` with `query="AI agents"` and the user's topic
+3. Show the top thumbnails, let the user pick a rank, re-run with `chosen_rank` to generate
 
 ## Related skills
 

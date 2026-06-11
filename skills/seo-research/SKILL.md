@@ -1,6 +1,52 @@
 ---
 name: seo-research
 description: Data-driven SEO research and analysis through the Hyper MCP — keyword research, competitor analysis, content planning, AI search visibility (ChatGPT, Claude, Perplexity, Google AI Overviews), backlink trends, search intent classification, page speed / Core Web Vitals, and full site audits. Use when the user asks for an SEO audit, keyword research, content strategy, competitor benchmarks, brand visibility in AI search, ranking history, or any organic search analysis.
+use_cases:
+  - Research keywords for a new product or page
+  - Analyze competitor SEO performance
+  - Find keyword opportunities for a domain
+  - Plan a content strategy based on search data
+  - Audit a domain's organic health
+  - Check brand visibility in AI search (ChatGPT, Perplexity, Claude)
+  - Discover who ranks for target keywords
+  - Compare search demand vs AI search demand
+  - Build a keyword-targeted content calendar
+  - Identify low-difficulty keyword opportunities
+  - Analyze backlink trends over time
+  - Find content gaps between competitors
+  - Track brand mentions across LLMs
+  - Evaluate Google AI Overview citations for a topic
+  - Compare traffic across multiple competitor domains
+  - Find competitors based on shared organic keywords
+  - Track historical SEO performance of a domain over months or years
+  - Classify search intent for a list of keywords
+  - Find keyword overlaps between two specific domains
+  - Check page speed and Core Web Vitals for a URL
+triggers:
+  - seo
+  - keyword research
+  - serp
+  - backlinks
+  - domain audit
+  - ai visibility
+  - competitors
+  - search volume
+  - ranking
+  - keyword difficulty
+  - content strategy
+  - ai search
+  - geo optimization
+  - traffic estimation
+  - page speed
+  - core web vitals
+  - search intent
+  - domain intersection
+  - historical ranking
+requires_toolkits:
+  - hyperseo
+suggested_toolkits:
+  - sandbox
+  - file_manager
 ---
 
 # SEO Research

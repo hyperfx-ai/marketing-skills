@@ -1,6 +1,28 @@
 ---
 name: pinterest-ads
 description: Plan and create Pinterest Ads campaigns through the Hyper MCP — Awareness, Consideration, Video View, Web Conversion, Catalog Sales, and Web Sessions objectives — with strict microcurrency budgeting, CBO rules, audience and customer-list management, conversion tag handling, keyword targeting, and campaign analytics. Use when the user mentions Pinterest ads, Pinterest campaign, Pinterest ad group, Pinterest audience, Pinterest conversion tracking, Pinterest tag, or Pinterest customer list.
+use_cases:
+  - Create Pinterest ad campaigns
+  - Manage Pinterest ad groups and ads
+  - Set up audience targeting
+  - Track conversions with Pinterest tags
+  - Manage customer lists for targeting
+  - Analyze campaign performance
+  - Send conversion events
+triggers:
+  - pinterest ads
+  - pinterest campaign
+  - pinterest ad group
+  - pinterest audience
+  - pinterest conversion
+  - pinterest tag
+  - pinterest customer list
+requires_toolkits:
+  - pinterest_ads
+suggested_toolkits:
+  - hyper_database
+  - sandbox
+  - file_manager
 ---
 
 # Pinterest Ads

@@ -1,6 +1,31 @@
 ---
 name: meta-ads-library
 description: Research competitor Facebook and Instagram ads from the Meta Ads Library via the Hyper MCP — search by keyword, pull full ad creative and metadata, enrich with page contact info for lead generation, and surface structured ad-intelligence summaries in chat. Use when the user wants to scrape the Meta Ads Library, spy on competitor ads, monitor new ads in a category, build a lead list from advertisers, or surface creative trends across an industry.
+use_cases:
+  - Research competitor Facebook and Instagram ads
+  - Scrape the Meta Ads Library for ad creative inspiration
+  - Import ad library data into database tables for analysis
+  - Build ad research databases from Meta Ads Library results
+  - Analyze competitor ad strategies with SQL queries
+  - Track ad trends across industries or keywords
+  - Enrich ad data with page contact information
+  - Pipe scraped ad results into structured tables
+  - Compare ad creatives across competitors
+  - Monitor new ads in a category over time
+triggers:
+  - meta ads library
+  - facebook ads library
+  - competitor ads
+  - ad research
+  - ad scraping
+  - scrape ads
+  - import ads
+  - ad spy
+  - ad library
+requires_toolkits:
+  - meta_ads_library
+suggested_toolkits:
+  - hyper_database
 ---
 
 # Meta Ads Library

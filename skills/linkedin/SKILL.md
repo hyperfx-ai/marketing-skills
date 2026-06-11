@@ -1,6 +1,26 @@
 ---
 name: linkedin
 description: Publish and manage LinkedIn content via the Hyper MCP — text posts, article / link previews, document and PDF posts, organization (company page) posts, and AI-generated text-to-carousel posts. Use when the user wants to post on LinkedIn, share an article on LinkedIn, post to a LinkedIn company page, upload a PDF / document to LinkedIn, or build a LinkedIn carousel from text.
+use_cases:
+  - Post a text update to LinkedIn
+  - Share a website link on LinkedIn with explicit article metadata
+  - Post to a LinkedIn company page
+  - Upload a PDF or document to LinkedIn
+  - Create a LinkedIn carousel from text content
+  - Manage LinkedIn posting flows for agents
+triggers:
+  - linkedin post
+  - post to linkedin
+  - linkedin carousel
+  - linkedin article
+  - linkedin document
+  - linkedin company page
+requires_toolkits:
+  - linkedin_toolkit
+suggested_toolkits:
+  - file_manager
+  - image_gen
+  - sandbox
 ---
 
 # LinkedIn

@@ -1,6 +1,35 @@
 ---
 name: google-ads
-description: Plan and create new Google Ads campaigns end-to-end via the Hyper MCP. Use when the user wants to launch Search, Display, or Performance Max campaigns, or mentions Google Ads, AdWords, search ads, display ads, Performance Max, PMax, PPC, Google campaigns, Google blueprint, search term reports, negative keywords, or manager accounts (MCC). For ongoing optimization, search-term cleanup, conversion diagnosis, or restructuring existing accounts, defer to a future `google-ads-operator` sibling skill.
+description: Plan and create new Google Ads campaigns end-to-end via the Hyper MCP, and report on existing accounts with GAQL-backed evidence (conversions, funnels, search terms, budgets, dashboards). Use when the user wants to launch Search, Display, or Performance Max campaigns, build Google Ads reports, or mentions AdWords, PMax, PPC, negative keywords, or MCC accounts. For ongoing optimization, defer to a future google-ads-operator sibling skill.
+use_cases:
+  - Create Google Ads campaigns
+  - Set up search campaigns
+  - Set up display campaigns
+  - Set up Performance Max campaigns
+  - Configure Smart Bidding
+  - Research keywords for ads
+  - Create campaigns with blueprint system
+  - Launch net-new campaigns from research
+  - Preview Google Ads blueprints before creation
+triggers:
+  - google ads
+  - adwords
+  - search ads
+  - display ads
+  - performance max
+  - pmax
+  - ppc
+  - google campaign
+  - google blueprint
+  - search term report
+  - negative keywords
+  - manager account
+  - mcc
+requires_toolkits:
+  - google_ads
+suggested_toolkits:
+  - sandbox
+  - file_manager
 ---
 
 # Google Ads
@@ -13,6 +42,11 @@ Strategic guide for building new Google Ads campaigns. Research first, consult i
 - **Google Ads integration connected** at [https://app.hyperfx.ai/integrations](https://app.hyperfx.ai/integrations).
 
 If `google_ads_list_accounts` is not in the tool list, stop and tell the user to enable Hyper MCP and connect Google Ads.
+
+## Routing
+
+- **Reporting on existing accounts** (GAQL-backed reports, conversion breakdowns, funnels, search terms, budget views, optional dashboards) → read `references/reporting.md` first; per-report recipes live under `references/reporting/reports/`.
+- **Campaign creation** (Search, Display, PMax) → this guide, below.
 
 ## Out of scope
 

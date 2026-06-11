@@ -1,6 +1,32 @@
 ---
 name: amazon-ads
 description: Plan and create Amazon Sponsored Products campaigns end-to-end via the Hyper MCP. Use when the user wants to launch Amazon Ads, set up Sponsored Products, manage keyword targeting and bids, configure ASIN or category product targeting, add negative keywords, automate budget rules, analyze ACoS / ROAS, or generate Sponsored Products reports. Also triggers on amazon ppc, amazon campaign, amazon keywords, or amazon report.
+use_cases:
+  - Create Amazon Sponsored Products campaigns
+  - Manage keyword targeting and bids
+  - Set up product targeting (ASIN/category)
+  - Add negative keywords to reduce wasted spend
+  - Configure budget rules for automation
+  - Analyze campaign performance and ACoS
+  - Generate SP reports (campaign, search term, targeting)
+  - Check integration health and profile setup
+  - Create campaigns with multi-profile support
+triggers:
+  - amazon ads
+  - sponsored products
+  - amazon campaign
+  - amazon ppc
+  - acos
+  - amazon keywords
+  - product targeting
+  - amazon report
+  - amazon budget rule
+requires_toolkits:
+  - amazon_ads
+suggested_toolkits:
+  - hyper_database
+  - sandbox
+  - file_manager
 ---
 
 # Amazon Ads
