@@ -350,3 +350,64 @@ Then pass the returned `key` values:
 ```
 
 Never write geo keys by hand — always resolve them through the search tool first.
+
+---
+
+## 18. Audience exclusions — interest/behavior/demographic are deprecated
+
+As of early 2024, Meta deprecated interest-based, behavior-based, and demographic-based audience **exclusions**. The `exclusions` field in targeting now only supports:
+
+- `exclusions.custom_audiences` — exclude a custom audience by ID
+- `exclusions.lookalike_audience` — exclude a lookalike audience
+
+The following exclusion types **no longer work** and will return an API error:
+
+```
+exclusions.interests        ← REMOVED
+exclusions.behaviors        ← REMOVED
+exclusions.demographics     ← REMOVED
+```
+
+This is a **Meta platform policy change**, not a toolkit limitation. When a user asks to exclude interests or demographics from targeting, inform them that only custom audience exclusions are available and offer to set up a custom audience for the exclusion instead.
+
+---
+
+## 19. Dynamic creative (`asset_feed_spec`) requires the two-step pattern
+
+`asset_feed_spec` (multiple text/headline/image variations for dynamic creative) **cannot be passed inline** inside the `creative` dict of `meta_ads_create`. It must be created as a standalone creative first.
+
+**Two-step pattern (required):**
+
+```python
+# Step 1 — create the dynamic creative with asset_feed_spec
+creative = meta_ads_ad_creatives_create(
+    account_id="act_...",
+    name="My Dynamic Creative",
+    object_story_spec={
+        "page_id": "<page_id>",
+        "link_data": {
+            "link": "https://example.com",
+            "message": "Primary copy A",
+        }
+    },
+    asset_feed_spec={
+        "bodies": [{"text": "Copy A"}, {"text": "Copy B"}, {"text": "Copy C"}],
+        "titles": [{"text": "Headline 1"}, {"text": "Headline 2"}],
+        "images": [{"hash": "<image_hash_1>"}, {"hash": "<image_hash_2>"}],
+        "link_urls": [{"website_url": "https://example.com"}],
+        "call_to_action_types": [{"type": "LEARN_MORE"}]
+    }
+)
+# → capture creative_id
+
+# Step 2 — attach by creative_id
+meta_ads_create(input_data={
+    "account_id": "act_...",
+    "adset_id": "<adset_id>",
+    "name": "My Dynamic Ad",
+    "creative": {"creative_id": "<creative_id from step 1>"},
+    "status": "PAUSED"
+})
+```
+
+Passing `asset_feed_spec` directly inside `meta_ads_create`'s `creative` dict is not supported — the inline creative spec only accepts `object_story_spec` or `creative_id`.
