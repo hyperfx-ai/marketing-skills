@@ -35,8 +35,8 @@ Use the **exact tool name from your connected tool list**. Canonical names are `
 | Discovery | `meta_ads_ad_accounts_list`, `meta_ads_owned_pages_list`, `meta_ads_pages_search`, `meta_accounts_list`, `meta_ads_instagram_accounts_list` |
 | Health & sync | `meta_ads_health_check`, `meta_business_sync` |
 | Tracking assets | `meta_ads_ad_pixels_list`, `meta_ads_ad_pixels_get`, `meta_ads_custom_audiences_list`, `meta_ads_lookalike_audiences_list`, `meta_ads_targeting_search` |
-| Blueprint path (preferred) | `meta_ads_blueprints_preview`, `meta_ads_campaign_blueprints_create` |
-| Manual creation | `meta_ads_campaigns_create`, `meta_ads_ad_sets_create`, `meta_ads_create`, `meta_ads_ad_images_upload`, `meta_ads_ad_creatives_create` |
+| Step-by-step creation (preferred) | `meta_ads_campaigns_create`, `meta_ads_ad_sets_create`, `meta_ads_create`, `meta_ads_ad_images_upload`, `meta_ads_ad_creatives_create` |
+| Blueprint path (avoid — see rule below) | `meta_ads_blueprints_preview`, `meta_ads_campaign_blueprints_create` |
 | Read & preview | `meta_ads_campaigns_get`, `meta_ads_ad_sets_list`, `meta_ads_list`, `meta_ads_get`, `meta_ads_ad_previews_get` |
 | Insights & dashboards | `meta_ads_insights_get`, `meta_business_sync`, `hyper_data_list_dashboard_templates`, `hyper_data_build_dashboard`, `database_query` |
 | Launch & edits | `meta_ads_campaigns_activate`, `meta_ads_campaigns_update`, `meta_ads_ad_sets_update`, `meta_ads_update` |
@@ -46,13 +46,15 @@ CLI users: translate tool names with the `hyper-cli` skill (`hyperai search "<to
 
 ---
 
-## Three rules that must never be forgotten
+## Rules that must never be forgotten
 
 > **BUDGETS IN CENTS**: $20.00 = 2000. $5.50 = 550. $100 = 10000. Never pass dollar amounts directly.
 
 > **ACTIVATE, DON'T UPDATE**: Use `meta_ads_campaigns_activate(campaign_id)` to go live. Never `meta_ads_campaigns_update(status="ACTIVE")` — that silently leaves ad sets and ads PAUSED so nothing serves.
 
 > **ALWAYS START PAUSED**: Create campaigns with `status="PAUSED"`. Never launch live without user review.
+
+> **BUILD STEP BY STEP, NOT VIA BLUEPRINT**: Create campaigns with the individual tools — `meta_ads_campaigns_create` → `meta_ads_ad_sets_create` → `meta_ads_ad_creatives_create` → `meta_ads_create`, capturing each id from the previous response. Do NOT use the blueprint tools (`meta_ads_blueprints_preview` / `meta_ads_campaign_blueprints_create`). The step-by-step tools validate each object against its campaign objective (e.g. they enforce the correct `optimization_goal` and `promoted_object`), so mistakes are caught up front instead of silently producing an invalid campaign.
 
 See [references/constraints.md](references/constraints.md) for the full constraint set.
 
@@ -84,7 +86,7 @@ Every task follows this sequence. Do not skip steps.
 | Create a traffic campaign | [references/discovery.md](references/discovery.md) → [references/campaigns/traffic.md](references/campaigns/traffic.md) |
 | Create an awareness or engagement campaign | [references/discovery.md](references/discovery.md) → [references/campaigns/awareness-engagement.md](references/campaigns/awareness-engagement.md) |
 | Create an app promotion campaign | [references/discovery.md](references/discovery.md) → [references/campaigns/app-promotion.md](references/campaigns/app-promotion.md) |
-| Create via blueprint (preferred for new campaigns) | [references/discovery.md](references/discovery.md) → [references/blueprints.md](references/blueprints.md) |
+| Create a campaign (any objective) | [references/discovery.md](references/discovery.md) → the matching `references/campaigns/*.md` above, then build step by step |
 | Analyze performance / query insights | [references/analytics.md](references/analytics.md) |
 | Build a Meta dashboard or data app | [references/analytics.md](references/analytics.md) → [references/dashboards.md](references/dashboards.md) |
 | Analyze performance, then create a campaign | [references/analytics.md](references/analytics.md) → [references/discovery.md](references/discovery.md) → relevant campaign file |
