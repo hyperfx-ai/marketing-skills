@@ -411,3 +411,54 @@ meta_ads_create(input_data={
 ```
 
 Passing `asset_feed_spec` directly inside `meta_ads_create`'s `creative` dict is not supported — the inline creative spec only accepts `object_story_spec` or `creative_id`.
+
+---
+
+## 20. Catalog / DPA creative fields are top-level creative fields
+
+For catalog / Dynamic Product Ads creatives, pass `product_set_id` as a **top-level creative field**. Do not nest it inside `object_story_spec`, `link_data`, or `asset_feed_spec`.
+
+For generated tools, put it at the top level of the creative `body`:
+
+```python
+meta_ads_ad_creatives_create(
+    ad_account_id="123456789",
+    body={
+        "name": "Catalog Creative",
+        "product_set_id": "<product_set_id>",
+        "object_story_spec": {
+            "page_id": "<page_id>",
+            "link_data": {
+                "link": "https://example.com",
+                "message": "Primary copy"
+            }
+        }
+    }
+)
+```
+
+If using legacy `meta_business_create_ad_creative`, pass `product_set_id` as a top-level argument.
+
+To opt out of Multi-advertiser Ads, pass `multi_advertiser_ads` as a **top-level creative object**:
+
+```json
+"multi_advertiser_ads": {
+  "enable_multi_advertiser_ads": false
+}
+```
+
+Do not pass `enable_multi_advertiser_ads` as a flat top-level field.
+
+For Advantage+ catalog creative controls, `degrees_of_freedom_spec.creative_features_spec` must be an object keyed by current Meta enum names:
+
+```json
+"degrees_of_freedom_spec": {
+  "creative_features_spec": {
+    "STANDARD_ENHANCEMENTS_CATALOG": {
+      "enroll_status": "OPT_OUT"
+    }
+  }
+}
+```
+
+Do not pass `creative_features_spec` as a list of strings. Do not use deprecated snake_case keys such as `contextual_multi_ads`, `enhance_cta`, `product_extensions`, `show_destination_blurbs`, or `standard_enhancements`.
