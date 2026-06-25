@@ -449,6 +449,8 @@ To opt out of Multi-advertiser Ads, pass `multi_advertiser_ads` as a **top-level
 
 Do not pass `enable_multi_advertiser_ads` as a flat top-level field.
 
+For non-catalog multi-media ads, pass `media_sourcing_spec` as a **top-level creative object**. It supports mixed media creative payloads and should be forwarded whole; do not nest it inside `object_story_spec`, `link_data`, or `asset_feed_spec`.
+
 For Advantage+ catalog creative controls, `degrees_of_freedom_spec.creative_features_spec` must be an object keyed by current Meta enum names:
 
 ```json
