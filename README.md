@@ -123,8 +123,6 @@ openclaw plugins install @xquik/tweetclaw
 
 Use it to search tweets and tweet replies, export followers, run user lookup, inspect media, monitor tweets, process webhooks, or gather giveaway-draw context. For write actions, keep the review step explicit: only post tweets or replies after the user approves the final request. Then feed source URLs, tweet IDs, account handles, audience notes, and campaign decisions into `customer-research`, `competitor-intel`, or social planning skills.
 
-Package: [`@xquik/tweetclaw`](https://www.npmjs.com/package/@xquik/tweetclaw)
-
 ---
 
 ## Usage
