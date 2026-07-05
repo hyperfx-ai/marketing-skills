@@ -1,6 +1,8 @@
 ---
 name: seo-research
 description: Data-driven SEO research and analysis through the Hyper MCP — keyword research, competitor analysis, content planning, AI search visibility (ChatGPT, Claude, Perplexity, Google AI Overviews), backlink trends, search intent classification, page speed / Core Web Vitals, and full site audits. Use when the user asks for an SEO audit, keyword research, content strategy, competitor benchmarks, brand visibility in AI search, ranking history, or any organic search analysis.
+icon: hyperseo
+short_description: Keyword research, SERP and AI-visibility analysis, competitor benchmarking, and site audits.
 ---
 
 # SEO Research
@@ -22,18 +24,18 @@ Data-driven SEO research and analysis. Every recommendation must be backed by re
 - **Hyper MCP installed and connected.** [https://app.hyperfx.ai/mcp](https://app.hyperfx.ai/mcp)
 - **HyperSEO toolkit enabled** at [https://app.hyperfx.ai/integrations](https://app.hyperfx.ai/integrations) — provides the `hyperseo_*` tool surface that wraps DataForSEO and AI search query data.
 
-If `hyperseo_search_volume` is not in the tool list, stop and tell the user to enable the Hyper MCP and turn on the HyperSEO toolkit.
+If `hyperseo_search_volume_get` is not in the tool list, stop and tell the user to enable the Hyper MCP and turn on the HyperSEO toolkit.
 
 ## Tool surface
 
 | Tool group | Tools |
 | --- | --- |
-| Keyword research | `hyperseo_search_volume`, `hyperseo_keyword_difficulty`, `hyperseo_keyword_ideas`, `hyperseo_keywords_for_site`, `hyperseo_search_intent` |
-| SERP & AI Overviews | `hyperseo_serp_results`, `hyperseo_ai_overview` |
-| Competitor analysis | `hyperseo_competitors`, `hyperseo_competitors_domain`, `hyperseo_domain_intersection`, `hyperseo_bulk_traffic` |
-| Domain & rankings | `hyperseo_domain_overview`, `hyperseo_domain_keywords`, `hyperseo_historical_rank` |
-| Backlinks | `hyperseo_backlinks_history` |
-| AI search visibility | `hyperseo_ai_search_volume`, `hyperseo_track_mentions` |
+| Keyword research | `hyperseo_search_volume_get`, `hyperseo_keyword_difficulty`, `hyperseo_keyword_ideas`, `hyperseo_site_keywords_search`, `hyperseo_intents_search` |
+| SERP & AI Overviews | `hyperseo_serp_results_get`, `hyperseo_ai_overviews_get` |
+| Competitor analysis | `hyperseo_competitors_search`, `hyperseo_competitor_domains_search`, `hyperseo_domain_intersections_search`, `hyperseo_bulk_traffic` |
+| Domain & rankings | `hyperseo_domain_overview_get`, `hyperseo_domain_keywords_get`, `hyperseo_rank_history_get` |
+| Backlinks | `hyperseo_backlinks_history_get` |
+| AI search visibility | `hyperseo_ai_search_volume_get`, `hyperseo_mentions_track` |
 | Technical health | `hyperseo_pagespeed` |
 
 ## Initial Assessment
@@ -61,7 +63,7 @@ When the task spans multiple areas (e.g., "help me with SEO for my new site"), s
 
 Apply these throughout all analysis.
 
-**Search intent comes first.** Every keyword has an intent. Use `hyperseo_search_intent` to classify at scale, then match content format to intent:
+**Search intent comes first.** Every keyword has an intent. Use `hyperseo_intents_search` to classify at scale, then match content format to intent:
 
 - Informational ("what is X") → guides, explainers.
 - Commercial ("best X", "X vs Y") → comparison pages, reviews.
@@ -80,23 +82,23 @@ Apply these throughout all analysis.
 
 | Task | Tool | Key output |
 | --- | --- | --- |
-| Check search volume and CPC | `hyperseo_search_volume` | Monthly volume, CPC, competition. |
+| Check search volume and CPC | `hyperseo_search_volume_get` | Monthly volume, CPC, competition. |
 | Assess ranking difficulty | `hyperseo_keyword_difficulty` | Difficulty score 0–100. |
 | Generate keyword ideas | `hyperseo_keyword_ideas` | Related keywords with metrics. |
-| Find keywords for a site | `hyperseo_keywords_for_site` | Keywords a domain could target. |
-| See who ranks on Google | `hyperseo_serp_results` | Top positions, URLs, domains. |
-| Check Google AI Overview | `hyperseo_ai_overview` | AI-generated summary and cited sources. |
-| See what a domain ranks for | `hyperseo_domain_keywords` | Current rankings and traffic. |
-| Find competing domains (by keywords) | `hyperseo_competitors` | Domains ranking for similar keywords. |
-| Find competing domains (by domain) | `hyperseo_competitors_domain` | Competitors based on shared organic keywords. |
-| Get domain health metrics | `hyperseo_domain_overview` | Authority, traffic, backlinks. |
-| Track backlink trends | `hyperseo_backlinks_history` | New / lost backlinks over time. |
-| Check AI chatbot query volume | `hyperseo_ai_search_volume` | Monthly queries to ChatGPT, Claude, etc. |
-| Track brand mentions in LLMs | `hyperseo_track_mentions` | Brand citations across AI models. |
+| Find keywords for a site | `hyperseo_site_keywords_search` | Keywords a domain could target. |
+| See who ranks on Google | `hyperseo_serp_results_get` | Top positions, URLs, domains. |
+| Check Google AI Overview | `hyperseo_ai_overviews_get` | AI-generated summary and cited sources. |
+| See what a domain ranks for | `hyperseo_domain_keywords_get` | Current rankings and traffic. |
+| Find competing domains (by keywords) | `hyperseo_competitors_search` | Domains ranking for similar keywords. |
+| Find competing domains (by domain) | `hyperseo_competitor_domains_search` | Competitors based on shared organic keywords. |
+| Get domain health metrics | `hyperseo_domain_overview_get` | Authority, traffic, backlinks. |
+| Track backlink trends | `hyperseo_backlinks_history_get` | New / lost backlinks over time. |
+| Check AI chatbot query volume | `hyperseo_ai_search_volume_get` | Monthly queries to ChatGPT, Claude, etc. |
+| Track brand mentions in LLMs | `hyperseo_mentions_track` | Brand citations across AI models. |
 | Compare traffic across domains | `hyperseo_bulk_traffic` | Organic / paid ETV and keyword counts per domain. |
-| Track ranking history over time | `hyperseo_historical_rank` | Monthly organic traffic and keyword trends. |
-| Classify keyword search intent | `hyperseo_search_intent` | Intent type with confidence scores. |
-| Find keyword overlaps between domains | `hyperseo_domain_intersection` | Shared SERP keywords with positions. |
+| Track ranking history over time | `hyperseo_rank_history_get` | Monthly organic traffic and keyword trends. |
+| Classify keyword search intent | `hyperseo_intents_search` | Intent type with confidence scores. |
+| Find keyword overlaps between domains | `hyperseo_domain_intersections_search` | Shared SERP keywords with positions. |
 | Check page speed / Core Web Vitals | `hyperseo_pagespeed` | Performance score, FCP, LCP, TBT, CLS. |
 
 ### Location codes
@@ -128,4 +130,4 @@ Default is US (`2840`). Common alternatives: UK `2826`, Canada `2124`, Australia
 4. **Check both channels.** When relevant, compare Google search volume with AI search volume.
 5. **Be honest about difficulty.** If a keyword is realistically unwinnable for the user's domain authority, say so and suggest alternatives.
 6. **Think in clusters, not isolated keywords.** Group related keywords into topic clusters.
-7. **Validate against SERPs.** Before recommending a content format, check what actually ranks with `hyperseo_serp_results`.
+7. **Validate against SERPs.** Before recommending a content format, check what actually ranks with `hyperseo_serp_results_get`.

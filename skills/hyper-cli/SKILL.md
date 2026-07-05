@@ -1,13 +1,15 @@
 ---
 name: hyper-cli
 description: Use the Hyper CLI to run Hyper marketing skills from a terminal. Use when the user wants to use `hyperai`, inspect live tool schemas, translate MCP tool names from a skill into CLI commands, switch connected accounts, or run marketing tools outside an MCP-native agent host.
+icon: hyper
+short_description: Call any Hyper platform tool from the terminal with the hyper CLI.
 ---
 
 # Hyper CLI
 
 Use `hyperai` to run Hyper tools from a terminal. This skill is a bridge for using the marketing skills in this repo through the CLI.
 
-Marketing skills usually name the MCP/raw tools, such as `gmail_send_message` or `meta_ads_ad_accounts_list`. The CLI also exposes friendly aliases, such as `gmail messages send` or `meta-ads ad-accounts list`. Pick one surface per call.
+Marketing skills usually name the MCP/raw tools, such as `gmail_messages_send` or `meta_ads_ad_accounts_list`. The CLI also exposes friendly aliases, such as `gmail messages send` or `meta-ads ad-accounts list`. Pick one surface per call.
 
 ## Requirements
 
@@ -43,23 +45,23 @@ hyperai call gmail messages send --json '{"to":"person@example.com","subject":"H
 Raw toolkit path:
 
 ```bash
-hyperai tools describe gmail gmail_send_message --parameters
-hyperai tools call gmail gmail_send_message --json '{"to":"person@example.com","subject":"Hello","body":"Hi"}'
+hyperai tools describe gmail gmail_messages_send --parameters
+hyperai tools call gmail gmail_messages_send --json '{"to":"person@example.com","subject":"Hello","body":"Hi"}'
 ```
 
-If a marketing skill says `gmail_send_message`, that is a raw MCP/toolkit name. Either translate it with search:
+If a marketing skill says `gmail_messages_send`, that is a raw MCP/toolkit name. Either translate it with search:
 
 ```bash
-hyperai search "gmail_send_message" --json --signature
+hyperai search "gmail_messages_send" --json --signature
 ```
 
 or call it through the raw toolkit surface:
 
 ```bash
-hyperai tools call gmail gmail_send_message --json '{...}'
+hyperai tools call gmail gmail_messages_send --json '{...}'
 ```
 
-Never assume `hyperai call gmail_send_message` will work.
+Never assume `hyperai call gmail_messages_send` will work.
 
 ## Describe progression
 
@@ -129,13 +131,13 @@ Use `--auth-id <auth-id>` only for a one-off override.
 Marketing skill names raw Gmail tool:
 
 ```text
-gmail_list_messages
+gmail_messages_list
 ```
 
 Resolve and call friendly alias:
 
 ```bash
-hyperai search "gmail_list_messages" --json --signature
+hyperai search "gmail_messages_list" --json --signature
 hyperai describe gmail messages list --parameters
 hyperai call gmail messages list --json '{"max_results":10}'
 ```

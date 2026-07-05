@@ -16,7 +16,7 @@ Step-by-step guide for auditing a domain's organic search health using the Hyper
 Get a high-level snapshot of domain health.
 
 1. Ask for the exact domain (e.g., `example.com` — don't guess).
-2. Run `hyperseo_domain_overview` on the domain.
+2. Run `hyperseo_domain_overview_get` on the domain.
 3. Review: organic keywords count, estimated traffic, backlinks, referring domains, domain rank.
 
 **Quick health indicators:**
@@ -43,7 +43,7 @@ If the user has Google Search Console connected in Hyper:
    **If the tool returns a "No data cached" error:** check the `suggestion` field in the response — it contains the workspace-specific table name (workspace-specific, e.g. `hyper_cache_google_search_console_<workspace>__daily_insights`). Retry the query using that exact table name. If no data exists at all, call `google_search_console_sync()` first to trigger an initial sync, wait for it to complete, then re-query.
 
    Returns actual clicks, impressions, CTR, and average position from GSC — ground-truth data vs. DataForSEO estimates.
-3. Use this alongside `hyperseo_domain_overview`. Real GSC clicks will differ from ETV estimates — present both where available.
+3. Use this alongside `hyperseo_domain_overview_get`. Real GSC clicks will differ from ETV estimates — present both where available.
 
 If GSC is not connected, skip this step and rely on DataForSEO estimates throughout.
 
@@ -51,8 +51,8 @@ If GSC is not connected, skip this step and rely on DataForSEO estimates through
 
 Understand what the domain already ranks for and how it's trending.
 
-1. Run `hyperseo_domain_keywords` with `limit=50` to see top-ranked keywords.
-2. Run `hyperseo_historical_rank` to see organic traffic and keyword count trends over time — is the domain growing or declining?
+1. Run `hyperseo_domain_keywords_get` with `limit=50` to see top-ranked keywords.
+2. Run `hyperseo_rank_history_get` to see organic traffic and keyword count trends over time — is the domain growing or declining?
 3. Sort current keywords by traffic to find the pages driving the most organic visits.
 4. Identify:
    - **Strengths**: keywords in positions 1 – 5 (defend these).
@@ -64,7 +64,7 @@ Understand what the domain already ranks for and how it's trending.
 
 Find untapped potential.
 
-1. Run `hyperseo_keywords_for_site` to discover keywords the domain could target but isn't.
+1. Run `hyperseo_site_keywords_search` to discover keywords the domain could target but isn't.
 2. Cross-check the best opportunities with `hyperseo_keyword_difficulty`.
 3. Focus on keywords where:
    - The domain has topical relevance.
@@ -75,7 +75,7 @@ Find untapped potential.
 
 Assess the domain's link profile.
 
-1. Run `hyperseo_backlinks_history` for the domain.
+1. Run `hyperseo_backlinks_history_get` for the domain.
 2. Look for:
    - **Growth trend**: are backlinks growing, stable, or declining?
    - **Referring domain ratio**: healthy profiles have a diverse set of referring domains, not just many links from few domains.
@@ -85,9 +85,9 @@ Assess the domain's link profile.
 
 No audit is complete without context.
 
-1. Run `hyperseo_competitors_domain` to find competitors based on shared organic keywords.
+1. Run `hyperseo_competitor_domains_search` to find competitors based on shared organic keywords.
 2. Run `hyperseo_bulk_traffic` on the user's domain + top 3 – 5 competitors to compare traffic levels quickly.
-3. Run `hyperseo_domain_overview` on the top 3 competitors for detailed metrics.
+3. Run `hyperseo_domain_overview_get` on the top 3 competitors for detailed metrics.
 4. Compare: how does the domain stack up on authority, traffic, and backlinks?
 5. This frames the audit findings — "you rank for 500 keywords" means different things if competitors rank for 500 vs 50,000.
 
@@ -107,8 +107,8 @@ Assess Core Web Vitals.
 
 Evaluate presence in AI search channels.
 
-1. Run `hyperseo_ai_search_volume` for the domain's top keywords to understand AI channel demand.
-2. Run `hyperseo_track_mentions` with the brand name on 2 – 3 relevant queries.
+1. Run `hyperseo_ai_search_volume_get` for the domain's top keywords to understand AI channel demand.
+2. Run `hyperseo_mentions_track` with the brand name on 2 – 3 relevant queries.
 3. Note whether AI assistants mention the brand, and how they describe it.
 
 ## Audit Report Structure
@@ -150,7 +150,7 @@ Keywords the domain should target but currently doesn't rank for.
 
 **6. Historical trends**
 
-Monthly organic traffic and keyword counts from `hyperseo_historical_rank`. Is the domain growing or declining?
+Monthly organic traffic and keyword counts from `hyperseo_rank_history_get`. Is the domain growing or declining?
 
 **7. Backlink health**
 
@@ -162,7 +162,7 @@ Core Web Vitals for key pages (mobile and desktop). Flag any metrics outside acc
 
 **9. Competitive benchmark**
 
-Side-by-side comparison with top 3 competitors using `hyperseo_bulk_traffic` and `hyperseo_domain_overview`.
+Side-by-side comparison with top 3 competitors using `hyperseo_bulk_traffic` and `hyperseo_domain_overview_get`.
 
 **10. AI visibility status**
 

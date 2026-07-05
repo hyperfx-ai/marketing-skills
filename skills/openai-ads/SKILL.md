@@ -1,6 +1,8 @@
 ---
 name: openai-ads
 description: Plan and manage OpenAI Ads (ChatGPT ads) campaigns end-to-end via the Hyper MCP — API-key auth, account discovery, geo targeting, image upload, chat_card and product-feed creatives, custom audiences, conversion tracking, status flow, and insights, with integer-micros money values. Use when the user wants to launch OpenAI ads, ChatGPT ads, chat card ads, manage OpenAI ad groups or audiences, or pull OpenAI Ads insights.
+icon: openai_ads
+short_description: Plan and manage OpenAI Ads with chat cards, product feeds, audiences, and insights.
 ---
 
 # OpenAI Ads Campaigns

@@ -17,13 +17,13 @@ Start with the user's seed terms and expand them.
 
 1. Run `hyperseo_keyword_ideas` with their seed keywords (set `limit` to 30–50 for a broad view).
 2. Review the ideas for relevance — discard anything off-topic.
-3. If the user has a domain, also run `hyperseo_keywords_for_site` to discover terms their site naturally aligns with.
+3. If the user has a domain, also run `hyperseo_site_keywords_search` to discover terms their site naturally aligns with.
 
 ### Step 2: Volume and commercial value
 
 Take the most promising candidates and check real demand.
 
-1. Run `hyperseo_search_volume` on the shortlisted keywords (batch up to 20 at a time).
+1. Run `hyperseo_search_volume_get` on the shortlisted keywords (batch up to 20 at a time).
 2. Note search volume, CPC, and competition level.
 3. High CPC often signals commercial intent — these keywords convert.
 
@@ -32,7 +32,7 @@ Take the most promising candidates and check real demand.
 Filter by what's actually achievable and classify intent.
 
 1. Run `hyperseo_keyword_difficulty` on the shortlist.
-2. Run `hyperseo_search_intent` on the same keywords to classify intent (informational, navigational, commercial, transactional).
+2. Run `hyperseo_intents_search` on the same keywords to classify intent (informational, navigational, commercial, transactional).
 3. Score each keyword against the priority framework below.
 4. Intent classification helps you decide the right content format before you start writing.
 
@@ -40,14 +40,14 @@ Filter by what's actually achievable and classify intent.
 
 Check if these keywords are also being queried in AI assistants.
 
-1. Run `hyperseo_ai_search_volume` on the top candidates.
+1. Run `hyperseo_ai_search_volume_get` on the top candidates.
 2. Keywords with high AI volume may represent emerging demand not yet saturated in traditional search.
 
 ### Step 5: SERP validation
 
 For top-priority keywords, check what currently ranks.
 
-1. Run `hyperseo_serp_results` for your highest-priority keywords.
+1. Run `hyperseo_serp_results_get` for your highest-priority keywords.
 2. Look at: who ranks, what content format they use, whether there are featured snippets or AI overviews.
 3. This tells you what you need to create to compete.
 
@@ -85,11 +85,11 @@ Don't present keywords as a flat list. Group them into clusters by intent.
 **Navigational** — "X login", "X website".
 
 - Usually not targetable unless it's your brand.
-- Note: track these with `hyperseo_track_mentions` for brand visibility.
+- Note: track these with `hyperseo_mentions_track` for brand visibility.
 
 ## Output Format
 
-Use `hyperseo_search_intent` to auto-fill the Intent column. Present the final keyword research as a prioritized table:
+Use `hyperseo_intents_search` to auto-fill the Intent column. Present the final keyword research as a prioritized table:
 
 ```
 | Keyword | Volume | Difficulty | CPC | AI Volume | Intent | Cluster | Priority |

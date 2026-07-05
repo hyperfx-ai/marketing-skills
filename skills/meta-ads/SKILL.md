@@ -1,6 +1,8 @@
 ---
 name: meta-ads
 description: Plan and create Meta (Facebook + Instagram) advertising campaigns end-to-end via the Hyper MCP, defaulting to Advantage+ automation. Use when the user wants to launch Meta ads, Facebook ads, Instagram ads, Advantage+ campaigns, carousel ads, dynamic creative ads, set up Meta conversion tracking, analyze performance, audit a Meta ads account, or build Meta performance dashboards. Also triggers on phrases like meta campaign, facebook campaign, advantage+, meta account audit, or meta blueprint.
+icon: meta_ads
+short_description: Plan and create Meta ad campaigns with Advantage+ defaults, audits, and dashboards.
 ---
 
 # Meta Ads
@@ -40,7 +42,7 @@ Use the **exact tool name from your connected tool list**. Canonical names are `
 | Read & preview | `meta_ads_campaigns_get`, `meta_ads_campaigns_search`, `meta_ads_ad_sets_list`, `meta_ads_list`, `meta_ads_get`, `meta_ads_ad_previews_get` |
 | Insights & dashboards | `meta_ads_insights_get`, `meta_business_sync`, `hyper_data_build_dashboard`, `database_query` |
 | Launch & edits | `meta_ads_campaigns_activate`, `meta_ads_campaigns_update`, `meta_ads_ad_sets_update`, `meta_ads_update` |
-| Site research | `firecrawl_extract_branding`, `firecrawl_screenshot` |
+| Site research | `firecrawl_branding_extract`, `firecrawl_screenshots_create` |
 
 CLI users: translate tool names with the `hyper-cli` skill (`hyperai search "<tool name>"`).
 

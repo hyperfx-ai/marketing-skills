@@ -94,7 +94,8 @@ That's `meta-ads` + `google-ads` + `tiktok-ads` + `ad-creative-generation` + `vi
 | [`seo-research`](skills/seo-research) | Keyword research, SERP and AI Overview analysis, competitor benchmarks, AI search visibility, backlinks, site audits. | HyperSEO toolkit |
 | [`competitor-intel`](skills/competitor-intel) | Research competitors end-to-end — site, social, search rank, AI-search citations, mentions — and produce battle cards, weekly digests, or board-prep updates. | Firecrawl + at least one of HyperSEO or Apify scrapers |
 | [`customer-research`](skills/customer-research) | Mine Reddit, YouTube comments, G2/Capterra, Twitter, and TikTok to surface what customers actually say — build personas, VOC quote banks, JTBD maps, and synthesis reports. | Apify scrapers toolkit (Reddit, Twitter, YouTube, TikTok, Instagram) |
-| [`youtube-transcript`](skills/youtube-transcript) | Fetch the transcript of any YouTube video and turn it into blog posts, social content, summaries, show notes, quote extractions, or timestamped chapters. | YouTube toolkit |
+| [`reddit`](skills/reddit) | Research subreddits, threads, and sentiment — mine questions, pain points, and voice-of-customer. | Reddit scraper |
+| [`youtube`](skills/youtube) | Fetch YouTube transcripts, repurpose video content into posts/summaries/chapters, and create thumbnails from proven composition patterns. | YouTube toolkit |
 | **Creative** | | |
 | [`ad-creative-generation`](skills/ad-creative-generation) | Generate ad copy and on-brand images for Google and Meta placements. | Firecrawl + image gen toolkit |
 | [`image-generation`](skills/image-generation) | Generate and edit images — picks the right model for text-heavy creatives, photoreal product shots, or high-res output. | Image gen toolkit |
@@ -232,6 +233,16 @@ Near-term skills and surfaces:
 See [CONTRIBUTING.md](CONTRIBUTING.md) to contribute a skill.
 
 ---
+
+### Apps & channels
+
+| Skill | What it does | Needs |
+| --- | --- | --- |
+| [`gmail`](skills/gmail) | Read, draft, send, and organize Gmail — labels, threads, drafts, attachments. | Gmail |
+| [`google-sheets`](skills/google-sheets) | Write structured data to Google Sheets and keep spreadsheets up to date. | Google Sheets |
+| [`slack`](skills/slack) | Send Slack messages, share files and images, and work with channels and threads. | Slack |
+| [`twilio`](skills/twilio) | Send SMS and WhatsApp messages and manage Twilio messaging workflows. | Twilio |
+| [`polymarket-trading`](skills/polymarket-trading) | Research Polymarket prediction markets and manage positions and orders. | Polymarket |
 
 ## Contributing
 

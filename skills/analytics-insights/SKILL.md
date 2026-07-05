@@ -1,6 +1,8 @@
 ---
 name: analytics-insights
 description: Drive Google Analytics (GA4), Google Tag Manager, Google Search Console, and BigQuery from chat — tracking plans, GA4 reports, key-event (conversion) setup, custom dimensions and metrics, GTM audits, GSC performance, and GA4 BigQuery export queries. Use when the user wants an analytics audit, a GA4 report, a tracking plan, conversion setup, GTM cleanup, search-performance data, or asks "how is the site performing?" or "are my conversions firing?".
+icon: google_analytics
+short_description: Drive GA4, GTM, Search Console, and BigQuery from chat for reports and tracking.
 ---
 
 # Analytics Insights

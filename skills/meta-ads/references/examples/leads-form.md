@@ -52,8 +52,8 @@ Steps:
 1. Select ad account (meta_ads_ad_accounts_list)
 2. Get Page ID (meta_ads_owned_pages_list)
 3. Run health check (meta_ads_health_check)
-4. Screenshot example.com/demo for creative reference (firecrawl_screenshot)
-5. Extract branding (firecrawl_extract_branding)
+4. Screenshot example.com/demo for creative reference (firecrawl_screenshots_create)
+5. Extract branding (firecrawl_branding_extract)
 6. Generate ad creative from screenshot
 7. Upload image → get image_hash (meta_ads_ad_images_upload)
 8. Create campaign → campaign_id (meta_ads_campaigns_create)
@@ -93,10 +93,10 @@ meta_ads_health_check({"account_id": "act_111222333"})
 ### Research
 
 ```python
-firecrawl_screenshot({"url": "https://example.com/demo"})
+firecrawl_screenshots_create({"url": "https://example.com/demo"})
 # → Screenshot: dark navy, "Book a Demo" hero CTA, B2B product screenshots
 
-firecrawl_extract_branding({"url": "https://example.com"})
+firecrawl_branding_extract({"url": "https://example.com"})
 # → Colors: #0D1B2A (navy), #00C2FF (electric blue)
 # → Font: Inter | Tone: professional, direct, B2B
 ```

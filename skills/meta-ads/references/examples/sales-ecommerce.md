@@ -51,8 +51,8 @@ Steps:
 1. Select ad account (meta_ads_ad_accounts_list)
 2. Get Page ID (meta_ads_owned_pages_list)
 3. Run health check (meta_ads_health_check)
-4. Screenshot skinfirst.com for creative reference (firecrawl_screenshot)
-5. Extract branding (firecrawl_extract_branding)
+4. Screenshot skinfirst.com for creative reference (firecrawl_screenshots_create)
+5. Extract branding (firecrawl_branding_extract)
 6. Generate ad creative from screenshot
 7. Upload image → get image_hash (meta_ads_ad_images_upload)
 8. Create campaign → campaign_id (meta_ads_campaigns_create)
@@ -92,10 +92,10 @@ meta_ads_health_check({"account_id": "act_111222333"})
 ### Research
 
 ```python
-firecrawl_screenshot({"url": "https://skinfirst.com"})
+firecrawl_screenshots_create({"url": "https://skinfirst.com"})
 # → Screenshot: clean minimal layout, soft pastel palette, hero product shot
 
-firecrawl_extract_branding({"url": "https://skinfirst.com"})
+firecrawl_branding_extract({"url": "https://skinfirst.com"})
 # → Colors: #F5EDE4 (cream), #9B7D6E (warm brown)
 # → Font: Playfair Display | Tone: elegant, natural
 ```

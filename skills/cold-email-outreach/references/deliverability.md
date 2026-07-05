@@ -99,7 +99,7 @@ Bad addresses tank deliverability faster than bad copy. Before adding a prospect
 4. **Drop prospects who have ever replied "remove me / unsubscribe / not interested" — across any campaign in the workspace.** Maintain a global `unsubscribed` Gmail label and check against it before each campaign:
 
 ```
-gmail_list_messages(query="label:unsubscribed to:<prospect-email>")
+gmail_messages_list(query="label:unsubscribed to:<prospect-email>")
 ```
 
 If anything comes back, do not send.
@@ -113,7 +113,7 @@ Don't dump 100 sends in 5 minutes. Spread them out:
 - **Per-hour cap:** Stay under 30–50 sends/hour from a single mailbox.
 - **Day of week:** Tuesday–Thursday outperform Monday and Friday for B2B. Avoid sends on weekends.
 
-Implementation: run the send loop over a `gmail_send_message` call, sleep ~15–60 seconds between sends, batch ~30 sends per hour. The agent can drive this directly.
+Implementation: run the send loop over a `gmail_messages_send` call, sleep ~15–60 seconds between sends, batch ~30 sends per hour. The agent can drive this directly.
 
 ## Monitoring — what to check after every campaign day
 
@@ -121,7 +121,7 @@ Implementation: run the send loop over a `gmail_send_message` call, sleep ~15–
 | --- | --- | --- | --- |
 | Bounce rate | < 3% | Apollo + Gmail bounce notifications | List quality is poor — re-enrich or pause |
 | Spam complaint rate | < 0.1% | Gmail Postmaster Tools | Copy reads as spam, or list is wrong-target |
-| Reply rate | > 2% | `gmail_list_messages(query="label:cold/<campaign> to:me newer_than:7d")` | Copy / targeting is off, or list is dead |
+| Reply rate | > 2% | `gmail_messages_list(query="label:cold/<campaign> to:me newer_than:7d")` | Copy / targeting is off, or list is dead |
 | Open rate | If tracked: 40%+ | (open tracking pixels are detectable and hurt deliverability — generally skip) | Subject line is weak |
 
 [Gmail Postmaster Tools](https://postmaster.google.com) is the single most useful free dashboard. Set it up the day you set up the sending domain. It shows your domain's reputation directly.

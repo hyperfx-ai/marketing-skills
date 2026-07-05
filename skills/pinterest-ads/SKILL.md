@@ -1,6 +1,8 @@
 ---
 name: pinterest-ads
 description: Plan and create Pinterest Ads campaigns through the Hyper MCP — Awareness, Consideration, Video View, Web Conversion, Catalog Sales, and Web Sessions objectives — with strict microcurrency budgeting, CBO rules, audience and customer-list management, conversion tag handling, keyword targeting, and campaign analytics. Use when the user mentions Pinterest ads, Pinterest campaign, Pinterest ad group, Pinterest audience, Pinterest conversion tracking, Pinterest tag, or Pinterest customer list.
+icon: pinterest_ads
+short_description: Plan and create Pinterest Ads with microcurrency budgets and conversion tags.
 ---
 
 # Pinterest Ads

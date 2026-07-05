@@ -17,7 +17,7 @@ The default. Works for ~70% of campaigns. The personalized observation must conn
 
 ### Shape
 
-1. **One sentence observation** (Tier 3 personalization — pulled from `firecrawl_scrape_url` of the careers / pricing / blog page, or from `scrape_linkedin_profiles`).
+1. **One sentence observation** (Tier 3 personalization — pulled from `firecrawl_urls_scrape` of the careers / pricing / blog page, or from `scrape_linkedin_profiles`).
 2. **The implied problem** (one sentence — the *because* / *which usually means* bridge).
 3. **One proof point** (one specific result, named customer or metric — never both vague).
 4. **One low-friction ask** (interest-based, not a meeting request).

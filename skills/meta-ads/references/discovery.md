@@ -90,13 +90,13 @@ Surface any non-PASS items to the user before continuing. Do not proceed with cr
 
 ### a) Screenshot capture (required)
 
-Call `firecrawl_screenshot` on the primary site URL and/or the specific landing page URL.
+Call `firecrawl_screenshots_create` on the primary site URL and/or the specific landing page URL.
 
 The screenshot is your visual grounding for creative direction — layout, hierarchy, tone, imagery style, hero content. Treat it as required input for image generation.
 
 ### b) Branding extract
 
-Call `firecrawl_extract_branding` on the primary site URL.
+Call `firecrawl_branding_extract` on the primary site URL.
 
 This captures brand colors, fonts, tone of voice, and key messaging. Use it to ensure generated ad creatives match the brand.
 

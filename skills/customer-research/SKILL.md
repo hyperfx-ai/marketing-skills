@@ -1,6 +1,8 @@
 ---
 name: customer-research
 description: Mine online communities and analyze existing assets to understand what customers actually think, say, and struggle with. Use when the user wants to do customer research, ICP research, voice-of-customer (VOC), review mining, Reddit mining, YouTube comment analysis, G2/Capterra scraping, build customer personas, map jobs to be done, understand churn reasons, or find authentic customer language for copy. Also use when given transcripts, surveys, or support tickets to synthesize.
+icon: apify
+short_description: Mine Reddit, YouTube, G2, X, and TikTok for what customers say in their own words.
 ---
 
 # Customer Research
@@ -31,12 +33,12 @@ Not all scrapers need to be active for every run — enable the ones relevant to
 | --- | --- |
 | `scrape_reddit` | Mine posts and comments from subreddits or by keyword |
 | `search_tweets` | Search X/Twitter with advanced operators and engagement filters |
-| `youtube_top_videos` | Find the top YouTube videos on a topic — use as input for comment mining |
+| `youtube_videos_search_top` | Find the top YouTube videos on a topic — use as input for comment mining |
 | `youtube_comments_search` | Pull comments from specific YouTube video URLs |
-| `youtube_transcript` | Fetch the full transcript of a YouTube video for language/topic extraction |
+| `youtube_video_transcripts_fetch` | Fetch the full transcript of a YouTube video for language/topic extraction |
 | `scrape_tiktok_videos` | Search TikTok by keyword or hashtag — find trending conversations and comments |
 | `web_scrape_page` | Scrape review pages (G2, Capterra, Trustpilot, app stores) |
-| `firecrawl_scrape_url` | Cleaner extraction for JS-heavy review pages |
+| `firecrawl_urls_scrape` | Cleaner extraction for JS-heavy review pages |
 | `search_google_results` | Find discussion threads, forum posts, and `site:` searches |
 | `scrape_instagram_posts` | Pull recent posts from specific brand or community accounts |
 
@@ -47,7 +49,7 @@ Not all scrapers need to be active for every run — enable the ones relevant to
 3. **Label confidence on every insight.** High = 3+ independent sources, unprompted. Medium = 2 sources or prompted only. Low = single source. Never present a Low-confidence finding as a conclusion.
 4. **Mind the bias of each source.** Reddit skews technical and skeptical. Review sites skew toward power users and people with strong opinions. Support tickets skew toward problems. Factor this in before generalizing.
 5. **Don't invent persona details.** If you don't have data for a persona field, leave it blank rather than filling it in with assumptions.
-6. **`youtube_transcript` is slow (~15–30s).** It spins up an isolated sandbox. Only use it for videos where the language in the spoken content (not comments) is what matters.
+6. **`youtube_video_transcripts_fetch` is slow (~15–30s).** It spins up an isolated sandbox. Only use it for videos where the language in the spoken content (not comments) is what matters.
 
 ---
 
@@ -123,7 +125,7 @@ scrape_reddit(
 
 ```python
 # Step 1: find the relevant videos
-youtube_top_videos(query="[product category] honest review", max_results=5, sort_by="views")
+youtube_videos_search_top(query="[product category] honest review", max_results=5, sort_by="views")
 
 # Step 2: mine comments from the top results
 youtube_comments_search(

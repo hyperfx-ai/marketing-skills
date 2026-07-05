@@ -1,6 +1,8 @@
 ---
 name: cold-email-outreach
 description: Run end-to-end B2B cold-email outreach through the Hyper MCP — enrich prospects with Apollo, scrape per-prospect signals from company sites and LinkedIn, draft personalized emails using proven hook frameworks, send via Gmail with safe defaults, and route replies into labeled folders. Use when the user wants to write cold emails, run an outbound sequence, prospect a list, build a follow-up cadence, "reach out to leads," or asks why nobody is replying to their cold emails.
+icon: gmail
+short_description: B2B cold outreach with Apollo prospecting, personalization, Gmail sending, and follow-ups.
 ---
 
 # Cold Email Outreach
@@ -24,23 +26,23 @@ End-to-end cold outreach: research, draft, send, follow up, route replies. Strat
 - **Firecrawl** (bundled) — for company-page signals.
 - **Optional: LinkedIn scraper** (bundled, runs through Apify) — for richer per-prospect personalization.
 
-If `gmail_send_message` and `apollo_mixed_people_search` are not in the agent's tool list, stop and tell the user to enable the Hyper MCP and connect Gmail + Apollo.
+If `gmail_messages_send` and `apollo_mixed_people_search` are not in the agent's tool list, stop and tell the user to enable the Hyper MCP and connect Gmail + Apollo.
 
 ## Tool surface
 
 | Phase | Tools |
 | --- | --- |
 | Prospect research | `apollo_mixed_people_search`, `apollo_mixed_companies_search`, `apollo_people_bulk_match` (preferred for 2+ enrich), `apollo_people_match` (single only) |
-| Per-prospect signals | `firecrawl_scrape_url`, `firecrawl_batch_scrape`, `firecrawl_extract_branding`, `firecrawl_screenshot`, `scrape_linkedin_profiles` *(conditional — requires LinkedIn Apify integration)* |
-| Drafting | `gmail_create_draft`, `gmail_update_draft`, `gmail_get_draft`, `gmail_list_drafts` |
-| Sending | `gmail_send_message`, `gmail_send_draft`, `gmail_reply_to_message` |
-| Reply routing | `gmail_list_messages`, `gmail_get_message`, `gmail_create_label`, `gmail_add_labels`, `gmail_remove_labels`, `gmail_move_email_to_label` *(takes `label_id` string, not `label_ids` array)* |
+| Per-prospect signals | `firecrawl_urls_scrape`, `firecrawl_urls_scrape_batch`, `firecrawl_branding_extract`, `firecrawl_screenshots_create`, `scrape_linkedin_profiles` *(conditional — requires LinkedIn Apify integration)* |
+| Drafting | `gmail_drafts_create`, `gmail_drafts_update`, `gmail_drafts_get`, `gmail_drafts_list` |
+| Sending | `gmail_messages_send`, `gmail_drafts_send`, `gmail_reply_to_message` |
+| Reply routing | `gmail_messages_list`, `gmail_get_message`, `gmail_labels_create`, `gmail_labels_add`, `gmail_labels_remove`, `gmail_messages_move_to_label` *(takes `label_id` string, not `label_ids` array)* |
 
 ## Critical rules
 
 1. **Never loop `apollo_people_match` for multiple prospects.** For 2+ records always batch into `apollo_people_bulk_match`. Apollo's tool description warns about this explicitly — looping single-match calls burns credits and is much slower.
-2. **Default send mode = drafts-first for review.** For any campaign with 4+ prospects, draft the first 1–3 with `gmail_create_draft`, show them to the user, get explicit approval, then batch-send the rest with `gmail_send_message`. Never send a full campaign without showing samples first.
-3. **One label per campaign.** Create a `cold/<campaign-name>` label with `gmail_create_label` at the start, apply it to every send, then track replies by searching that label. This is what makes Phase 6 reply routing actually work.
+2. **Default send mode = drafts-first for review.** For any campaign with 4+ prospects, draft the first 1–3 with `gmail_drafts_create`, show them to the user, get explicit approval, then batch-send the rest with `gmail_messages_send`. Never send a full campaign without showing samples first.
+3. **One label per campaign.** Create a `cold/<campaign-name>` label with `gmail_labels_create` at the start, apply it to every send, then track replies by searching that label. This is what makes Phase 6 reply routing actually work.
 4. **Stay under Gmail's send limits.** ~500 messages/day per consumer Gmail account, ~2,000/day per Workspace user. Space sends out — see [`references/deliverability.md`](./references/deliverability.md) for warming and per-day pacing.
 5. **Personalization must connect to the problem.** If the personalized opener could be deleted and the email still makes sense, it isn't doing any work. The opener should naturally bridge into *why you're emailing*.
 6. **One ask per email, one CTA.** Interest-based (`Worth exploring?`) beats meeting requests on cold touch 1.
@@ -57,7 +59,7 @@ Get the user to commit to:
 3. **Value prop in one sentence** — "We help X do Y so they can Z."
 4. **Proof point** — One specific result: "We helped Notion cut their CAC by 31% in 90 days." (Made up examples are worse than no example — get a real one.)
 5. **Trigger / signal (optional but powerful)** — Funding round, hiring, pricing-page change, recent blog post, product launch, leadership change.
-6. **Sender + reply-to** — Which Gmail account is sending. (Confirm with `gmail_list_labels` to verify the integration is live.)
+6. **Sender + reply-to** — Which Gmail account is sending. (Confirm with `gmail_labels_list` to verify the integration is live.)
 7. **Volume + cadence** — Total prospects, max sends/day, follow-up gap pattern.
 
 If they're stuck on any of these, push back. A campaign without proof or a clear ask will not perform regardless of how clever the writing is.
@@ -98,9 +100,9 @@ For each prospect, gather one *specific* observation that connects to the proble
 | Cost | Tool | Use it for |
 | --- | --- | --- |
 | Free (already have it) | Apollo response fields | Title change, recent role start, company headcount jump, funding |
-| Cheap | `firecrawl_scrape_url` of the careers / pricing / blog page | "You're hiring 4 SDRs", "Pricing pages says enterprise plan launching", "Latest blog post is about X" |
-| Cheap (multi-page) | `firecrawl_batch_scrape` | Same observation across many sites in one call |
-| Medium | `firecrawl_extract_branding` | Brand voice for the email tone, brand colors if you'll send a follow-up image |
+| Cheap | `firecrawl_urls_scrape` of the careers / pricing / blog page | "You're hiring 4 SDRs", "Pricing pages says enterprise plan launching", "Latest blog post is about X" |
+| Cheap (multi-page) | `firecrawl_urls_scrape_batch` | Same observation across many sites in one call |
+| Medium | `firecrawl_branding_extract` | Brand voice for the email tone, brand colors if you'll send a follow-up image |
 | Higher *(conditional)* | `scrape_linkedin_profiles(profile_urls=[...])` *(requires LinkedIn Apify integration — skip if not connected)* | Recent post, mutual connection, recent job change, school/employer overlap |
 
 Personalization tiers (use the highest tier you can afford for *this* campaign):
@@ -146,12 +148,12 @@ See [`references/frameworks.md`](./references/frameworks.md) for full examples a
 
 ```
 # 1. Create label for the campaign once — capture the returned id
-label = gmail_create_label(name="cold/q3-growth-leads")
+label = gmail_labels_create(name="cold/q3-growth-leads")
 campaign_label_id = label["id"]
 
 # 2. Draft the first 1-3 prospects for user review
 for p in prospects[:3]:
-    gmail_create_draft(
+    gmail_drafts_create(
       to=p["email"],
       subject="quick question",
       body=render_email(framework="observation", prospect=p),
@@ -161,15 +163,15 @@ for p in prospects[:3]:
 
 # 4. After approval, send and label each message
 for p in prospects[3:]:
-    result = gmail_send_message(
+    result = gmail_messages_send(
       to=p["email"],
       subject="quick question",
       body=render_email(framework="observation", prospect=p),
     )
-    gmail_add_labels(message_id=result["id"], label_ids=[campaign_label_id])
+    gmail_labels_add(message_id=result["id"], label_ids=[campaign_label_id])
 ```
 
-If the user wants every email reviewed, use `gmail_create_draft` for all of them and send via `gmail_send_draft` after approval. If the user is confident and the templates are pre-approved (e.g., they've run this campaign shape before), you can skip directly to `gmail_send_message` from prospect 1. Default behavior is drafts-first.
+If the user wants every email reviewed, use `gmail_drafts_create` for all of them and send via `gmail_drafts_send` after approval. If the user is confident and the templates are pre-approved (e.g., they've run this campaign shape before), you can skip directly to `gmail_messages_send` from prospect 1. Default behavior is drafts-first.
 
 ### Phase 5 — Run the follow-up cadence
 
@@ -179,7 +181,7 @@ Default cadence (adjust to the user's situation):
 
 | Touch | Day | Angle | Tool |
 | --- | --- | --- | --- |
-| 1 | 0 | Initial framework (observation/question/trigger/story) | `gmail_send_message` |
+| 1 | 0 | Initial framework (observation/question/trigger/story) | `gmail_messages_send` |
 | 2 | +3 | Reply in the same thread, add a one-line specific proof | `gmail_reply_to_message` |
 | 3 | +7 | Different angle (if 1 was observation, try question or value-first) | `gmail_reply_to_message` |
 | 4 | +14 | Useful free resource — case study, calculator, teardown | `gmail_reply_to_message` |
@@ -191,7 +193,7 @@ Always reply in the original thread (`gmail_reply_to_message` with the `message_
 
 ```
 # Pull all replies on the campaign label from the last 7 days
-gmail_list_messages(query="label:cold/q3-growth-leads is:unread newer_than:7d")
+gmail_messages_list(query="label:cold/q3-growth-leads is:unread newer_than:7d")
 ```
 
 For each reply, read the body with `gmail_get_message(message_id=...)`, classify it, and label:
@@ -207,11 +209,11 @@ For each reply, read the body with `gmail_get_message(message_id=...)`, classify
 Apply classification and clear unread with two separate calls:
 
 ```
-gmail_add_labels(message_id=..., label_ids=[classification_label_id])
-gmail_remove_labels(message_id=..., label_ids=["UNREAD"])
+gmail_labels_add(message_id=..., label_ids=[classification_label_id])
+gmail_labels_remove(message_id=..., label_ids=["UNREAD"])
 ```
 
-Create the sub-labels once with `gmail_create_label` and capture their IDs before the routing loop.
+Create the sub-labels once with `gmail_labels_create` and capture their IDs before the routing loop.
 
 ## Quality check (before any send)
 

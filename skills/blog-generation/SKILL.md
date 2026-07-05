@@ -1,6 +1,8 @@
 ---
 name: blog-generation
 description: "Generate one excellent, on-brand blog post per run for any business, built to rank on Google and get cited by AI search (ChatGPT, Claude, Perplexity, AI Overviews). A stateful engine: reads a brand strategy doc, picks a fresh topic (never repeats), researches, writes in the brand's voice, and logs the post back. Use when the user wants to write a blog post, run a daily or recurring blog task, or generate SEO / AEO / blog content. For keyword data and audits, defer to seo-research."
+icon: hyperseo
+short_description: Generate one on-brand blog post per run, built to rank and get cited by AI search.
 ---
 # Blog Generation
 
@@ -21,23 +23,23 @@ The whole game is captured in two ideas. First, AI search visibility is SEO done
 | Job | Tools |
 | --- | --- |
 | Read and write `blog-strategy.md` and the post draft | your file tools (`read_file`, `create_file`, `edit_file`) |
-| Learn the brand from their site (Step 0) | `firecrawl_scrape_url`, `web_scrape_page` |
-| Validate a topic and study the SERP / AI answer | `hyperseo_search_volume`, `hyperseo_keyword_difficulty`, `hyperseo_search_intent`, `hyperseo_ai_search_volume`, `hyperseo_serp_results`, `hyperseo_ai_overview` |
+| Learn the brand from their site (Step 0) | `firecrawl_urls_scrape`, `web_scrape_page` |
+| Validate a topic and study the SERP / AI answer | `hyperseo_search_volume_get`, `hyperseo_keyword_difficulty`, `hyperseo_intents_search`, `hyperseo_ai_search_volume_get`, `hyperseo_serp_results_get`, `hyperseo_ai_overviews_get` |
 | Mine real-world signal and measure impact | `google_search_console_query_insights` |
-| Check whether AI recommends the brand | `hyperseo_track_mentions` |
+| Check whether AI recommends the brand | `hyperseo_mentions_track` |
 
 ## Out of scope: defer to other skills
 
 | Request | Send them to |
 | --- | --- |
 | Keyword research, SERP / AI-Overview analysis, competitor benchmarks, site audits, AI-visibility tracking | `seo-research` |
-| Turn a YouTube video into a post | `youtube-transcript` |
+| Turn a YouTube video into a post | `youtube` |
 | What real customers say (Reddit, reviews) to ground a post | `customer-research` |
 | Publish to a social channel | `linkedin`, `instagram`, `tiktok` |
 
 ## The run (do this every time the task fires)
 
-**Step 0 (first run only): build the strategy doc.** If `blog-strategy.md` does not exist, create it before writing anything. Read the brand's site (`firecrawl_scrape_url` on homepage, about, best existing posts, product/pricing) and fill the **Brand brief** using the method in `references/brand-voice-and-quality.md`. Seed the **Topic backlog** with 8 to 15 candidate topics (validate with HyperSEO where available). Then continue to Step 1. If anything critical is unknown (real proof assets, the brand's actual positioning), ask the user rather than inventing.
+**Step 0 (first run only): build the strategy doc.** If `blog-strategy.md` does not exist, create it before writing anything. Read the brand's site (`firecrawl_urls_scrape` on homepage, about, best existing posts, product/pricing) and fill the **Brand brief** using the method in `references/brand-voice-and-quality.md`. Seed the **Topic backlog** with 8 to 15 candidate topics (validate with HyperSEO where available). Then continue to Step 1. If anything critical is unknown (real proof assets, the brand's actual positioning), ask the user rather than inventing.
 
 **Step 1: load your memory (read the log).** Open the brand's `blog-strategy.md` from its saved file path and read ALL of it into context: the Brand brief (the contract every draft honors) and the entire Published log (everything already written). This happens on every run after the first, with no exceptions. You cannot pick a fresh topic without it.
 
@@ -47,7 +49,7 @@ The whole game is captured in two ideas. First, AI search visibility is SEO done
 - **What it is going to do**: the archetype (listicle, comparison, how-to, what-is, alternatives, pillar, pain/diagnostic, original research, case study, glossary) from `references/blog-archetypes.md`.
 - **The research it is going to do**: the specific checks for this post (SERP read, AI-Overview check, sources to pull, the brand proof to feature).
 
-**Step 3: research.** Run the plan. Validate the target (`hyperseo_search_volume`, `_keyword_difficulty`, `_search_intent`, `_ai_search_volume`). Study what wins (`hyperseo_serp_results`) and what AI already cites (`hyperseo_ai_overview`). Read the top pages and find the angle they all miss. Pull the real facts, stats, and named sources you will cite. Never fabricate.
+**Step 3: research.** Run the plan. Validate the target (`hyperseo_search_volume_get`, `_keyword_difficulty`, `_search_intent`, `_ai_search_volume`). Study what wins (`hyperseo_serp_results_get`) and what AI already cites (`hyperseo_ai_overviews_get`). Read the top pages and find the angle they all miss. Pull the real facts, stats, and named sources you will cite. Never fabricate.
 
 **Step 4: write the post.** Build to the archetype spec in `references/blog-archetypes.md`, using the answer-first structure and copy-paste blocks in `references/blog-playbook.md`, in the brand's voice per `references/brand-voice-and-quality.md`, with the citation tactics in `references/ai-citation-playbook.md`. On-page and schema per `references/on-page-and-technical.md`.
 

@@ -1,6 +1,8 @@
 ---
 name: amazon-ads
 description: Plan and create Amazon Sponsored Products campaigns end-to-end via the Hyper MCP. Use when the user wants to launch Amazon Ads, set up Sponsored Products, manage keyword targeting and bids, configure ASIN or category product targeting, add negative keywords, automate budget rules, analyze ACoS / ROAS, or generate Sponsored Products reports. Also triggers on amazon ppc, amazon campaign, amazon keywords, or amazon report.
+icon: amazon_ads
+short_description: Plan and create Amazon Sponsored Products campaigns with targeting and budget rules.
 ---
 
 # Amazon Ads

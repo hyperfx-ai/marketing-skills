@@ -196,9 +196,9 @@ All data above pulled on [date]. Pricing and features can change — re-pull bef
 ## Share of voice (where this matters)
 | Channel | Us | [Comp A] | [Comp B] | [Comp C] | Source / metric |
 | --- | --- | --- | --- | --- | --- |
-| Organic search (est. monthly traffic) | [N] | [N] | [N] | [N] | hyperseo_domain_overview |
-| Backlinks (90d delta) | +[N] | +[N] | +[N] | +[N] | hyperseo_backlinks_history |
-| AI Overview citations (count over [keywords]) | [N] | [N] | [N] | [N] | hyperseo_ai_overview |
+| Organic search (est. monthly traffic) | [N] | [N] | [N] | [N] | hyperseo_domain_overview_get |
+| Backlinks (90d delta) | +[N] | +[N] | +[N] | +[N] | hyperseo_backlinks_history_get |
+| AI Overview citations (count over [keywords]) | [N] | [N] | [N] | [N] | hyperseo_ai_overviews_get |
 | Instagram followers (current / 90d delta) | [N] / +[N] | [N] / +[N] | [N] / +[N] | [N] / +[N] | scrape_instagram |
 | TikTok median views/post (90d) | [N] | [N] | [N] | [N] | scrape_tiktok_videos |
 

@@ -26,7 +26,7 @@ Key differences from traditional SEO:
 
 Before optimizing, establish a baseline.
 
-1. Run `hyperseo_track_mentions` with the user's brand name and 2 – 3 key competitor brands, using a query their customers would ask.
+1. Run `hyperseo_mentions_track` with the user's brand name and 2 – 3 key competitor brands, using a query their customers would ask.
    - Example: `query="best project management tools"`, `brands=["Asana", "Monday.com", "ClickUp"]`.
 2. This queries multiple LLMs (GPT, Claude, Perplexity) with web search enabled and checks which brands appear in responses.
 3. Note: which models mention the brand, what context they provide, and which sources they cite.
@@ -36,8 +36,8 @@ Before optimizing, establish a baseline.
 
 Understand how much query volume exists in AI channels.
 
-1. Run `hyperseo_ai_search_volume` for the user's target keywords.
-2. Compare with `hyperseo_search_volume` for the same keywords.
+1. Run `hyperseo_ai_search_volume_get` for the user's target keywords.
+2. Compare with `hyperseo_search_volume_get` for the same keywords.
 3. Look for keywords where AI volume is growing fast — these represent emerging opportunities.
 
 **Interpreting AI volume:**
@@ -50,7 +50,7 @@ Understand how much query volume exists in AI channels.
 
 Google's AI Overviews appear above traditional search results for many queries.
 
-1. Run `hyperseo_ai_overview` for the user's most important keywords.
+1. Run `hyperseo_ai_overviews_get` for the user's most important keywords.
 2. Review: which sources does Google AI cite?
 3. Note the domains and content types that get cited.
 4. This reveals what kind of content earns AI citations.
@@ -59,7 +59,7 @@ Google's AI Overviews appear above traditional search results for many queries.
 
 Compare brand visibility across AI models.
 
-1. Run `hyperseo_track_mentions` for multiple relevant queries with the user's brand and top competitors.
+1. Run `hyperseo_mentions_track` for multiple relevant queries with the user's brand and top competitors.
 2. Build a visibility matrix: which brands are mentioned by which models for which queries.
 3. Identify gaps: queries where competitors are mentioned but the user is not.
 

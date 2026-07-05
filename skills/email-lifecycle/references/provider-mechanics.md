@@ -175,36 +175,36 @@ Best for under-500 lists where the value of every email is high enough to justif
 
 | Job | Tool |
 | --- | --- |
-| Maintain segment as a label | `gmail_create_label`, `gmail_add_labels`, `gmail_remove_labels` |
-| Draft / send | `gmail_create_draft`, `gmail_update_draft`, `gmail_send_message`, `gmail_send_draft`, `gmail_reply_to_message` |
-| Find replies / engagement | `gmail_list_messages` *(accepts Gmail query syntax)*, `gmail_get_message` |
+| Maintain segment as a label | `gmail_labels_create`, `gmail_labels_add`, `gmail_labels_remove` |
+| Draft / send | `gmail_drafts_create`, `gmail_drafts_update`, `gmail_messages_send`, `gmail_drafts_send`, `gmail_reply_to_message` |
+| Find replies / engagement | `gmail_messages_list` *(accepts Gmail query syntax)*, `gmail_get_message` |
 
 ### Concrete: send a 50-person founder broadcast
 
 ```
 # 1. Make sure all recipients are tagged
-gmail_create_label(name="lifecycle/q3-investor-update")
+gmail_labels_create(name="lifecycle/q3-investor-update")
 
 # 2. Loop over recipients (maintained externally — Sheets, CSV, DB)
 for email in recipient_list:
-    result = gmail_send_message(
+    result = gmail_messages_send(
       to=email,
       subject="Q3 update",
       body=render_personalized_body(email),
     )
-    # Label each sent message (gmail_send_message has no label_ids arg)
-    gmail_add_labels(
+    # Label each sent message (gmail_messages_send has no label_ids arg)
+    gmail_labels_add(
       message_id=result["message_id"],
       label_ids=["<label_id_for_lifecycle/q3-investor-update>"],
     )
 
 # 3. Pull replies a week later
-gmail_list_messages(query="label:lifecycle/q3-investor-update is:unread newer_than:7d")
+gmail_messages_list(query="label:lifecycle/q3-investor-update is:unread newer_than:7d")
 ```
 
 ### Gmail gotchas
 
 - **No native segmentation, no native flows.** All the lifecycle logic lives outside Gmail (in your code / agent). Gmail is purely the send + label + reply layer.
-- **Personalization happens at send time.** No template engine — you build the body string per recipient before calling `gmail_send_message`.
+- **Personalization happens at send time.** No template engine — you build the body string per recipient before calling `gmail_messages_send`.
 - **Same deliverability rules as cold email.** Even though these are warm contacts, going from 5 sends/day to 500 sends/day overnight will trip Gmail's heuristics. Pace it.
-- **Labels are your only segment.** Use a hierarchical label scheme: `lifecycle/<program>` and `lifecycle/<program>/converted`, etc. Then `gmail_list_messages(query="label:lifecycle/<program> -label:lifecycle/<program>/converted")` gives you "still in the program."
+- **Labels are your only segment.** Use a hierarchical label scheme: `lifecycle/<program>` and `lifecycle/<program>/converted`, etc. Then `gmail_messages_list(query="label:lifecycle/<program> -label:lifecycle/<program>/converted")` gives you "still in the program."

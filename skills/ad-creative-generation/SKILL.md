@@ -1,6 +1,10 @@
 ---
 name: ad-creative-generation
 description: Generate on-brand ad creatives — visuals + copy — for Google, Meta (Facebook / Instagram), and other paid platforms via the Hyper MCP. Extracts brand identity from a website, writes ad copy variants, and produces brand-consistent images using reference-based image generation. Use when the user asks for ad creative, ad copy variants, RSA headlines, Meta ad creative, display ads, carousel ads, or A/B test variants.
+metadata:
+  version: 1.0.0
+icon: image_gen
+short_description: Brand extraction, ad copy variants, and on-brand images for Google and Meta placements.
 ---
 
 # Ad Creative Generation
@@ -15,10 +19,10 @@ This skill assumes the [Hyper MCP](https://app.hyperfx.ai/mcp) is connected to y
 
 | Group | Tools |
 |-------|-------|
-| Brand extraction | `firecrawl_extract_branding` |
-| Image generation (default) | `openai_image_edit`, `openai_image_generation` |
-| Image generation (text-heavy) | `nano_banana_image_generation`, `nano_banana_image_edit` |
-| Image generation (photoreal product shots) | `seedream_image_generation` |
+| Brand extraction | `firecrawl_branding_extract` |
+| Image generation (default) | `images_generate` (`model="gpt-image-2"`) |
+| Image generation (text-heavy) | `images_generate` (`model="nano-banana-pro"`) |
+| Image generation (photoreal product shots) | `images_generate` (`model="seedream-4.5"`) |
 
 For deeper image-tool selection guidance see the `image-generation` skill. To turn finished creatives into running campaigns see `google-ads` and `meta-ads`.
 
@@ -35,9 +39,9 @@ For deeper image-tool selection guidance see the `image-generation` skill. To tu
 - **DO NOT display image URLs** — they are automatically shown in chat.
 - **Read `brand.screenshot.description`** to understand the product — never guess from the company name.
 - **Default to logo + headline + product screenshot** for SaaS / product ads unless the user requests a different style.
-- **Use OpenAI for the initial ad creative by default** — `openai_image_edit` for branded / reference-based work, `openai_image_generation` for loose first-pass concepts.
-- **Do not default to Nano Banana for the first creative pass** — use it when the user explicitly asks or when readable text inside the image is the main requirement.
-- **`openai_image_edit` supported sizes:** `1024x1024` (square), `1024x1536` (portrait / story), `1536x1024` (landscape / banner). Match to platform placement.
+- **Use `model="gpt-image-2"` for the initial ad creative by default** — with reference images for branded work, or without for loose first-pass concepts.
+- **Do not default to `model="nano-banana-pro"` for the first creative pass** — use it when the user explicitly asks or when readable text inside the image is the main requirement.
+- **Set `aspect_ratio` to the placement** — `1:1` (feed), `9:16` (story), `16:9` (banner) — and `quality` (`"draft" | "standard" | "high"`); `images_generate` takes those, not raw pixel sizes.
 - **Respect character limits** — Google RSA headlines are 30 chars, descriptions 90 chars; Meta primary text is 125 chars visible.
 - **Change one variable per variant** so test results are attributable.
 - **Match aspect ratio to placement** — feed is 1:1, story is 9:16 (use `1024x1536`), banner is 16:9 (use `1536x1024`).
@@ -59,10 +63,10 @@ When the task spans multiple areas (e.g., "create ad creatives for this website"
 
 ### Phase 1: Brand Extraction
 
-Call `firecrawl_extract_branding` with the website URL. This single call returns branding data, a saved logo, and a website screenshot:
+Call `firecrawl_branding_extract` with the website URL. This single call returns branding data, a saved logo, and a website screenshot:
 
 ```python
-brand = firecrawl_extract_branding(url="https://example.com")
+brand = firecrawl_branding_extract(url="https://example.com")
 ```
 
 The result contains:
@@ -92,14 +96,14 @@ Generate ad images using brand assets as references. Always pass **both logo and
 
 **Read `brand.screenshot.description`** to understand what the product actually does and what the UI looks like. Do not guess from the company name.
 
-**Preferred tool for the first creative pass: `openai_image_edit`**
+**Preferred first pass: `images_generate` with `model="gpt-image-2"`**
 
 #### Default approach (best practice for SaaS / product ads)
 
-By default, a strong ad creative has three layers: **brand** (logo), **copy** (headline), and **product** (realistic screenshot showing the core value prop). This is the recommended starting point when the user hasn't specified a creative direction. Use OpenAI for this initial composition unless the user explicitly asks for Nano Banana or the image is primarily a text-rendering task.
+By default, a strong ad creative has three layers: **brand** (logo), **copy** (headline), and **product** (realistic screenshot showing the core value prop). This is the recommended starting point when the user hasn't specified a creative direction. Use `model="gpt-image-2"` for this initial composition unless the user explicitly asks for another model or the image is primarily a text-rendering task.
 
 ```python
-openai_image_edit(
+images_generate(
     requests=[{
         "prompt": (
             "Social media ad creative for [company name]. "
@@ -111,7 +115,8 @@ openai_image_edit(
         ),
         "reference_images": [brand.logo.file_id, brand.screenshot.file_id]
     }],
-    size="1024x1024",
+    model="gpt-image-2",
+    aspect_ratio="1:1",
     quality="high"
 )
 ```
@@ -131,11 +136,11 @@ If the user asks for a specific creative style (lifestyle imagery, abstract, ill
 
 | Scenario | Tool | Why |
 |----------|------|-----|
-| On-brand creative (default) | `openai_image_edit` with logo + screenshot refs | Best default for the first branded concept |
-| Text-heavy creative (headlines in image) | `nano_banana_image_generation` with `model="pro"` | Use only when text rendering inside the image is the main requirement |
-| Quick ideation / concept exploration | `openai_image_generation` | Fast first-pass concepting with no references needed |
-| Iterative refinement of existing image | `nano_banana_image_edit` | Edit a specific generated image |
-| Photoreal product shots / material detail | `seedream_image_generation` | Strong fabric/texture/spatial depth |
+| On-brand creative (default) | `images_generate` (`model="gpt-image-2"`) with logo + screenshot refs | Best default for the first branded concept |
+| Text-heavy creative (headlines in image) | `images_generate` (`model="nano-banana-pro"`) | Use only when text rendering inside the image is the main requirement |
+| Quick ideation / concept exploration | `images_generate` (`model="gpt-image-2"`) | Fast first-pass concepting with no references needed |
+| Iterative refinement of existing image | `images_generate` (`model="nano-banana"`) with the image as a reference | Edit a specific generated image |
+| Photoreal product shots / material detail | `images_generate` (`model="seedream-4.5"`) | Strong fabric/texture/spatial depth |
 
 ## Platform Quick Reference
 

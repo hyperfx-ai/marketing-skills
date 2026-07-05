@@ -1,6 +1,8 @@
 ---
 name: google-ads
 description: Plan and create new Google Ads campaigns and report on existing accounts via the Hyper MCP. Use when the user wants to launch Search, Display, or Performance Max campaigns, build Google Ads reports or dashboards, diagnose conversion tracking, or mentions Google Ads, AdWords, search ads, display ads, Performance Max, PMax, PPC, Google campaigns, Google blueprint, search term reports, budget analysis, conversion funnels, negative keywords, or manager accounts (MCC).
+icon: google_ads
+short_description: Plan and create Google Ads campaigns and build GAQL-backed reports and dashboards.
 ---
 
 # Google Ads

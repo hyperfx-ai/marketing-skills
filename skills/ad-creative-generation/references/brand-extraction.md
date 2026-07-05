@@ -4,10 +4,10 @@ Extract brand identity from a website for use in ad creative generation.
 
 ## Single-Call Workflow
 
-`firecrawl_extract_branding` extracts branding data, downloads the logo, and captures a screenshot in one call:
+`firecrawl_branding_extract` extracts branding data, downloads the logo, and captures a screenshot in one call:
 
 ```python
-brand = firecrawl_extract_branding(url="https://example.com")
+brand = firecrawl_branding_extract(url="https://example.com")
 ```
 
 ## Return Shape
@@ -50,7 +50,7 @@ The logo provides brand mark consistency. The screenshot shows the actual produc
 By default, compose: **logo + headline + realistic product screenshot**. Describe the product screenshot based on `brand.screenshot.description`, not guessed.
 
 ```python
-openai_image_edit(
+images_generate(
     requests=[{
         "prompt": (
             "Social media ad creative for [company name]. "
@@ -61,7 +61,6 @@ openai_image_edit(
         ),
         "reference_images": reference_images
     }],
-    size="1024x1024",
     quality="high"
 )
 ```
@@ -87,8 +86,8 @@ Brand colors inform copy context (e.g., knowing the brand is a fintech vs. a kid
 
 ## Cached Results
 
-`firecrawl_extract_branding` caches results by domain. Subsequent calls for the same domain return cached data without re-fetching. Use `refresh=True` to force a fresh extraction:
+`firecrawl_branding_extract` caches results by domain. Subsequent calls for the same domain return cached data without re-fetching. Use `refresh=True` to force a fresh extraction:
 
 ```python
-brand = firecrawl_extract_branding(url="https://example.com", refresh=True)
+brand = firecrawl_branding_extract(url="https://example.com", refresh=True)
 ```

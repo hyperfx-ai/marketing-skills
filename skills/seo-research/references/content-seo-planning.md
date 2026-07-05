@@ -23,17 +23,17 @@ Understand what the user's content should cover.
 
 Not every idea has search demand. Validate.
 
-1. Run `hyperseo_search_volume` on the most relevant keyword candidates.
+1. Run `hyperseo_search_volume_get` on the most relevant keyword candidates.
 2. Run `hyperseo_keyword_difficulty` on the same set.
-3. Run `hyperseo_search_intent` to classify intent at scale — this determines the right content format for each keyword.
-4. Also run `hyperseo_ai_search_volume` to check AI channel demand.
+3. Run `hyperseo_intents_search` to classify intent at scale — this determines the right content format for each keyword.
+4. Also run `hyperseo_ai_search_volume_get` to check AI channel demand.
 5. Discard keywords with no meaningful volume (< 100 / month) unless strategically important.
 
 ### Step 3: Analyze the SERP
 
 For each high-priority keyword, understand what Google rewards.
 
-1. Run `hyperseo_serp_results` for the top 10 – 15 keyword targets.
+1. Run `hyperseo_serp_results_get` for the top 10 – 15 keyword targets.
 2. Note the content format that ranks:
    - Long-form guides (2000+ words)?
    - Listicles ("10 best…")?
@@ -46,7 +46,7 @@ For each high-priority keyword, understand what Google rewards.
 
 For informational keywords, check if Google generates an AI Overview.
 
-1. Run `hyperseo_ai_overview` for key terms.
+1. Run `hyperseo_ai_overviews_get` for key terms.
 2. Review which sources get cited in the AI overview.
 3. Content that earns AI citations gets visibility even above traditional position 1.
 
@@ -98,9 +98,9 @@ Target Keyword: [primary keyword]
 Secondary Keywords: [2-3 related terms to include naturally]
 Search Volume: [monthly]
 Difficulty: [0-100]
-Search Intent: [from hyperseo_search_intent: informational / commercial / transactional / navigational]
+Search Intent: [from hyperseo_intents_search: informational / commercial / transactional / navigational]
 Recommended Format: [guide / listicle / comparison / landing page]
-SERP Insight: [what currently ranks - based on hyperseo_serp_results]
+SERP Insight: [what currently ranks - based on hyperseo_serp_results_get]
 Cluster Role: [pillar / supporting]
 Links To: [pillar page or related supporting pages]
 ```

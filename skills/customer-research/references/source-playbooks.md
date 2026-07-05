@@ -78,21 +78,21 @@ YouTube comments are rich with authentic customer language — especially on tut
 
 ```python
 # Find high-view comparison and review videos
-youtube_top_videos(
+youtube_videos_search_top(
     query="[product name] review 2026",
     max_results=10,
     sort_by="views"
 )
 
 # Find tutorial videos (comments reveal confusion and gaps)
-youtube_top_videos(
+youtube_videos_search_top(
     query="[product category] tutorial for beginners",
     max_results=10,
     sort_by="views"
 )
 
 # Find competitor videos
-youtube_top_videos(
+youtube_videos_search_top(
     query="[competitor name] vs [product name]",
     max_results=5,
     sort_by="views"
@@ -117,10 +117,10 @@ youtube_comments_search(
 
 ```python
 # Only when the spoken content (not comments) matters — e.g., a customer story video
-youtube_transcript(video_id_or_url="https://www.youtube.com/watch?v=VIDEO_ID")
+youtube_video_transcripts_fetch(video_id_or_url="https://www.youtube.com/watch?v=VIDEO_ID")
 ```
 
-Note: `youtube_transcript` takes 15–30s. Use sparingly.
+Note: `youtube_video_transcripts_fetch` takes 15–30s. Use sparingly.
 
 ---
 
@@ -222,10 +222,10 @@ web_scrape_page(
 )
 ```
 
-**Tip:** If `web_scrape_page` returns JavaScript-blocked content, try `firecrawl_scrape_url` instead:
+**Tip:** If `web_scrape_page` returns JavaScript-blocked content, try `firecrawl_urls_scrape` instead:
 
 ```python
-firecrawl_scrape_url(
+firecrawl_urls_scrape(
     url="https://www.g2.com/products/[product-slug]/reviews",
     only_main_content=True
 )
@@ -289,7 +289,7 @@ search_google_results(
 )
 ```
 
-Then use `firecrawl_scrape_url` or `web_scrape_page` to read the most relevant URLs.
+Then use `firecrawl_urls_scrape` or `web_scrape_page` to read the most relevant URLs.
 
 ---
 
@@ -321,6 +321,6 @@ Note: `scrape_instagram_posts` returns post captions, engagement, and metadata �
 Some scraper tools are Apify-backed and occasionally return `fetch failed` or timeout:
 
 1. Retry once after a short pause.
-2. If it fails again, try an alternative tool (e.g., `firecrawl_scrape_url` instead of `web_scrape_page`).
+2. If it fails again, try an alternative tool (e.g., `firecrawl_urls_scrape` instead of `web_scrape_page`).
 3. If still failing, note the source as unavailable and continue with remaining sources. Don't block the entire research on one failed scrape.
 4. Never invent data to fill a gap — mark it as "source not available."

@@ -12,24 +12,24 @@ Firecrawl is the backbone for any web-content slice. Use it whenever the questio
 - Hero copy, positioning, value props, primary CTAs
 - Customer logos, testimonials, social proof
 - Feature pages — what they emphasize and what they hide
-- Brand assets — logo, color palette, fonts (`firecrawl_extract_branding`)
-- Visual snapshot for evidence (`firecrawl_screenshot`)
-- Full blog archive for content-strategy analysis (`firecrawl_crawl_website`)
+- Brand assets — logo, color palette, fonts (`firecrawl_branding_extract`)
+- Visual snapshot for evidence (`firecrawl_screenshots_create`)
+- Full blog archive for content-strategy analysis (`firecrawl_websites_crawl`)
 
 ### Tool calls
 
 | Need | Tool |
 | --- | --- |
-| One specific URL (homepage, pricing, a single blog post) | `firecrawl_scrape_url(url=...)` |
-| 5–50 known URLs at once | `firecrawl_batch_scrape(urls=[...])` then `firecrawl_check_batch_status(...)` |
-| Whole-site crawl (every blog post, every doc page) | `firecrawl_crawl_website(url=..., max_pages=...)` then `firecrawl_check_crawl_status(...)` |
-| Branding (logo + palette + voice) | `firecrawl_extract_branding(url=...)` |
-| Visual snapshot for the brief | `firecrawl_screenshot(url=...)` |
+| One specific URL (homepage, pricing, a single blog post) | `firecrawl_urls_scrape(url=...)` |
+| 5–50 known URLs at once | `firecrawl_urls_scrape_batch(urls=[...])` then `firecrawl_batches_status_check(...)` |
+| Whole-site crawl (every blog post, every doc page) | `firecrawl_websites_crawl(url=..., max_pages=...)` then `firecrawl_crawls_status_check(...)` |
+| Branding (logo + palette + voice) | `firecrawl_branding_extract(url=...)` |
+| Visual snapshot for the brief | `firecrawl_screenshots_create(url=...)` |
 
 ### Pitfalls
 
 - **JS-heavy SPAs may not render fully.** If the page comes back near-empty, fall back to `web_scrape_page` (stealth-proxy + JS render). Bonus: `web_scrape_page` accepts an `ai_query` argument that extracts targeted info from the page in one call (e.g. `ai_query="extract the pricing tier names and monthly prices"`).
-- **`firecrawl_crawl_website` can be slow + credit-heavy.** Cap with `max_pages` for first run. A 200-post blog archive easily becomes a 10-minute job.
+- **`firecrawl_websites_crawl` can be slow + credit-heavy.** Cap with `max_pages` for first run. A 200-post blog archive easily becomes a 10-minute job.
 - **Pricing pages with toggles (monthly / annual).** A single scrape captures the default state. Run twice — once for monthly, once for annual — by including the URL parameter or hash in the URL.
 - **Geo-fenced pages.** Firecrawl scrapes from a default region; pricing in EUR vs USD vs GBP varies. Note the apparent locale of the result in the brief.
 
@@ -41,25 +41,25 @@ The credit-metered SEO surface (DataForSEO under the hood). Use intentionally �
 
 | Tool | What it answers |
 | --- | --- |
-| `hyperseo_competitors(keywords=[...], location_code=2840, limit=10)` | Who ranks for the same keywords as us? Pass the *category keywords you want to win*, not a domain. Use when the user can't name the competitor set. |
-| `hyperseo_competitors_domain(domain=..., location_code=2840)` | Per-competitor overlap and rank profile against a target domain. |
-| `hyperseo_domain_overview(domain=..., location_code=2840)` | One-shot snapshot — keyword count, estimated monthly organic clicks (ETV), traffic value, backlinks. The "first call to make per competitor." |
-| `hyperseo_domain_keywords(domain=..., limit=50, location_code=2840)` | What keywords does this competitor rank for? |
-| `hyperseo_domain_intersection(domain1=ours, domain2=theirs, limit=50)` | Keywords *both* domains rank for in the same SERPs — and at what positions. Highest-leverage call for "what do we compete on" analysis. |
-| `hyperseo_keywords_for_site(domain=..., limit=...)` | Keyword opportunities a domain targets or could target. |
-| `hyperseo_backlinks_history(target=..., date_from="YYYY-MM-DD", date_to="YYYY-MM-DD")` | Are they building links? Losing them? Note: arg is `target`, not `domain`. |
-| `hyperseo_historical_rank(domain=..., date_from=..., date_to=...)` | Monthly ETV, keyword count, and rank trend over time for a domain. Does *not* take a per-keyword filter — it returns the domain-wide trend. |
-| `hyperseo_track_mentions(query=..., brands=[...])` | Runs the `query` against OpenAI / Claude / Perplexity (with web search) and returns citations + which `brands` were mentioned. The right tool for "who shows up when LLMs answer this question." |
-| `hyperseo_ai_overview(keyword=..., location_code=2840)` | Google AI Overview / AI Mode summary + cited sources for one keyword. Singular keyword, integer location code. |
-| `hyperseo_ai_search_volume(...)` | Search volume specifically for AI-search queries — different from web-search volume. |
+| `hyperseo_competitors_search(keywords=[...], location_code=2840, limit=10)` | Who ranks for the same keywords as us? Pass the *category keywords you want to win*, not a domain. Use when the user can't name the competitor set. |
+| `hyperseo_competitor_domains_search(domain=..., location_code=2840)` | Per-competitor overlap and rank profile against a target domain. |
+| `hyperseo_domain_overview_get(domain=..., location_code=2840)` | One-shot snapshot — keyword count, estimated monthly organic clicks (ETV), traffic value, backlinks. The "first call to make per competitor." |
+| `hyperseo_domain_keywords_get(domain=..., limit=50, location_code=2840)` | What keywords does this competitor rank for? |
+| `hyperseo_domain_intersections_search(domain1=ours, domain2=theirs, limit=50)` | Keywords *both* domains rank for in the same SERPs — and at what positions. Highest-leverage call for "what do we compete on" analysis. |
+| `hyperseo_site_keywords_search(domain=..., limit=...)` | Keyword opportunities a domain targets or could target. |
+| `hyperseo_backlinks_history_get(target=..., date_from="YYYY-MM-DD", date_to="YYYY-MM-DD")` | Are they building links? Losing them? Note: arg is `target`, not `domain`. |
+| `hyperseo_rank_history_get(domain=..., date_from=..., date_to=...)` | Monthly ETV, keyword count, and rank trend over time for a domain. Does *not* take a per-keyword filter — it returns the domain-wide trend. |
+| `hyperseo_mentions_track(query=..., brands=[...])` | Runs the `query` against OpenAI / Claude / Perplexity (with web search) and returns citations + which `brands` were mentioned. The right tool for "who shows up when LLMs answer this question." |
+| `hyperseo_ai_overviews_get(keyword=..., location_code=2840)` | Google AI Overview / AI Mode summary + cited sources for one keyword. Singular keyword, integer location code. |
+| `hyperseo_ai_search_volume_get(...)` | Search volume specifically for AI-search queries — different from web-search volume. |
 
 ### Pitfalls
 
-- **Looping over competitors burns credits fast.** Always batch — pull `hyperseo_domain_overview` for all 5 competitors in succession, then move to next call. Don't interleave.
-- **`hyperseo_competitors` returns 100s — cap your set early.** Take the top 5 organic competitors, then validate with the user before going deeper. A 12-competitor brief is unreadable.
+- **Looping over competitors burns credits fast.** Always batch — pull `hyperseo_domain_overview_get` for all 5 competitors in succession, then move to next call. Don't interleave.
+- **`hyperseo_competitors_search` returns 100s — cap your set early.** Take the top 5 organic competitors, then validate with the user before going deeper. A 12-competitor brief is unreadable.
 - **Backlink and rank data lags by days/weeks** depending on the underlying provider. Don't use this for "what happened yesterday" — use it for trends.
 - **AI Overview citations are volatile.** A single AI Overview pull is noise. Track over time; the trend is what matters.
-- **Country/locale matters.** A US-default `hyperseo_serp_results` is meaningless for a competitor whose primary market is the UK. Always set `location_code` explicitly (integer — e.g. `2826` for UK, `2840` for US, `2124` for CA, `2036` for AU).
+- **Country/locale matters.** A US-default `hyperseo_serp_results_get` is meaningless for a competitor whose primary market is the UK. Always set `location_code` explicitly (integer — e.g. `2826` for UK, `2840` for US, `2124` for CA, `2036` for AU).
 
 ## Apify scrapers — organic social
 
@@ -163,19 +163,19 @@ When the competitor is a DTC / ecommerce brand:
 | `scrape_ecommerce_products(...)` | Product listings — title, price, availability, variants. Useful for catalog deltas. |
 | `scrape_ecommerce_reviews(...)` | Product reviews — useful for sentiment + product-feedback mining at scale. |
 
-These are stronger than `firecrawl_scrape_url` on a PDP because they normalize the product fields across platforms (Shopify / WooCommerce / etc.) instead of returning raw HTML.
+These are stronger than `firecrawl_urls_scrape` on a PDP because they normalize the product fields across platforms (Shopify / WooCommerce / etc.) instead of returning raw HTML.
 
 ## Choosing the right source for the job
 
 | The user wants… | Source priority |
 | --- | --- |
 | "What changed on [competitor]'s pricing page?" | Firecrawl on the pricing URL — diff against last scrape |
-| "Are they ranking for X?" | `hyperseo_domain_keywords` (filter the result) — `hyperseo_historical_rank` returns *domain-wide* trend, not per-keyword |
-| "What keywords do they have that we don't?" | `hyperseo_domain_intersection` (returns keywords *both* rank for at what positions; gap = ours zero / theirs non-zero) |
+| "Are they ranking for X?" | `hyperseo_domain_keywords_get` (filter the result) — `hyperseo_rank_history_get` returns *domain-wide* trend, not per-keyword |
+| "What keywords do they have that we don't?" | `hyperseo_domain_intersections_search` (returns keywords *both* rank for at what positions; gap = ours zero / theirs non-zero) |
 | "How fast are they growing on Instagram?" | `scrape_instagram_followers_count(usernames=[...])` (trend over multiple runs) |
 | "What's the conversation about them online?" | Reddit + Twitter + Google reviews search |
-| "Who shows up in AI Overviews for our category?" | `hyperseo_ai_overview(keyword=..., location_code=...)` per keyword |
-| "Who do LLMs cite when asked about our category?" | `hyperseo_track_mentions(query="best [category] tools", brands=[...])` |
+| "Who shows up in AI Overviews for our category?" | `hyperseo_ai_overviews_get(keyword=..., location_code=...)` per keyword |
+| "Who do LLMs cite when asked about our category?" | `hyperseo_mentions_track(query="best [category] tools", brands=[...])` |
 | "Are they hiring?" | LinkedIn (`scrape_linkedin_profiles` on the company URL) — check team size + recent posts about hiring |
 | "Did they just raise / launch / pivot?" | Twitter (`search_tweets(from_user=...)`) + News via `search_google_results` |
 
@@ -183,8 +183,8 @@ These are stronger than `firecrawl_scrape_url` on a PDP because they normalize t
 
 Every source has cost (HyperSEO credits, Apify compute, Firecrawl quota). Operating principles:
 
-1. **Cheapest call first.** A `hyperseo_domain_overview` is cheaper than a `firecrawl_crawl_website` of their whole blog. Pull the cheap stuff to scope the expensive stuff.
+1. **Cheapest call first.** A `hyperseo_domain_overview_get` is cheaper than a `firecrawl_websites_crawl` of their whole blog. Pull the cheap stuff to scope the expensive stuff.
 2. **Per-competitor budget.** Decide before pulling: "for each competitor I'll spend ~5 calls." Stick to it. Drift kills credit budgets.
 3. **Sequence, don't parallelize.** 8 parallel scrapes = 8 timeouts. 8 sequential scrapes = 8 results, with the option to bail early if the early ones don't reveal anything.
-4. **Cache + re-use within the session.** A `hyperseo_domain_overview` result is stable for a day or two — don't re-pull within the same brief.
+4. **Cache + re-use within the session.** A `hyperseo_domain_overview_get` result is stable for a day or two — don't re-pull within the same brief.
 5. **Tell the user the budget upfront.** "This will hit ~25 HyperSEO calls and ~12 Firecrawl scrapes for the 4-competitor brief. OK to proceed?" Avoids a $50 surprise on the bill.

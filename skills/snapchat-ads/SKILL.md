@@ -1,6 +1,8 @@
 ---
 name: snapchat-ads
 description: Plan and create Snapchat Ads campaigns end-to-end via the Hyper MCP — campaign, ad squad, ad build order with media upload, creatives, targeting, Snap Pixel conversion tracking, and sync / async reporting, using micro-currency budgets and JSON-Patch partial updates. Use when the user wants to launch Snapchat ads, build ad squads, upload Snap creatives, set up Snap Pixel tracking, or analyze Snapchat ad performance. Also triggers on snap ads, snapchat campaign, or snapchat ads manager.
+icon: snapchat_ads
+short_description: Plan and create Snapchat Ads with ad squads, creatives, Snap Pixel, and reporting.
 ---
 
 # Snapchat Ads Campaigns

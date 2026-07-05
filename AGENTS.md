@@ -39,7 +39,8 @@ Skills are NOT tools. They are markdown instructions plus optional reference fil
 | [`seo-research`](./skills/seo-research) | Data-driven SEO research via the HyperSEO toolkit — keyword research, SERP and AI Overview analysis, competitor benchmarking, content planning, AI search visibility tracking (ChatGPT / Claude / Perplexity), backlink trends, and full site audits. Ships with five reference workflows under `references/`. |
 | [`competitor-intel`](./skills/competitor-intel) | End-to-end competitor research and monitoring — pick the set, scrape every public surface (Firecrawl for site/blog/pricing, HyperSEO for rank/backlinks/intersection, Apify scrapers for Instagram / TikTok / LinkedIn / Twitter / Reddit / Google search / Google Trends), diff against last run, and synthesize battle cards / weekly digests / comparison-page input / board-prep updates. Ships with two references under `references/` (per-source playbook, brief templates). |
 | [`customer-research`](./skills/customer-research) | Mine Reddit, YouTube comments, G2/Capterra, X/Twitter, and TikTok to surface what customers actually say in their own words. Produces research synthesis reports, VOC quote banks, personas, and JTBD maps. Requires the Apify scrapers toolkit (Reddit, Twitter, YouTube, TikTok, Instagram). Ships with two references under `references/` (per-source playbooks, synthesis templates). |
-| [`youtube-transcript`](./skills/youtube-transcript) | Fetch the full transcript of any YouTube video (`youtube_transcript`) and optionally use AI-powered extraction (`youtube_reader`) to turn it into blog posts, social content, summaries, show notes, timestamped chapters, or raw quote banks. Requires the YouTube toolkit. |
+| [`reddit`](./skills/reddit) | Research subreddits, threads, and sentiment — mine questions, pain points, and voice-of-customer from Reddit. |
+| [`youtube`](./skills/youtube) | Fetch YouTube transcripts and AI-powered video extraction (`youtube_video_transcripts_fetch`, `youtube_videos_read`), repurpose video content, and create thumbnails with the bundled scripts and composition references. Requires the YouTube toolkit. |
 
 ### Creative output
 
@@ -68,6 +69,16 @@ Skills are NOT tools. They are markdown instructions plus optional reference fil
 | Skill | What it does |
 | --- | --- |
 | [`hyper-cli`](./skills/hyper-cli) | Bridge skill for running the marketing skills through `hyperai`, including how to translate raw MCP tool names into CLI aliases or raw toolkit calls. |
+
+### Apps & channels
+
+| Skill | What it does |
+| --- | --- |
+| [`gmail`](./skills/gmail) | Read, draft, send, and organize Gmail — labels, threads, drafts, and attachments. |
+| [`google-sheets`](./skills/google-sheets) | Write structured data to Google Sheets and keep spreadsheets up to date. |
+| [`slack`](./skills/slack) | Send Slack messages, share files and images, and work with channels and threads. |
+| [`twilio`](./skills/twilio) | Send SMS and WhatsApp messages and manage Twilio messaging workflows. |
+| [`polymarket-trading`](./skills/polymarket-trading) | Research Polymarket prediction markets and manage positions and orders. |
 
 ## Adding or editing a skill
 

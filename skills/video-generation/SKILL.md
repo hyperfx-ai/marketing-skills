@@ -1,6 +1,8 @@
 ---
 name: video-generation
 description: End-to-end AI video production through the Hyper MCP — text-to-video and image-to-video generation (Sora, Veo, Seedance), scene chaining, video analysis, transcription, subtitles, TikTok / karaoke captions, voiceover (TTS), audio mixing, clipping, stitching, and text overlays. Use when the user asks to generate a video, create UGC, scene-chain, add captions or subtitles, add narration, stitch clips, clip a podcast highlight, or do any AI video editing.
+icon: video_generation
+short_description: Generate and edit AI video end-to-end, from scene chaining to captions and voiceover.
 ---
 
 # Video Generation & Editing
@@ -85,7 +87,8 @@ review = videos_analyze(file_id="video_file_id", analysis_type="quality_review")
 | Generate a video (any model) | [references/generation.md](references/generation.md) — model selection, parameter matrix, prompt templates |
 | Build a longer multi-scene video | [references/generation.md](references/generation.md) — script planning + scene chaining |
 | Add subtitles / captions / voiceover / overlays, or clip a video | [references/post-production.md](references/post-production.md) |
-| Produce UGC / TikTok content end-to-end | [references/workflows.md](references/workflows.md) → [references/generation.md](references/generation.md) |
+| Produce UGC / TikTok content end-to-end | [references/ugc-video.md](references/ugc-video.md) (`ugc_videos_create` modes) → [references/workflows.md](references/workflows.md) |
+| Shape a prompt for a specific model (Sora / Veo / Seedance / Kling) | [references/video-prompting.md](references/video-prompting.md) |
 | Turn a podcast / long video into short clips | [references/workflows.md](references/workflows.md) → [references/post-production.md](references/post-production.md) |
 | Understand or QA an existing video | Use `videos_analyze` (see Video Understanding above) |
 

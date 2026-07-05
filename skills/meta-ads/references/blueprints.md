@@ -89,7 +89,7 @@ All budgets in **cents**. $20.00 = 2000.
 
 Before building the blueprint:
 
-1. Capture a website screenshot: `firecrawl_screenshot` on the landing page URL.
+1. Capture a website screenshot: `firecrawl_screenshots_create` on the landing page URL.
 2. Generate an ad image using the screenshot as visual reference (see `ad-creative-generation` skill).
 3. Upload: `meta_ads_ad_images_upload(account_id="<account_id>", image_url="<url>")` → `image_hash`.
 4. Use `image_hash` in blueprint ad objects.

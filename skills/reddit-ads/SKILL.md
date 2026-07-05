@@ -1,6 +1,8 @@
 ---
 name: reddit-ads
 description: Plan and create Reddit Ads campaigns end-to-end via the Hyper MCP — campaign, ad group, ad build order with subreddit / interest / geo targeting, promoted posts, custom and saved audiences, Reddit pixel conversion tracking, and reporting, with micro-currency budgets. Use when the user wants to launch Reddit ads, promote a Reddit post, target subreddits, set up a Reddit pixel, or pull Reddit ad reports. Also triggers on reddit campaign, reddit ppc, or reddit ads manager.
+icon: reddit_ads
+short_description: Plan and create Reddit Ads with promoted posts, targeting, pixels, and reporting.
 ---
 
 # Reddit Ads Campaigns

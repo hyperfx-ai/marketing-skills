@@ -15,8 +15,8 @@ Step-by-step guide for identifying, analyzing, and benchmarking SEO competitors 
 
 Don't assume who the competitors are — discover them from data.
 
-1. If you have the user's domain, run `hyperseo_competitors_domain` to find competitors based on shared organic keywords. This is the best starting point.
-2. Alternatively, if you only have target keywords, run `hyperseo_competitors` to find domains that rank for similar terms.
+1. If you have the user's domain, run `hyperseo_competitor_domains_search` to find competitors based on shared organic keywords. This is the best starting point.
+2. Alternatively, if you only have target keywords, run `hyperseo_competitors_search` to find domains that rank for similar terms.
 3. The top 5 – 7 results are the real SEO competitors (these may differ from business competitors).
 
 ### Step 2: Domain comparison
@@ -24,7 +24,7 @@ Don't assume who the competitors are — discover them from data.
 For each competitor (and the user's own domain).
 
 1. Run `hyperseo_bulk_traffic` with all domains at once to get a quick traffic comparison across all competitors in a single call.
-2. Run `hyperseo_domain_overview` on each domain for detailed metrics (authority, backlinks, referring domains).
+2. Run `hyperseo_domain_overview_get` on each domain for detailed metrics (authority, backlinks, referring domains).
 3. Present as a comparison matrix.
 
 **Comparison matrix format:**
@@ -38,8 +38,8 @@ For each competitor (and the user's own domain).
 
 Find what competitors rank for that the user doesn't.
 
-1. Run `hyperseo_domain_intersection` between the user's domain and each top competitor to find keywords where both appear in SERPs — this reveals direct keyword battlegrounds.
-2. Run `hyperseo_domain_keywords` on the top 2 – 3 competitors (limit 50 each) to find keywords the user is missing entirely.
+1. Run `hyperseo_domain_intersections_search` between the user's domain and each top competitor to find keywords where both appear in SERPs — this reveals direct keyword battlegrounds.
+2. Run `hyperseo_domain_keywords_get` on the top 2 – 3 competitors (limit 50 each) to find keywords the user is missing entirely.
 3. Compare: which high-value keywords do competitors have that the user is missing?
 4. Cross-check the gaps with `hyperseo_keyword_difficulty` to find achievable targets.
 
@@ -47,7 +47,7 @@ Find what competitors rank for that the user doesn't.
 
 Understand the link-building landscape.
 
-1. Run `hyperseo_backlinks_history` on each competitor.
+1. Run `hyperseo_backlinks_history_get` on each competitor.
 2. Compare link velocity: who is gaining or losing backlinks faster?
 3. A competitor with strong backlink growth will be harder to overtake without a similar link strategy.
 
@@ -55,7 +55,7 @@ Understand the link-building landscape.
 
 For the user's most important keywords.
 
-1. Run `hyperseo_serp_results` to see exactly who holds the top positions.
+1. Run `hyperseo_serp_results_get` to see exactly who holds the top positions.
 2. Note the content types that rank (articles, product pages, videos, Reddit threads).
 3. Identify patterns: do certain domains dominate across multiple keywords?
 
