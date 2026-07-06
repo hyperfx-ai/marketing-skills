@@ -244,7 +244,6 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) to contribute a skill.
 | [`google-sheets`](skills/google-sheets) | Write structured data to Google Sheets and keep spreadsheets up to date. | Google Sheets |
 | [`slack`](skills/slack) | Send Slack messages, share files and images, and work with channels and threads. | Slack |
 | [`twilio`](skills/twilio) | Send SMS and WhatsApp messages and manage Twilio messaging workflows. | Twilio |
-| [`polymarket-trading`](skills/polymarket-trading) | Research Polymarket prediction markets and manage positions and orders. | Polymarket |
 
 ## Contributing
 

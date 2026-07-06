@@ -84,7 +84,6 @@ Skills are NOT tools. They are markdown instructions plus optional reference fil
 | [`google-sheets`](./skills/google-sheets) | Write structured data to Google Sheets and keep spreadsheets up to date. |
 | [`slack`](./skills/slack) | Send Slack messages, share files and images, and work with channels and threads. |
 | [`twilio`](./skills/twilio) | Send SMS and WhatsApp messages and manage Twilio messaging workflows. |
-| [`polymarket-trading`](./skills/polymarket-trading) | Research Polymarket prediction markets and manage positions and orders. |
 
 ## Adding or editing a skill
 
