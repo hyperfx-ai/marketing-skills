@@ -14,7 +14,7 @@ Marketing skills usually name the MCP/raw tools, such as `gmail_messages_send` o
 ## Requirements
 
 - **Hyper MCP configured for the workspace.** [https://app.hyperfx.ai/mcp](https://app.hyperfx.ai/mcp)
-- **Required integrations connected** at [https://app.hyperfx.ai/integrations](https://app.hyperfx.ai/integrations). Use the sibling marketing skill to know which integrations are required.
+- **Required integrations connected** at [https://app.hyperfx.ai/apps](https://app.hyperfx.ai/apps). Use the sibling marketing skill to know which integrations are required.
 - **Hyper CLI installed and authenticated.** Verify with `hyperai info`.
 
 If `hyperai info` fails, stop and tell the user to authenticate the CLI before calling tools.

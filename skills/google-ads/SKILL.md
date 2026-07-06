@@ -12,7 +12,7 @@ Strategic guide for building new Google Ads campaigns and reporting on existing 
 ## Requirements
 
 - **Hyper MCP installed and connected.** [https://app.hyperfx.ai/mcp](https://app.hyperfx.ai/mcp)
-- **Google Ads integration connected** at [https://app.hyperfx.ai/integrations](https://app.hyperfx.ai/integrations).
+- **Google Ads integration connected** at [https://app.hyperfx.ai/apps](https://app.hyperfx.ai/apps).
 
 If `google_ads_list_accounts` is not in the tool list, stop and tell the user to enable Hyper MCP and connect Google Ads.
 

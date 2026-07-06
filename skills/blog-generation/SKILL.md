@@ -16,7 +16,7 @@ The whole game is captured in two ideas. First, AI search visibility is SEO done
 
 - **Hyper MCP connected.** https://app.hyperfx.ai/mcp
 - **A brand strategy doc** (`blog-strategy.md`) in persistent files. If it does not exist yet, the engine builds one on the first run (Step 0). This is what lets it write in the brand's real voice and avoid repeats.
-- **Recommended toolkits**, enabled at https://app.hyperfx.ai/integrations: **Firecrawl** (read the brand's site), **HyperSEO** (validate topics, see what ranks and what AI cites), **Google Search Console** (mine real signals and measure). Without them you can still draft, but flag that topic and ranking calls are unvalidated.
+- **Recommended toolkits**, enabled at https://app.hyperfx.ai/apps: **Firecrawl** (read the brand's site), **HyperSEO** (validate topics, see what ranks and what AI cites), **Google Search Console** (mine real signals and measure). Without them you can still draft, but flag that topic and ranking calls are unvalidated.
 
 ## Tool surface
 

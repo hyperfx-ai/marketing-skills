@@ -22,7 +22,7 @@ Data-driven SEO research and analysis. Every recommendation must be backed by re
 ## Requirements
 
 - **Hyper MCP installed and connected.** [https://app.hyperfx.ai/mcp](https://app.hyperfx.ai/mcp)
-- **HyperSEO toolkit enabled** at [https://app.hyperfx.ai/integrations](https://app.hyperfx.ai/integrations) — provides the `hyperseo_*` tool surface that wraps DataForSEO and AI search query data.
+- **HyperSEO toolkit enabled** at [https://app.hyperfx.ai/apps](https://app.hyperfx.ai/apps) — provides the `hyperseo_*` tool surface that wraps DataForSEO and AI search query data.
 
 If `hyperseo_search_volume_get` is not in the tool list, stop and tell the user to enable the Hyper MCP and turn on the HyperSEO toolkit.
 

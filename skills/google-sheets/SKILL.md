@@ -32,7 +32,7 @@ Use this skill whenever you need to write structured data into an existing sprea
 ## Requirements
 
 - **Hyper MCP installed and connected.** [https://app.hyperfx.ai/mcp](https://app.hyperfx.ai/mcp)
-- **Google Sheets integration** enabled at [https://app.hyperfx.ai/integrations](https://app.hyperfx.ai/integrations).
+- **Google Sheets integration** enabled at [https://app.hyperfx.ai/apps](https://app.hyperfx.ai/apps).
 
 ## Core Rule
 

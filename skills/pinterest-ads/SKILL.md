@@ -23,7 +23,7 @@ Strategic skill for managing Pinterest Ads campaigns via the Pinterest Ads API v
 ## Requirements
 
 - **Hyper MCP installed and connected.** [https://app.hyperfx.ai/mcp](https://app.hyperfx.ai/mcp)
-- **Pinterest Ads integration connected** at [https://app.hyperfx.ai/integrations](https://app.hyperfx.ai/integrations) (Pinterest Business account with ad account access).
+- **Pinterest Ads integration connected** at [https://app.hyperfx.ai/apps](https://app.hyperfx.ai/apps) (Pinterest Business account with ad account access).
 
 If `pinterest_ads_list_ad_accounts` is not in the tool list, stop and tell the user to enable the Hyper MCP and connect Pinterest Ads.
 

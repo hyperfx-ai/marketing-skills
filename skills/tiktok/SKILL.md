@@ -20,7 +20,7 @@ End-to-end skill for publishing organic content to TikTok through the **TikTok C
 ## Requirements
 
 - **Hyper MCP installed and connected.** [https://app.hyperfx.ai/mcp](https://app.hyperfx.ai/mcp)
-- **TikTok integration connected** at [https://app.hyperfx.ai/integrations](https://app.hyperfx.ai/integrations) — this skill uses the TikTok Login Kit / Content Posting API (NOT the TikTok Marketing API).
+- **TikTok integration connected** at [https://app.hyperfx.ai/apps](https://app.hyperfx.ai/apps) — this skill uses the TikTok Login Kit / Content Posting API (NOT the TikTok Marketing API).
 
 If `tiktok_open_post_form` is not in the tool list, stop and tell the user to enable Hyper MCP and connect TikTok.
 

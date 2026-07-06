@@ -21,7 +21,7 @@ End-to-end lifecycle email — pick the right provider for the job, build the au
 ## Requirements
 
 - **Hyper MCP installed and connected.** [https://app.hyperfx.ai/mcp](https://app.hyperfx.ai/mcp)
-- **At least one of these providers** connected at [https://app.hyperfx.ai/integrations](https://app.hyperfx.ai/integrations):
+- **At least one of these providers** connected at [https://app.hyperfx.ai/apps](https://app.hyperfx.ai/apps):
   - **Klaviyo** — ecommerce, Shopify-heavy lists, behavioral triggers off purchase / browse data
   - **Resend** — product-led / SaaS / dev tools, transactional + lifecycle on the same domain
   - **Beehiiv** — newsletters, paid-tier subscriptions, content-driven lists

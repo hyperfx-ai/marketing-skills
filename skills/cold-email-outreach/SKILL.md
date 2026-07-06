@@ -21,7 +21,7 @@ End-to-end cold outreach: research, draft, send, follow up, route replies. Strat
 ## Requirements
 
 - **Hyper MCP installed and connected.** [https://app.hyperfx.ai/mcp](https://app.hyperfx.ai/mcp)
-- **Gmail integration** connected at [https://app.hyperfx.ai/integrations](https://app.hyperfx.ai/integrations) — supplies the sending account.
+- **Gmail integration** connected at [https://app.hyperfx.ai/apps](https://app.hyperfx.ai/apps) — supplies the sending account.
 - **Apollo integration** connected — supplies prospect search and email enrichment.
 - **Firecrawl** (bundled) — for company-page signals.
 - **Optional: LinkedIn scraper** (bundled, runs through Apify) — for richer per-prospect personalization.

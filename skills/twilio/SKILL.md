@@ -29,7 +29,7 @@ Use this skill for all Twilio tasks including SMS, WhatsApp, voice calls, and ve
 ## Requirements
 
 - **Hyper MCP installed and connected.** [https://app.hyperfx.ai/mcp](https://app.hyperfx.ai/mcp)
-- **Twilio integration** enabled at [https://app.hyperfx.ai/integrations](https://app.hyperfx.ai/integrations).
+- **Twilio integration** enabled at [https://app.hyperfx.ai/apps](https://app.hyperfx.ai/apps).
 
 ## WhatsApp Sandbox Setup (Required for Testing)
 

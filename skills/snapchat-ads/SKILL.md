@@ -12,7 +12,7 @@ Strategic guide for managing Snapchat advertising via the Snapchat Marketing API
 ## Requirements
 
 - **Hyper MCP installed and connected.** [https://app.hyperfx.ai/mcp](https://app.hyperfx.ai/mcp)
-- **Snapchat Ads integration connected** (a Snap Business account with ad account access) at [https://app.hyperfx.ai/integrations](https://app.hyperfx.ai/integrations).
+- **Snapchat Ads integration connected** (a Snap Business account with ad account access) at [https://app.hyperfx.ai/apps](https://app.hyperfx.ai/apps).
 
 If `snapchat_ads_list_organizations` is not in the tool list, stop and tell the user to enable Hyper MCP and connect Snapchat Ads. Creating ad squads or serving ads also requires an **active funding source** on the ad account — campaigns, media, and creatives can be created without one.
 

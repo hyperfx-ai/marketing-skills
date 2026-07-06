@@ -25,7 +25,7 @@ End-to-end competitor research and monitoring. Define the set, pull from every p
 ## Requirements
 
 - **Hyper MCP installed and connected.** [https://app.hyperfx.ai/mcp](https://app.hyperfx.ai/mcp)
-- **At least one of these toolkits** connected at [https://app.hyperfx.ai/integrations](https://app.hyperfx.ai/integrations):
+- **At least one of these toolkits** connected at [https://app.hyperfx.ai/apps](https://app.hyperfx.ai/apps):
   - **Firecrawl** *(highly recommended — backbone for any site/blog/pricing-page work)*
   - **HyperSEO** *(needed for rank, backlink, domain-overlap analysis)*
   - **Apify scrapers** — Instagram, TikTok, LinkedIn, Twitter, Reddit, Google search, Google Trends

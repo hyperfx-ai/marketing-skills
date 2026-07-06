@@ -13,7 +13,7 @@ through `https://api.ads.openai.com/v1`.
 ## Requirements
 
 - **Hyper MCP installed and connected.** [https://app.hyperfx.ai/mcp](https://app.hyperfx.ai/mcp)
-- **OpenAI Ads integration connected** (an OpenAI Ads API key, scoped to one ad account) at [https://app.hyperfx.ai/integrations](https://app.hyperfx.ai/integrations).
+- **OpenAI Ads integration connected** (an OpenAI Ads API key, scoped to one ad account) at [https://app.hyperfx.ai/apps](https://app.hyperfx.ai/apps).
 
 If `openai_ads_ad_accounts_get` is not in the tool list, stop and tell the user to enable Hyper MCP and connect OpenAI Ads. After connecting, `openai_ads_health_check()` verifies the key — if `connected=false`, the API key is missing, invalid, or expired.
 

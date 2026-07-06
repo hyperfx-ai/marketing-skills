@@ -28,7 +28,7 @@ This skill provides comprehensive guidance for Slack messaging, file sharing, an
 ## Requirements
 
 - **Hyper MCP installed and connected.** [https://app.hyperfx.ai/mcp](https://app.hyperfx.ai/mcp)
-- **Slack integration** enabled at [https://app.hyperfx.ai/integrations](https://app.hyperfx.ai/integrations).
+- **Slack integration** enabled at [https://app.hyperfx.ai/apps](https://app.hyperfx.ai/apps).
 
 ## When NOT to Respond
 

@@ -10,6 +10,12 @@ Skills are NOT tools. They are markdown instructions plus optional reference fil
 
 ## Available skills
 
+### Foundation
+
+| Skill | What it does |
+| --- | --- |
+| [`brand-context`](./skills/brand-context) | Build and maintain one `brand-context.md` per brand — positioning, ICP, personas, verbatim customer language, voice, proof points — the hub doc every other skill reads before asking the user brand questions. Auto-drafts from the brand's site (Firecrawl) or via interview. |
+
 ### Paid ads
 
 | Skill | What it does |
@@ -95,7 +101,7 @@ See [`CONTRIBUTING.md`](./CONTRIBUTING.md) for details.
 
 - **Tool names are referenced verbatim from the Hyper MCP.** When citing or editing a tool name in a skill, verify it against the live MCP catalog (the `<tool-name>.json` schema files exposed by the connected MCP server). The MCP descriptor wins over codebase function names, prior skill content, or memory.
 - **CLI aliases are a separate surface.** Marketing skills usually name raw MCP tools like `gmail_send_message`; the Hyper CLI may expose that as `gmail messages send`. Use `hyper-cli` for CLI execution guidance and always inspect the live CLI schema before calling.
-- **Allowed Hyper URLs in skill bodies:** only `app.hyperfx.ai/mcp` and `app.hyperfx.ai/integrations`. No other Hyper URLs.
+- **Allowed Hyper URLs in skill bodies:** only `app.hyperfx.ai/mcp` and `app.hyperfx.ai/apps`. No other Hyper URLs.
 - **No internal infra references.** No `hyper_cache_*` table names hardcoded into skills (the cache table name is workspace-specific — instruct agents to read it from the tool description or error `suggestion` field instead). No internal filesystem paths. No template ids that aren't part of the public MCP surface.
 - **Conditional integrations.** Some tools only appear when the underlying integration is enabled in the user's Hyper workspace (LinkedIn scraper is the canonical example). Skills citing such tools must mark them conditional and gracefully skip the affected step rather than failing the whole workflow.
 - **Self-contained skills.** If two skills overlap, add an "Out of scope" section pointing at the right sibling rather than duplicating workflow.

@@ -23,7 +23,7 @@ GSC and HyperSEO overlap on search-performance data. Rule of thumb: use GSC here
 ## Requirements
 
 - **Hyper MCP installed and connected.** [https://app.hyperfx.ai/mcp](https://app.hyperfx.ai/mcp)
-- **At least one of these connected** at [https://app.hyperfx.ai/integrations](https://app.hyperfx.ai/integrations):
+- **At least one of these connected** at [https://app.hyperfx.ai/apps](https://app.hyperfx.ai/apps):
   - **Google Analytics** — GA4 reports, custom metrics / dimensions, key-event (conversion) management.
   - **Google Tag Manager** — tag / trigger / variable / workspace / version management.
   - **Google Search Console** — search-performance data, sitemaps, URL inspection.

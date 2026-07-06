@@ -12,7 +12,7 @@ Strategic guide for managing Amazon Ads Sponsored Products campaigns. Research f
 ## Requirements
 
 - **Hyper MCP installed and connected.** [https://app.hyperfx.ai/mcp](https://app.hyperfx.ai/mcp)
-- **Amazon Ads integration connected** at [https://app.hyperfx.ai/integrations](https://app.hyperfx.ai/integrations).
+- **Amazon Ads integration connected** at [https://app.hyperfx.ai/apps](https://app.hyperfx.ai/apps).
 
 If `amazon_ads_list_profiles` is not in the tool list, stop and tell the user to enable Hyper MCP and connect Amazon Ads.
 

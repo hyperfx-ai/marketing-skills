@@ -23,7 +23,7 @@ Skill for publishing to LinkedIn through the LinkedIn integration exposed by the
 ## Requirements
 
 - **Hyper MCP installed and connected.** [https://app.hyperfx.ai/mcp](https://app.hyperfx.ai/mcp)
-- **LinkedIn integration connected** at [https://app.hyperfx.ai/integrations](https://app.hyperfx.ai/integrations).
+- **LinkedIn integration connected** at [https://app.hyperfx.ai/apps](https://app.hyperfx.ai/apps).
 - For company-page posts, the connected member account must have permission to post for that organization.
 
 If `linkedin_create_text_post` is not in the tool list, stop and tell the user to enable Hyper MCP and connect LinkedIn.

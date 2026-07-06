@@ -21,7 +21,7 @@ The skill's job is to turn raw scraped ads into useful summaries: top advertiser
 ## Requirements
 
 - **Hyper MCP installed and connected.** [https://app.hyperfx.ai/mcp](https://app.hyperfx.ai/mcp)
-- **Apify integration connected** at [https://app.hyperfx.ai/integrations](https://app.hyperfx.ai/integrations) — the Meta Ads Library tools run via Apify under the hood.
+- **Apify integration connected** at [https://app.hyperfx.ai/apps](https://app.hyperfx.ai/apps) — the Meta Ads Library tools run via Apify under the hood.
 
 If `search_facebook_ads` is not in the tool list, stop and tell the user to enable Hyper MCP and connect Apify.
 

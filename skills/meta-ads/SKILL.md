@@ -21,7 +21,7 @@ Strategic guide for creating and managing Meta advertising campaigns, analyzing 
 ## Requirements
 
 - **Hyper MCP installed and connected.** [https://app.hyperfx.ai/mcp](https://app.hyperfx.ai/mcp)
-- **Meta Business integration connected** (Facebook + Instagram, with at least one ad account and one Page) at [https://app.hyperfx.ai/integrations](https://app.hyperfx.ai/integrations).
+- **Meta Business integration connected** (Facebook + Instagram, with at least one ad account and one Page) at [https://app.hyperfx.ai/apps](https://app.hyperfx.ai/apps).
 - **Firecrawl integration connected** for site research and screenshot grounding (discovery phase).
 
 If `meta_ads_ad_accounts_list` is not in the tool list, stop and tell the user to enable Hyper MCP and connect Meta Business.

@@ -30,7 +30,7 @@ This skill provides comprehensive guidance for managing Gmail emails, labels, an
 ## Requirements
 
 - **Hyper MCP installed and connected.** [https://app.hyperfx.ai/mcp](https://app.hyperfx.ai/mcp)
-- **Gmail integration** enabled at [https://app.hyperfx.ai/integrations](https://app.hyperfx.ai/integrations).
+- **Gmail integration** enabled at [https://app.hyperfx.ai/apps](https://app.hyperfx.ai/apps).
 
 ## Label Operations - Critical Distinctions
 

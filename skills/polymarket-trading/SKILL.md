@@ -27,7 +27,7 @@ Guide for trading on Polymarket prediction markets. Polymarket is a decentralize
 ## Requirements
 
 - **Hyper MCP installed and connected.** [https://app.hyperfx.ai/mcp](https://app.hyperfx.ai/mcp)
-- **Polymarket toolkit** enabled at [https://app.hyperfx.ai/integrations](https://app.hyperfx.ai/integrations).
+- **Polymarket toolkit** enabled at [https://app.hyperfx.ai/apps](https://app.hyperfx.ai/apps).
 
 ## Important: Time Sensitivity
 

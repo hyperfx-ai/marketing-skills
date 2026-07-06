@@ -28,7 +28,7 @@ Use these tools in this order for research quality:
 ## Requirements
 
 - **Hyper MCP installed and connected.** [https://app.hyperfx.ai/mcp](https://app.hyperfx.ai/mcp)
-- **Reddit scraper toolkit** enabled at [https://app.hyperfx.ai/integrations](https://app.hyperfx.ai/integrations).
+- **Reddit scraper toolkit** enabled at [https://app.hyperfx.ai/apps](https://app.hyperfx.ai/apps).
 
 1. `scrape_reddit_leads` (precision first)
 2. `scrape_reddit` (expand recall second)

@@ -31,7 +31,7 @@ skills/<skill-name>/
 3. **Body must NOT contain**:
    - Internal infra references (`hyper_cache_*` table names, internal filesystem paths, internal agent template names).
    - Real account IDs, real customer data, or real auth tokens.
-   - Any Hyper URL other than `app.hyperfx.ai/mcp` and `app.hyperfx.ai/integrations`.
+   - Any Hyper URL other than `app.hyperfx.ai/mcp` and `app.hyperfx.ai/apps`.
 
 4. **Length cap**: 500 lines max. Move long-form material into `references/<topic>.md` and link to it.
 

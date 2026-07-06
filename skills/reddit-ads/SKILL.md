@@ -12,7 +12,7 @@ Strategic guide for managing Reddit advertising via the Reddit Ads API v3. The t
 ## Requirements
 
 - **Hyper MCP installed and connected.** [https://app.hyperfx.ai/mcp](https://app.hyperfx.ai/mcp)
-- **Reddit Ads integration connected** (a Reddit Ads business account with ad account access) at [https://app.hyperfx.ai/integrations](https://app.hyperfx.ai/integrations).
+- **Reddit Ads integration connected** (a Reddit Ads business account with ad account access) at [https://app.hyperfx.ai/apps](https://app.hyperfx.ai/apps).
 
 If `reddit_ads_get_me` / `reddit_ads_list_businesses` is not in the tool list, stop and tell the user to enable Hyper MCP and connect Reddit Ads. Serving ads also requires an active **funding instrument** on the ad account — campaigns and ad groups can be created without one, but the account must be funded for ads to run.
 
