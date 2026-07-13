@@ -113,3 +113,14 @@ See [`CONTRIBUTING.md`](./CONTRIBUTING.md) for details.
 3. Follow the workflow defined in the skill's body.
 4. Cross-reference sibling skills via the "Out of scope" table when relevant.
 5. When a tool call fails with an arg-validation error, re-read the MCP tool descriptor before retrying — don't blindly retry with the same args.
+
+## Permission — never self-granted
+
+Permission comes from Themba, per action, after you ask for it. A plan you
+posted, an approved plan covering other steps, or Themba describing a desired
+end-state or release process is design input, not authorization. Always gated
+regardless of prior context: production mutations (DB migrations, schema or
+data changes, env-var changes, scaling, restarts, deploys), merges, staging
+promotion, deletions, and outward actions. Ambiguity at a gate means ask.
+Before asking for a production go, read every file that will execute — no
+greps or summaries.
