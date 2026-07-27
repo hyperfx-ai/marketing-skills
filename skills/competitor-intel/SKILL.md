@@ -32,6 +32,7 @@ End-to-end competitor research and monitoring. Define the set, pull from every p
   - **Firecrawl** *(highly recommended — backbone for any site/blog/pricing-page work)*
   - **HyperSEO** *(needed for rank, backlink, domain-overlap analysis)*
   - **Apify scrapers** — Instagram, TikTok, LinkedIn, Twitter, Reddit, Google search, Google Trends
+  - **Xquik Apify Actors** *(optional; use only when the live MCP catalog exposes a generic Apify marketplace Actor runner)*
   - **Image generation** *(optional — only if the brief feeds a comparison-page or battle-card asset downstream)*
 
 If none of those tool prefixes appear in the agent's tool list (`firecrawl_*`, `hyperseo_*`, `scrape_instagram*`, `scrape_tiktok*`, `search_tweets`, `scrape_reddit*`, `search_google_results`, `scrape_google_trends`, `web_scrape_page`), stop and tell the user to enable the Hyper MCP and connect at least Firecrawl + one social scraper. The LinkedIn scraper (`scrape_linkedin_profiles`) is only present when that specific integration is enabled — gracefully skip the LinkedIn slice if it's missing rather than failing the whole brief.
@@ -52,6 +53,8 @@ If none of those tool prefixes appear in the agent's tool list (`firecrawl_*`, `
 | Demand / trend signals | `scrape_google_trends`, `hyperseo_search_volume_get`, `hyperseo_intents_search` |
 | Optional: comparison-page assets | `images_generate` |
 
+The generic Apify Actor runner is conditional. Discover its exact name and arguments from the live MCP descriptor. Never guess them.
+
 ## Critical rules
 
 1. **Public-only data.** Never scrape behind login walls or paywalls. If a target is gated, stop and surface that — don't try to bypass.
@@ -64,6 +67,7 @@ If none of those tool prefixes appear in the agent's tool list (`firecrawl_*`, `
 8. **Stay clearly factual.** Use neutral language ("Competitor X published Y on date Z, copy reads as…") not value judgments ("Competitor X's strategy is broken…"). The brief is intel, not opinion.
 9. **Disambiguate brand-name SERPs.** A search for `<competitor>` alone often returns unrelated results that share the brand name (e.g. a search for "hyperfx" returns mostly HyperX headphones, not hyperfx.ai). Always pair the brand with a category modifier — `<competitor> alternative`, `<competitor> reviews`, `<competitor> pricing`, `<competitor> vs <us>` — to get clean SERPs.
 10. **Apify-backed scrapers fail intermittently.** Expect occasional `"fetch failed"` or empty-result responses from `scrape_instagram*`, `scrape_tiktok*`, `scrape_reddit*`, `scrape_google_trends`, `search_tweets`, and `search_google_results`. Retry once after a short delay before reporting the source as missing — and surface partial results to the user rather than failing the whole brief if a scraper stays down.
+11. **Get approval before every Actor run.** Show the Actor, targets, result caps, and live Store pricing first. Never put an Apify token in a URL or output.
 
 ## Workflow
 
@@ -148,6 +152,8 @@ search_tweets(from_user="<competitor_handle>", max_items=50)
 scrape_linkedin_profiles(urls=["https://www.linkedin.com/company/<competitor>"])
 ```
 
+Use the conditional Xquik Actor route in `references/source-by-source.md` when the user needs threads, reply context, or audience overlap. Do not replace `search_tweets`.
+
 4. **Sentiment & demand:**
 
 ```
@@ -188,6 +194,7 @@ The point of the skill is *delta*, not snapshot. For each competitor, compare:
 | Domain intersection (theirs ∩ yours) | Keywords *they* rank for and *you don't* — content gaps |
 | Instagram / TikTok | Posts since last run, follower delta, engagement-rate delta |
 | Twitter / Reddit | Volume of mentions vs prior period |
+| X audience overlap | Follower overlap vs the prior approved sample |
 | AI-search citations | New AI Overview citations vs last run |
 
 For a first run, there's no "last" — the diff section in the brief becomes "baseline established, will diff against this on next run." Tell the user this explicitly so they don't expect insight on day 1.

@@ -29,6 +29,7 @@ The goal is always the same: surface what customers actually say (in their own w
 
 - **Hyper MCP installed.** [https://app.hyperfx.ai/mcp](https://app.hyperfx.ai/mcp)
 - **Apify scrapers toolkit enabled** at [https://app.hyperfx.ai/apps](https://app.hyperfx.ai/apps) — provides Reddit, Twitter, YouTube, TikTok, and Instagram scrapers.
+- **Optional Xquik Actor route.** Use it only when the live MCP catalog exposes a generic Apify marketplace Actor runner. Otherwise keep the existing `search_tweets` route.
 
 Not all scrapers need to be active for every run — enable the ones relevant to your ICP (Reddit and one review site is the minimum). If a scraper tool is missing from the tool list, skip that source and continue with the others.
 
@@ -47,6 +48,8 @@ Not all scrapers need to be active for every run — enable the ones relevant to
 | `search_google_results` | Find discussion threads, forum posts, and `site:` searches |
 | `scrape_instagram_posts` | Pull recent posts from specific brand or community accounts |
 
+The generic Apify Actor runner is conditional. Its name and arguments come from the live MCP descriptor. Never guess them from this Skill.
+
 ## Critical rules
 
 1. **Always capture verbatim language.** Don't paraphrase customer quotes — the exact words are what gets used in copy and messaging. Extract and preserve them.
@@ -55,6 +58,7 @@ Not all scrapers need to be active for every run — enable the ones relevant to
 4. **Mind the bias of each source.** Reddit skews technical and skeptical. Review sites skew toward power users and people with strong opinions. Support tickets skew toward problems. Factor this in before generalizing.
 5. **Don't invent persona details.** If you don't have data for a persona field, leave it blank rather than filling it in with assumptions.
 6. **`youtube_video_transcripts_fetch` is slow (~15–30s).** It spins up an isolated sandbox. Only use it for videos where the language in the spoken content (not comments) is what matters.
+7. **Get approval before every Actor run.** Show the Actor, targets, result caps, and live Store pricing first. Never put an Apify token in a URL or output.
 
 ---
 
@@ -149,6 +153,8 @@ search_tweets(
     min_faves=5
 )
 ```
+
+For broader X coverage or audience overlap, use the conditional Xquik Actor route in `references/source-playbooks.md`. Keep `search_tweets` as the default and fallback.
 
 **Review sites (G2, Capterra, Trustpilot):**
 

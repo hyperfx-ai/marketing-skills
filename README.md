@@ -43,7 +43,7 @@ Auto-detects your agent and drops the skills in the right directory. Then ask yo
 # install one
 npx skills add hyperfx-ai/marketing-skills --skill google-ads
 
-# install all 24
+# install all 30
 npx skills add hyperfx-ai/marketing-skills --all
 ```
 
@@ -94,8 +94,8 @@ That's `meta-ads` + `google-ads` + `tiktok-ads` + `ad-creative-generation` + `vi
 | [`linkedin`](skills/linkedin) | Publish text, articles, documents, and AI-generated carousels — personal profiles and company pages. | LinkedIn |
 | **Research** | | |
 | [`seo-research`](skills/seo-research) | Keyword research, SERP and AI Overview analysis, competitor benchmarks, AI search visibility, backlinks, site audits. | HyperSEO toolkit |
-| [`competitor-intel`](skills/competitor-intel) | Research competitors end-to-end — site, social, search rank, AI-search citations, mentions — and produce battle cards, weekly digests, or board-prep updates. | Firecrawl + at least one of HyperSEO or Apify scrapers |
-| [`customer-research`](skills/customer-research) | Mine Reddit, YouTube comments, G2/Capterra, Twitter, and TikTok to surface what customers actually say — build personas, VOC quote banks, JTBD maps, and synthesis reports. | Apify scrapers toolkit (Reddit, Twitter, YouTube, TikTok, Instagram) |
+| [`competitor-intel`](skills/competitor-intel) | Research competitors across site, social, search, and optional Xquik Actor routes. Produce battle cards, weekly digests, or board updates. | Firecrawl + at least one of HyperSEO or Apify scrapers |
+| [`customer-research`](skills/customer-research) | Mine Reddit, YouTube comments, review sites, X, and TikTok. Includes optional Xquik Actor routes. | Apify scrapers toolkit |
 | [`reddit`](skills/reddit) | Research subreddits, threads, and sentiment — mine questions, pain points, and voice-of-customer. | Reddit scraper |
 | [`youtube`](skills/youtube) | Fetch YouTube transcripts, repurpose video content into posts/summaries/chapters, and create thumbnails from proven composition patterns. | YouTube toolkit |
 | **Creative** | | |
