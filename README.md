@@ -80,7 +80,7 @@ That's `meta-ads` + `google-ads` + `tiktok-ads` + `ad-creative-generation` + `vi
 | [`brand-context`](skills/brand-context) | Build one `brand-context.md` per brand — positioning, ICP, personas, verbatim customer language, voice, proof points — that every other skill reads before asking brand questions. | Firecrawl recommended for auto-draft; works standalone via interview |
 | **Paid ads** | | |
 | [`google-ads`](skills/google-ads) | Plan and launch Google Ads campaigns — Search, Display, and Performance Max — and build GAQL-backed reports and dashboards. | Google Ads |
-| [`meta-ads`](skills/meta-ads) | Plan and launch Meta ad campaigns across Facebook and Instagram; audit existing accounts. | Meta Business, Firecrawl |
+| [`meta-ads`](skills/meta-ads) | Plan and launch Meta campaigns and Partnership Ads across Facebook and Instagram; audit existing accounts. | Meta Business, Firecrawl |
 | [`meta-ads-library`](skills/meta-ads-library) | Research competitor ads in the Meta Ads Library. | Apify |
 | [`amazon-ads`](skills/amazon-ads) | Plan and launch Amazon Sponsored Products campaigns. | Amazon Ads |
 | [`tiktok-ads`](skills/tiktok-ads) | Plan and launch TikTok ad campaigns across all objectives. | TikTok Marketing |
