@@ -1,18 +1,18 @@
 """Generate a single YouTube thumbnail.
 
-Routing logic chooses the right image-gen tool based on inputs:
+Every call goes through the unified ``images_generate`` facade; routing picks
+the backend via ``backend_hint``:
 
-- ``style_reference_file_id`` set     -> ``images_edit_nano_banana`` with that
-                                          file as the base image (best for
-                                          cloning a single style reference).
+- ``style_reference_file_id`` set     -> nano-banana backend with the file as a
+                                          reference image (``nano_banana_pro``
+                                          when the prompt has explicit text
+                                          overlay, ``nano_banana`` otherwise).
 - ``brand_file_ids`` or
-  ``face_file_ids`` set               -> ``images_edit_openai`` with combined
+  ``face_file_ids`` set               -> ``openai`` backend with combined
                                           reference_images (better at composing
                                           multiple reference assets).
-- otherwise                           -> ``images_generate_nano_banana``
-                                          (``model='pro'`` if the prompt has
-                                          explicit text overlay, ``flash``
-                                          otherwise).
+- otherwise                           -> nano-banana backend, pro/flash chosen
+                                          by prompt text-heaviness.
 
 All tool calls go through the sandbox RPC, so generated images are persisted
 as ``DBFile``s in the conversation thread and metering fires automatically.
@@ -77,41 +77,53 @@ async def run(
     used_tool: str
     result: dict[str, Any]
 
+    # All paths go through the unified images_generate facade; the backend is
+    # selected via backend_hint (provider-specific tools are no longer
+    # exposed on the MCP surface).
+    used_tool = "images_generate"
     if style_reference_file_id:
-        used_tool = "images_edit_nano_banana"
         if chosen_model == "auto":
             chosen_model = "pro" if _looks_text_heavy(prompt) else "flash"
+        backend = "nano_banana_pro" if chosen_model == "pro" else "nano_banana"
         result = await call_tool(
             used_tool,
-            file_id=style_reference_file_id,
-            prompt=prompt,
+            requests=[
+                {
+                    "id": "thumbnail",
+                    "prompt": prompt,
+                    "reference_images": [style_reference_file_id],
+                }
+            ],
             n=n,
-            model=chosen_model,
+            backend_hint=backend,
             aspect_ratio=aspect,
-            image_size=image_size,
+            quality="high" if image_size == "2K" else "standard",
         )
+        chosen_model = backend
     elif refs:
-        used_tool = "images_edit_openai"
-        # OpenAI image-edit only supports its native sizes.
-        openai_size = "1536x1024" if aspect.startswith("16") else "1024x1024"
+        # OpenAI composes multiple references best when identity must be
+        # preserved (face + brand + product).
         result = await call_tool(
             used_tool,
             requests=[{"prompt": prompt, "reference_images": refs}],
-            size=openai_size,
+            backend_hint="openai",
+            aspect_ratio=aspect,
             quality="high",
         )
+        chosen_model = "openai"
     else:
-        used_tool = "images_generate_nano_banana"
         if chosen_model == "auto":
             chosen_model = "pro" if _looks_text_heavy(prompt) else "flash"
+        backend = "nano_banana_pro" if chosen_model == "pro" else "nano_banana"
         result = await call_tool(
             used_tool,
             requests=[{"id": "thumbnail", "prompt": prompt}],
             n=n,
-            model=chosen_model,
+            backend_hint=backend,
             aspect_ratio=aspect,
-            image_size=image_size,
+            quality="high" if image_size == "2K" else "standard",
         )
+        chosen_model = backend
 
     images = result.get("images", []) if isinstance(result, dict) else []
     if not images:
@@ -120,7 +132,7 @@ async def run(
     primary = images[0]
     return {
         "tool_used": used_tool,
-        "model": chosen_model if used_tool != "images_edit_openai" else "gpt-image-2",
+        "model": chosen_model,
         "aspect_ratio": aspect,
         "image_size": image_size,
         "primary": {

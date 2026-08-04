@@ -7,9 +7,10 @@ Two-phase script:
   ask which rank to clone.
 
 * Phase 2 (``chosen_rank`` set): looks up the chosen thumbnail's
-  ``thumbnail_file_id`` and runs ``images_edit_nano_banana`` with that file as
-  the style reference. If a ``face_file_id`` is provided, the prompt is
-  augmented to composite the user's face into the cloned style.
+  ``thumbnail_file_id`` and runs ``images_generate`` with that file as a
+  reference image (nano-banana-pro backend). If a ``face_file_id`` is
+  provided, the openai backend composites the user's face into the cloned
+  style.
 """
 
 from __future__ import annotations
@@ -112,32 +113,36 @@ async def run(
         source_title=chosen.get("title"),
     )
 
+    used_tool = "images_generate"
     if face_file_id:
-        # OpenAI edit composes multiple references better than nano-banana edit
-        # when we need to preserve a person's identity.
+        # The openai backend composes multiple references better than
+        # nano-banana when a person's identity must be preserved.
         result = await call_tool(
-            "images_edit_openai",
+            used_tool,
             requests=[
                 {
                     "prompt": prompt,
                     "reference_images": [style_file_id, face_file_id],
                 }
             ],
-            size="1536x1024",
+            backend_hint="openai",
+            aspect_ratio="16:9",
             quality="high",
         )
-        used_tool = "images_edit_openai"
     else:
         result = await call_tool(
-            "images_edit_nano_banana",
-            file_id=style_file_id,
-            prompt=prompt,
+            used_tool,
+            requests=[
+                {
+                    "prompt": prompt,
+                    "reference_images": [style_file_id],
+                }
+            ],
             n=1,
-            model="pro",
+            backend_hint="nano_banana_pro",
             aspect_ratio="16:9",
-            image_size="2K",
+            quality="high",
         )
-        used_tool = "images_edit_nano_banana"
 
     images = result.get("images", []) if isinstance(result, dict) else []
     if not images:
