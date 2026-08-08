@@ -26,7 +26,7 @@ Two principles run through everything here:
 
 | Job | Tools |
 | --- | --- |
-| Read and write drafts, read `brand-context.md` | your file tools (`read_file`, `create_file`, `edit_file`) |
+| Read and write drafts, read `brand-context.md` | your agent's file tools |
 | Pull source material or examples from URLs | `firecrawl_urls_scrape`, `web_scrape_page` |
 
 ## Out of scope: defer to other skills
