@@ -103,6 +103,7 @@ That's `meta-ads` + `google-ads` + `tiktok-ads` + `ad-creative-generation` + `vi
 | [`image-generation`](skills/image-generation) | Generate and edit images — picks the right model for text-heavy creatives, photoreal product shots, or high-res output. | Image gen toolkit |
 | [`video-generation`](skills/video-generation) | Generate AI video and prep it for distribution — text/image-to-video, captions, voiceover, stitching, overlays. | Video gen toolkit |
 | [`blog-generation`](skills/blog-generation) | Generate one excellent, on-brand blog post per run — a stateful engine that never repeats a topic, built for SEO and AI-search citations. | Firecrawl, HyperSEO, and Google Search Console recommended |
+| [`writing`](skills/writing) | Writing style library and quality gate for all prose — routes each deliverable to a named writing system (BLUF, PAS, AIDA, Smart Brevity, classic style, Diátaxis) with checkable rules, then lints out the AI tells. | No toolkit required |
 | **Outbound & lifecycle** | | |
 | [`cold-email-outreach`](skills/cold-email-outreach) | Run end-to-end B2B cold outreach — prospect, enrich, personalize, send, follow up, route replies. | Gmail + Apollo (Firecrawl + LinkedIn scraper bundled) |
 | [`email-lifecycle`](skills/email-lifecycle) | Build welcome, nurture, re-engagement, win-back, and abandoned-cart email programs. | At least one of Klaviyo, Resend, Beehiiv, or Gmail |

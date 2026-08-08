@@ -56,6 +56,7 @@ Skills are NOT tools. They are markdown instructions plus optional reference fil
 | [`image-generation`](./skills/image-generation) | Tool-selection guide for the bundled image models — OpenAI (`gpt-image-2`), Nano Banana (Gemini 3 Pro / 2.5 Flash), Seedream (ByteDance via fal.ai) — for ad creatives, branded compositions, photoreal product shots, image-to-image edits, and high-resolution output. |
 | [`video-generation`](./skills/video-generation) | End-to-end AI video — text-to-video / image-to-video (Sora, Veo, Seedance), scene chaining, video analysis, transcription, subtitles, TikTok / karaoke captions, voiceover (TTS), audio mixing, clipping, stitching, and text overlays. |
 | [`blog-generation`](./skills/blog-generation) | Generate one excellent, on-brand blog post per run — a stateful engine (reads a brand strategy doc, never repeats a topic) built to rank on Google and get cited by AI search. Firecrawl / HyperSEO / Search Console recommended. |
+| [`writing`](./skills/writing) | Writing style library and quality gate for all prose — routes each deliverable to a named writing system (BLUF / Minto, PAS, AIDA, Smart Brevity, inverted pyramid, classic style, plain language, Diátaxis) with hard checkable rules, then runs a lint pass that strips AI tells. Ships with five references under `references/` (copywriting, business writing, technical writing, prose style, lint-and-humanize). |
 
 ### Outbound & lifecycle
 
