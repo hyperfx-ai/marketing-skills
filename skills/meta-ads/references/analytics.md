@@ -4,21 +4,20 @@ Use this for querying performance data, ad-level insights, and historical report
 
 ---
 
-## When to use cached data vs the Meta API
+## Where Meta performance data comes from
+
+The Meta API insights tools are the source of truth. There is no Hyper-managed Meta cache
+table and no Meta sync tool. Do not query one and do not try to refresh one.
 
 | Situation | Use |
 |---|---|
-| User asks for a performance check or trend | Cached data first (faster, no rate limits) |
-| User needs fields not in the cache | Meta API insights tools |
-| Cache is stale or user explicitly requests fresh data | Use live API tools (`meta_ads_insights_get`) for the fresh numbers; the platform sync refreshes the cache on its own schedule |
-| No cached data exists yet for this account | Meta API as fallback |
-| Campaign was just created in this session | Meta API directly — new campaigns are NOT in cache yet |
+| Any performance check, trend, or drilldown | `meta_ads_insights_get` |
+| Campaign created in this session | `meta_ads_insights_get` or `meta_ads_campaign_get` |
+| History longer than the API returns conveniently, or a join against non-Meta data | A warehouse table the workspace loads itself — see "Querying warehouse tables" below |
 
-> **Important**: The cache is not real-time. If the user just created a campaign in this conversation, it won't appear in cached data. Use `meta_ads_insights_get` or `meta_ads_campaign_get` directly for anything created in the current session.
-
-> **Check the cache's latest date before trusting it for a recent window.** The cache can lag by weeks or months. If the user asks for "last 30 days" but the cache's most recent row is older than that window, the cache cannot answer the question — go straight to `meta_ads_insights_get` for live data. Always confirm the max date in the cache (e.g. `SELECT MAX(date_start) FROM <table>`) before relying on it for a time-bounded request.
-
-Check the toolkit context for the cached table name and last sync timestamp before calling any API tools.
+> **Important**: always name the date range you queried when you report numbers back. Meta
+> attribution shifts as conversions land, so the same window can return different totals on
+> different days.
 
 ---
 
@@ -104,9 +103,18 @@ Do not claim Meta only supports 7 or 28 days unless an actual API response says 
 
 ---
 
-## Querying cached data
+## Querying warehouse tables (optional)
 
-Use the integration-scoped table name from the toolkit context. Query cached data with `database_query` (the canonical SQL tool; `hyper_data_sql` is a legacy alias and may not be exposed under that name). There is no other standalone raw-SQL tool — for dashboards, route SQL through `hyper_data_build_dashboard`'s `sql_data_sources` instead.
+This section applies only when the workspace loads Meta data into its own database or
+warehouse. Read it through the `database` toolkit — the single database path in Hyper:
+
+1. Call `database_tables_list` to discover what the connected database actually holds.
+2. Call `database_tables_describe` on the table you found to get its real columns.
+3. Query it with `database_query`.
+
+**Never guess a table name or a column name.** The queries below are shapes, not literals —
+substitute the real table and the real column names you got from steps 1 and 2. If the
+connected database holds no Meta data, use `meta_ads_insights_get` instead.
 
 ### Daily spend trend
 
@@ -116,7 +124,7 @@ SELECT
   date_start,
   SUM(spend) AS total_spend,
   SUM(impressions) AS total_impressions
-FROM <cached_table>
+FROM <table from database_tables_list>
 GROUP BY campaign_name, date_start
 ORDER BY date_start DESC
 LIMIT 100;
@@ -132,7 +140,7 @@ SELECT
   SUM(clicks) AS clicks,
   ROUND(SUM(clicks)::numeric / NULLIF(SUM(impressions), 0) * 100, 2) AS ctr_pct,
   ROUND(SUM(spend)::numeric / NULLIF(SUM(clicks), 0), 2) AS cpc
-FROM <cached_table>
+FROM <table from database_tables_list>
 GROUP BY campaign_name
 ORDER BY spend DESC;
 ```
@@ -148,20 +156,13 @@ SELECT
     WHEN SUM(conversions) > 0 THEN ROUND(SUM(spend)::numeric / SUM(conversions), 2)
     ELSE NULL
   END AS cost_per_conversion
-FROM <cached_table>
+FROM <table from database_tables_list>
 GROUP BY adset_name
 ORDER BY spend DESC;
 ```
 
-Prefer cached data for reporting and dashboards. Use the Meta API directly only when a required field is missing from the cache, or for campaigns created in this session.
-
----
-
-## Cache refresh
-
-Data syncs automatically every 30 minutes.
-
-If the data appears stale or the user requests a refresh: pull the fresh numbers live with `meta_ads_insights_get` and tell the user the cached tables refresh automatically on the platform sync schedule (~30 minutes). There is no manual sync tool.
+Default to `meta_ads_insights_get`. Reach for a warehouse table only when the workspace has
+one and the request genuinely needs it.
 
 ---
 

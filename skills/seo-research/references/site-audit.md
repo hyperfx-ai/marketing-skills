@@ -32,17 +32,21 @@ Get a high-level snapshot of domain health.
 If the user has Google Search Console connected in Hyper:
 
 1. Call `google_search_console_list_sites()` to confirm the domain is verified and get the exact `site_url` as registered in GSC.
-2. Call `google_search_console_query_insights` — this is a **SQL query tool**. Read the tool description for the example table name and column list, then pass a SQL string:
+2. Call `google_search_console_performance_get` for the search analytics. It reads the Search Console API directly, so there is no cache to warm and no sync step:
    ```
-   google_search_console_query_insights(
-       query="SELECT query, SUM(clicks) AS clicks, SUM(impressions) AS impressions,
-              AVG(position) AS avg_pos FROM [table name from tool description]
-              WHERE date >= CURRENT_DATE - 30 GROUP BY query ORDER BY clicks DESC LIMIT 20"
+   google_search_console_performance_get(
+       site_url="<site_url from step 1>",
+       start_date="2025-01-01",
+       end_date="2025-01-31",
+       dimensions=["query"],
+       row_limit=20
    )
    ```
-   **If the tool returns a "No data cached" error:** check the `suggestion` field in the response — it contains the workspace-specific table name (workspace-specific, e.g. `hyper_cache_google_search_console_<workspace>__daily_insights`). Retry the query using that exact table name. If no data exists at all, call `google_search_console_sync()` first to trigger an initial sync, wait for it to complete, then re-query.
+   Pass `dimensions=["page"]` for landing-page performance, or `["query", "page"]` for both. Dates are `YYYY-MM-DD`.
 
    Returns actual clicks, impressions, CTR, and average position from GSC — ground-truth data vs. DataForSEO estimates.
+
+   **If the call returns no rows:** GSC has no data for that range. Widen the date range and confirm `site_url` matches the verified property exactly. Do not substitute DataForSEO estimates and present them as GSC data.
 3. Use this alongside `hyperseo_domain_overview_get`. Real GSC clicks will differ from ETV estimates — present both where available.
 
 If GSC is not connected, skip this step and rely on DataForSEO estimates throughout.
