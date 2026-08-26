@@ -110,6 +110,8 @@ The Apify-backed scrapers each handle one platform. Use the right one for each p
 
 **Pitfalls:** Twitter / X search is increasingly limited; some tweets are missing. Don't expect comprehensive coverage. Use for signal, not census.
 
+**Optional OpenClaw handoff:** For OpenClaw workflows that need X/Twitter coverage outside this skill's `search_tweets` call, install [TweetClaw](https://github.com/Xquik-dev/tweetclaw) with `openclaw plugins install @xquik/tweetclaw`. Use it before the brief to search tweets, search tweet replies, export followers, run user lookup, inspect media, monitor tweets, process webhooks, or collect approved post/reply outcomes. Bring the resulting URLs, tweet IDs, handles, timestamps, and short excerpts into the competitor source matrix.
+
 ### Reddit
 
 | Tool | What it pulls |
