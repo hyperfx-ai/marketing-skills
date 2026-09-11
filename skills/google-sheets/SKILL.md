@@ -34,6 +34,18 @@ Use this skill whenever you need to write structured data into an existing sprea
 - **Hyper MCP installed and connected.** [https://app.hyperfx.ai/mcp](https://app.hyperfx.ai/mcp)
 - **Google Sheets integration** enabled at [https://app.hyperfx.ai/apps](https://app.hyperfx.ai/apps).
 
+### How to call tools on the Hyper MCP
+
+The Hyper MCP lists six tools: `search`, `describe`, `call`, `connections_list`, `connections_use`, `info`. Every tool named in this skill runs through `call`:
+
+```text
+search("<what you want to do>")      # find the tool name and its toolkit
+describe("<tool name>")              # read the input schema
+call("<tool name>", {...})           # run it
+```
+
+The names in this skill are the `name` argument of `call`. A tool that is not enabled for the workspace, or whose integration is not connected, is not found by `search`; stop and tell the user which integration to connect.
+
 ## Core Rule
 
 Never write to Google Sheets from guessed column letters alone.

@@ -9,7 +9,7 @@ short_description: Call any Hyper platform tool from the terminal with the hyper
 
 Use `hyperai` to run Hyper tools from a terminal. This skill is a bridge for using the marketing skills in this repo through the CLI.
 
-Marketing skills usually name the MCP/raw tools, such as `gmail_messages_send` or `meta_ads_ad_accounts_list`. The CLI also exposes friendly aliases, such as `gmail messages send` or `meta-ads ad-accounts list`. Pick one surface per call.
+Marketing skills usually name the MCP/raw tools, such as `gmail_messages_send` or `meta_ads_adaccount_list`. The CLI also exposes friendly aliases, such as `gmail messages send` or `meta-ads ad-accounts list`. Pick one surface per call.
 
 ## Requirements
 
@@ -18,6 +18,18 @@ Marketing skills usually name the MCP/raw tools, such as `gmail_messages_send` o
 - **Hyper CLI installed and authenticated.** Verify with `hyperai info`.
 
 If `hyperai info` fails, stop and tell the user to authenticate the CLI before calling tools.
+
+### How to call tools on the Hyper MCP
+
+The Hyper MCP lists six tools: `search`, `describe`, `call`, `connections_list`, `connections_use`, `info`. Every tool named in this skill runs through `call`:
+
+```text
+search("<what you want to do>")      # find the tool name and its toolkit
+describe("<tool name>")              # read the input schema
+call("<tool name>", {...})           # run it
+```
+
+The names in this skill are the `name` argument of `call`. A tool that is not enabled for the workspace, or whose integration is not connected, is not found by `search`; stop and tell the user which integration to connect.
 
 ## Tool surface
 
@@ -145,13 +157,13 @@ hyperai call gmail messages list --json '{"max_results":10}'
 Marketing skill names raw Meta tool:
 
 ```text
-meta_business_list_ad_accounts
+meta_ads_adaccount_list
 ```
 
 Resolve and call friendly alias:
 
 ```bash
-hyperai search "meta_business_list_ad_accounts" --json --signature
+hyperai search "meta_ads_adaccount_list" --json --signature
 hyperai describe meta-ads ad-accounts list --parameters
 hyperai call meta-ads ad-accounts list --json '{"detail":"id_only"}'
 ```
@@ -159,8 +171,8 @@ hyperai call meta-ads ad-accounts list --json '{"detail":"id_only"}'
 Raw fallback:
 
 ```bash
-hyperai tools describe meta_business meta_business_list_ad_accounts --parameters
-hyperai tools call meta_business meta_business_list_ad_accounts --json '{"detail":"id_only"}'
+hyperai tools describe meta_business meta_ads_adaccount_list --parameters
+hyperai tools call meta_business meta_ads_adaccount_list --json '{"detail":"id_only"}'
 ```
 
 Image generation:

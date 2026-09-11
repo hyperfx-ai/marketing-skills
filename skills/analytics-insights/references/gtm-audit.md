@@ -16,9 +16,9 @@ The 8 checks below cover ~95% of GTM problems.
 ### 1. Inventory: how many tags, triggers, variables?
 
 ```
-gtm_tag(operation="list", workspace_path="accounts/123/containers/456/workspaces/789")
-gtm_trigger(operation="list", workspace_path="...")
-gtm_variable(operation="list", workspace_path="...")
+google_tag_manager_tags_manage(operation="list", workspace_path="accounts/123/containers/456/workspaces/789")
+google_tag_manager_triggers_manage(operation="list", workspace_path="...")
+google_tag_manager_variables_manage(operation="list", workspace_path="...")
 ```
 
 Healthy ranges (rough — bigger sites legitimately have more):
@@ -39,7 +39,7 @@ Pull all tags, group by `type` + the trigger they fire on. Anything firing the s
 
 ```
 # Get all tags
-result = gtm_tag(operation="list", workspace_path="...")
+result = google_tag_manager_tags_manage(operation="list", workspace_path="...")
 
 # Look for duplicates: same type, same firing trigger, similar parameters
 # (No SQL here — just inspect the response)
@@ -103,15 +103,15 @@ Cleanup: create a `Constant` variable, replace every hard-coded reference. Criti
 If something broke "around last Tuesday," the publish history is the prime suspect.
 
 ```
-gtm_version(operation="list", container_path="accounts/123/containers/456")
-gtm_version_header(operation="list", container_path="accounts/123/containers/456")
+google_tag_manager_versions_manage(operation="list", container_path="accounts/123/containers/456")
+google_tag_manager_version_headers_manage(operation="list", container_path="accounts/123/containers/456")
 ```
 
 Each version has a `publishedTimestamp` and a name. Find the version that was live during the breakage window. Diff against the previous version (the GTM UI does this best — the API can fetch both versions and you compare the JSON).
 
 ```
-gtm_version(operation="get", version_path="accounts/.../versions/12")
-gtm_version(operation="get", version_path="accounts/.../versions/11")
+google_tag_manager_versions_manage(operation="get", version_path="accounts/.../versions/12")
+google_tag_manager_versions_manage(operation="get", version_path="accounts/.../versions/11")
 ```
 
 If a tag / trigger / variable changed between v11 and v12 and v12 was the publish that broke things, you have your culprit.
@@ -122,13 +122,13 @@ GTM has a 4-stage workflow that exists for a reason — bypass it and you'll pub
 
 ```
 1. Workspace      ← edit here (sandboxed, doesn't affect live container)
-   gtm_workspace(operation="create", name="audit-2026-q2", ...)
+   google_tag_manager_workspaces_manage(operation="create", name="audit-2026-q2", ...)
 
 2. Preview         ← test in GTM Preview mode with the page open
    (UI-only — no API operation, but the agent can tell the user to do this)
 
 3. Version         ← snapshot the workspace into a versioned set of changes
-   gtm_version(operation="create", workspace_path="...", name="audit-cleanup", notes="removed 12 unused tags")
+   google_tag_manager_versions_manage(operation="create", workspace_path="...", name="audit-cleanup", notes="removed 12 unused tags")
 
 4. Publish         ← make the version live
    (UI or version operation with publish=true)

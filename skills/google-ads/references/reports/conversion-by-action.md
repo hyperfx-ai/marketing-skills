@@ -93,7 +93,7 @@ re-aggregates it via `sql_data_sources`, and binds the variables in the
 interface source. Cache table convention: `gads_<report>_<scope>`.
 
 ```python
-result = hyper_data_build_dashboard(
+result = data_apps_build(
     name="Conversions by Action",
     tool_data_sources={
         "raw_conversions": {

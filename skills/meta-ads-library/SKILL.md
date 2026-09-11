@@ -25,24 +25,36 @@ The skill's job is to turn raw scraped ads into useful summaries: top advertiser
 - **Hyper MCP installed and connected.** [https://app.hyperfx.ai/mcp](https://app.hyperfx.ai/mcp)
 - **Apify integration connected** at [https://app.hyperfx.ai/apps](https://app.hyperfx.ai/apps) — the Meta Ads Library tools run via Apify under the hood.
 
-If `search_facebook_ads` is not in the tool list, stop and tell the user to enable Hyper MCP and connect Apify.
+If `search("meta_ad_library_ads_search")` does not find `meta_ad_library_ads_search`, stop and tell the user to enable Hyper MCP and connect Apify.
+
+### How to call tools on the Hyper MCP
+
+The Hyper MCP lists six tools: `search`, `describe`, `call`, `connections_list`, `connections_use`, `info`. Every tool named in this skill runs through `call`:
+
+```text
+search("<what you want to do>")      # find the tool name and its toolkit
+describe("<tool name>")              # read the input schema
+call("<tool name>", {...})           # run it
+```
+
+The names in this skill are the `name` argument of `call`. A tool that is not enabled for the workspace, or whose integration is not connected, is not found by `search`; stop and tell the user which integration to connect.
 
 ## Tool surface
 
 | Tool | Purpose |
 | --- | --- |
-| `search_facebook_ads` | Search the Meta Ads Library by keyword. Returns compact results (title, body, CTA, link, page name, dates, platforms). Max 40 per call. |
-| `get_facebook_ad_details` | Get full details for a specific ad. Requires both `ad_archive_id` **and** `page_id` — both come from `search_facebook_ads` results. |
-| `search_facebook_ads_enriched` | Search + enrich each result with page contact info (email, phone, website). Slower (multiple API calls per result). Max 20 per call. |
-| `search_facebook_pages` | Search Facebook pages by category + location (not by keyword). Useful for building a lead list from a vertical. |
-| `scrape_facebook_pages` | Scrape detailed data from specific Facebook page URLs. |
+| `meta_ad_library_ads_search` | Search the Meta Ads Library by keyword. Returns compact results (title, body, CTA, link, page name, dates, platforms). Max 40 per call. |
+| `meta_ad_library_ads_get` | Get full details for a specific ad. Requires both `ad_archive_id` **and** `page_id` — both come from `meta_ad_library_ads_search` results. |
+| `meta_ad_library_ads_search_enriched` | Search + enrich each result with page contact info (email, phone, website). Slower (multiple API calls per result). Max 20 per call. |
+| `meta_ad_library_pages_search` | Search Facebook pages by category + location (not by keyword). Useful for building a lead list from a vertical. |
+| `meta_ad_library_pages_scrape` | Scrape detailed data from specific Facebook page URLs. |
 
 ## Critical rules
 
 1. **Public-only data.** The Meta Ads Library is public. Don't attempt to bypass any access control or scrape private content.
-2. **Count limits differ between tools.** `search_facebook_ads` allows `count` up to 40. `search_facebook_ads_enriched` caps at 20 — exceeding this returns an error.
-3. **`get_facebook_ad_details` needs two IDs.** Both `ad_archive_id` and `page_id` are required. Both are returned in every `search_facebook_ads` result row — pass them through together.
-4. **Enriched search is slow.** It makes a Facebook page scrape per ad and optionally a website scrape. Only use it when contact info matters (lead-gen workflows). For pure ad intelligence, use the regular `search_facebook_ads`.
+2. **Count limits differ between tools.** `meta_ad_library_ads_search` allows `count` up to 40. `meta_ad_library_ads_search_enriched` caps at 20 — exceeding this returns an error.
+3. **`meta_ad_library_ads_get` needs two IDs.** Both `ad_archive_id` and `page_id` are required. Both are returned in every `meta_ad_library_ads_search` result row — pass them through together.
+4. **Enriched search is slow.** It makes a Facebook page scrape per ad and optionally a website scrape. Only use it when contact info matters (lead-gen workflows). For pure ad intelligence, use the regular `meta_ad_library_ads_search`.
 5. **Apify-backed tools fail intermittently.** Expect occasional `"fetch failed"` responses. Retry once after a short delay before reporting the source as missing.
 6. **Don't over-interpret a single ad.** "Brand X is running a discount" is noise. "5 of the top 10 advertisers in this query are running discounts" is signal. Always aggregate before drawing conclusions.
 
@@ -57,14 +69,14 @@ Before running anything, agree on:
 3. **Active vs all** — `active_status="active"` is usually what you want. Inactive ads are historical and noisier.
 4. **Time window** — `period` accepts `"last24h"`, `"last7d"`, `"last14d"`, `"last30d"`, or `"all_time"`. Match the window to the user's intent (weekly digest → `"last7d"`, trend research → `"last30d"`).
 5. **The job** — what is this for?
-   - **Creative trend report** → use `search_facebook_ads`, summarize patterns across hooks, CTAs, formats.
-   - **Top advertiser snapshot** → use `search_facebook_ads`, group by `page_name`.
-   - **Lead list** → use `search_facebook_ads_enriched`, filter for rows with `contact_email` or `contact_website`.
+   - **Creative trend report** → use `meta_ad_library_ads_search`, summarize patterns across hooks, CTAs, formats.
+   - **Top advertiser snapshot** → use `meta_ad_library_ads_search`, group by `page_name`.
+   - **Lead list** → use `meta_ad_library_ads_search_enriched`, filter for rows with `contact_email` or `contact_website`.
 
 ### Phase 2 — Pull the ads
 
 ```
-search_facebook_ads(
+meta_ad_library_ads_search(
     query="meal kit delivery",
     country="US",
     active_status="active",
@@ -80,7 +92,7 @@ For more than 40 ads, paginate by re-calling with `offset=40`, `offset=80`, etc.
 For lead-gen with contact info:
 
 ```
-search_facebook_ads_enriched(
+meta_ad_library_ads_search_enriched(
     query="meal kit delivery",
     country="US",
     active_status="active",
@@ -94,16 +106,16 @@ Enriched rows add: `contact_email`, `contact_phone`, `contact_website`, `page_fo
 
 ### Phase 3 — Get full creative for the most interesting ads (optional)
 
-`search_facebook_ads` returns truncated bodies for some ads. To get the complete creative — including video URLs and images — call `get_facebook_ad_details` on the specific ads worth a deeper look:
+`meta_ad_library_ads_search` returns truncated bodies for some ads. To get the complete creative — including video URLs and images — call `meta_ad_library_ads_get` on the specific ads worth a deeper look:
 
 ```
-get_facebook_ad_details(
+meta_ad_library_ads_get(
     ad_archive_id="559220927273823",      # from search results
     page_id="328127803978438"             # from search results
 )
 ```
 
-Both args come from the same row in `search_facebook_ads`. Do this for the top 3–5 ads, not all 40 — each detail call is a separate Apify run.
+Both args come from the same row in `meta_ad_library_ads_search`. Do this for the top 3–5 ads, not all 40 — each detail call is a separate Apify run.
 
 ### Phase 4 — Surface the intelligence
 

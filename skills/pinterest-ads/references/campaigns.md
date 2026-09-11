@@ -37,7 +37,7 @@ Ad Account
 ### 1. Create campaign
 
 ```python
-pinterest_ads_create_campaign(
+pinterest_ads_campaigns_create(
     ad_account_id="<AD_ACCOUNT_ID>",
     name="Spring Collection 2026",
     objective_type="WEB_CONVERSION",
@@ -76,7 +76,7 @@ pinterest_ads_create_campaign(
 #### Template: CONSIDERATION campaign (simplest, non-CBO)
 
 ```python
-pinterest_ads_create_ad_group(
+pinterest_ads_ad_groups_create(
     ad_account_id="<AD_ACCOUNT_ID>",
     name="US Women 25-54",
     campaign_id="<CAMPAIGN_ID>",
@@ -92,7 +92,7 @@ pinterest_ads_create_ad_group(
 #### Template: CONSIDERATION campaign (CBO — no ad group budget)
 
 ```python
-pinterest_ads_create_ad_group(
+pinterest_ads_ad_groups_create(
     ad_account_id="<AD_ACCOUNT_ID>",
     name="US Women 25-54",
     campaign_id="<CAMPAIGN_ID>",
@@ -111,7 +111,7 @@ pinterest_ads_create_ad_group(
 > **TYPE SAFETY**: `cpa_goal_value_in_micro_currency` MUST be a **string** (e.g., `"5000000"`), NOT an integer. `conversion_tag_id` MUST be a **string**. `attribution_windows` values MUST be **integers**.
 
 ```python
-pinterest_ads_create_ad_group(
+pinterest_ads_ad_groups_create(
     ad_account_id="<AD_ACCOUNT_ID>",
     name="Conversion - Checkout",
     campaign_id="<CAMPAIGN_ID>",
@@ -162,7 +162,7 @@ pinterest_ads_create_ad_group(
 #### Template: AWARENESS campaign
 
 ```python
-pinterest_ads_create_ad_group(
+pinterest_ads_ad_groups_create(
     ad_account_id="<AD_ACCOUNT_ID>",
     name="Brand Awareness",
     campaign_id="<CAMPAIGN_ID>",
@@ -202,7 +202,7 @@ pinterest_ads_create_ad_group(
 ### 3. Create ad
 
 ```python
-pinterest_ads_create_ad(
+pinterest_ads_create(
     ad_account_id="<AD_ACCOUNT_ID>",
     ad_group_id="<AD_GROUP_ID>",
     creative_type="REGULAR",

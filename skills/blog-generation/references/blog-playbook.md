@@ -114,7 +114,7 @@ A single post rarely builds authority. Plan in clusters.
 
 ## 6. Improving an existing post (often higher ROI than a new one)
 
-Before writing something new, check `google_search_console_query_insights` for pages that already get impressions:
+Before writing something new, check `google_search_console_insights_query` for pages that already get impressions:
 
 - **Position 4 to 15, decent impressions, low CTR:** do not write a new post. Rewrite the title and meta to earn the click, and tighten the answer-first lead.
 - **Position 10 to 20 on a relevant query with no dedicated page:** that query is a signal. Write a focused post targeting it, and link to it from related posts.

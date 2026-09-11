@@ -25,14 +25,26 @@ The whole game is captured in two ideas. First, AI search visibility is SEO done
 - **A brand strategy doc** (`blog-strategy.md`) in persistent files. If it does not exist yet, the engine builds one on the first run (Step 0). This is what lets it write in the brand's real voice and avoid repeats.
 - **Recommended toolkits**, enabled at https://app.hyperfx.ai/apps: **Firecrawl** (read the brand's site), **HyperSEO** (validate topics, see what ranks and what AI cites), **Google Search Console** (mine real signals and measure). Without them you can still draft, but flag that topic and ranking calls are unvalidated.
 
+### How to call tools on the Hyper MCP
+
+The Hyper MCP lists six tools: `search`, `describe`, `call`, `connections_list`, `connections_use`, `info`. Every tool named in this skill runs through `call`:
+
+```text
+search("<what you want to do>")      # find the tool name and its toolkit
+describe("<tool name>")              # read the input schema
+call("<tool name>", {...})           # run it
+```
+
+The names in this skill are the `name` argument of `call`. A tool that is not enabled for the workspace, or whose integration is not connected, is not found by `search`; stop and tell the user which integration to connect.
+
 ## Tool surface
 
 | Job | Tools |
 | --- | --- |
 | Read and write `blog-strategy.md` and the post draft | your file tools (`read_file`, `create_file`, `edit_file`) |
-| Learn the brand from their site (Step 0) | `firecrawl_urls_scrape`, `web_scrape_page` |
-| Validate a topic and study the SERP / AI answer | `hyperseo_search_volume_get`, `hyperseo_keyword_difficulty`, `hyperseo_intents_search`, `hyperseo_ai_search_volume_get`, `hyperseo_serp_results_get`, `hyperseo_ai_overviews_get` |
-| Mine real-world signal and measure impact | `google_search_console_query_insights` |
+| Learn the brand from their site (Step 0) | `firecrawl_urls_scrape`, `web_pages_scrape` |
+| Validate a topic and study the SERP / AI answer | `hyperseo_search_volume_get`, `hyperseo_keyword_difficulty_get`, `hyperseo_intents_search`, `hyperseo_ai_search_volume_get`, `hyperseo_serp_results_get`, `hyperseo_ai_overviews_get` |
+| Mine real-world signal and measure impact | `google_search_console_insights_query` |
 | Check whether AI recommends the brand | `hyperseo_mentions_track` |
 
 ## Out of scope: defer to other skills
@@ -73,7 +85,7 @@ Each run must produce something new. To choose:
 1. **Exclude everything in the Published log** and anything that merely rewords it (same intent under a different title is a repeat).
 2. **Prefer the highest-priority unblocked backlog item** that fits the brand and has real demand.
 3. **Vary the shape.** If the last few posts were listicles, write a how-to, a pain/diagnostic, or an original-data piece. A healthy blog mixes archetypes.
-4. **Pull from live signal where available**: GSC queries the brand ranks for on page two (`google_search_console_query_insights`), keyword gaps (defer to `seo-research`), recurring customer questions, or a timely news hook in the brand's space.
+4. **Pull from live signal where available**: GSC queries the brand ranks for on page two (`google_search_console_insights_query`), keyword gaps (defer to `seo-research`), recurring customer questions, or a timely news hook in the brand's space.
 5. **Lean on the brand's own substance.** The most citable, least repeatable posts use the brand's proprietary data, real customer outcomes, or first-hand expertise. Reach for these often.
 
 ## The strategy doc (`blog-strategy.md`) — the engine's memory

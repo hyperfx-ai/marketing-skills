@@ -34,22 +34,34 @@ End-to-end competitor research and monitoring. Define the set, pull from every p
   - **Apify scrapers** — Instagram, TikTok, LinkedIn, Twitter, Reddit, Google search, Google Trends
   - **Image generation** *(optional — only if the brief feeds a comparison-page or battle-card asset downstream)*
 
-If none of those tool prefixes appear in the agent's tool list (`firecrawl_*`, `hyperseo_*`, `scrape_instagram*`, `scrape_tiktok*`, `search_tweets`, `scrape_reddit*`, `search_google_results`, `scrape_google_trends`, `web_scrape_page`), stop and tell the user to enable the Hyper MCP and connect at least Firecrawl + one social scraper. The LinkedIn scraper (`scrape_linkedin_profiles`) is only present when that specific integration is enabled — gracefully skip the LinkedIn slice if it's missing rather than failing the whole brief.
+If none of those tool prefixes appear in the agent's tool list (`firecrawl_*`, `hyperseo_*`, `instagram_scrape*`, `scrape_tiktok*`, `x_tweets_search`, `reddit_scrape*`, `google_search_results_search`, `google_trends_scrape`, `web_pages_scrape`), stop and tell the user to enable the Hyper MCP and connect at least Firecrawl + one social scraper. The LinkedIn scraper (`scrape_linkedin_profiles`) is only present when that specific integration is enabled — gracefully skip the LinkedIn slice if it's missing rather than failing the whole brief.
+
+### How to call tools on the Hyper MCP
+
+The Hyper MCP lists six tools: `search`, `describe`, `call`, `connections_list`, `connections_use`, `info`. Every tool named in this skill runs through `call`:
+
+```text
+search("<what you want to do>")      # find the tool name and its toolkit
+describe("<tool name>")              # read the input schema
+call("<tool name>", {...})           # run it
+```
+
+The names in this skill are the `name` argument of `call`. A tool that is not enabled for the workspace, or whose integration is not connected, is not found by `search`; stop and tell the user which integration to connect.
 
 ## Tool surface
 
 | Phase | Tools |
 | --- | --- |
-| Site & web content | `firecrawl_urls_scrape`, `firecrawl_urls_scrape_batch`, `firecrawl_websites_crawl`, `firecrawl_screenshots_create`, `firecrawl_branding_extract`, `web_scrape_page` (JS-rendering fallback, supports `ai_query` for targeted extraction), `web_fetch_page`, `web_loader` |
+| Site & web content | `firecrawl_urls_scrape`, `firecrawl_urls_scrape_batch`, `firecrawl_websites_crawl`, `firecrawl_screenshots_create`, `firecrawl_branding_extract`, `web_pages_scrape` (JS-rendering fallback, supports `ai_query` for targeted extraction), `web_pages_fetch`, `web_pages_load` |
 | Search rankings & backlinks | `hyperseo_competitors_search`, `hyperseo_competitor_domains_search`, `hyperseo_domain_overview_get`, `hyperseo_domain_keywords_get`, `hyperseo_domain_intersections_search`, `hyperseo_site_keywords_search`, `hyperseo_backlinks_history_get`, `hyperseo_rank_history_get`, `hyperseo_mentions_track` |
-| Brand mentions in AI search & SERPs | `hyperseo_ai_overviews_get`, `hyperseo_ai_search_volume_get`, `hyperseo_mentions_track`, `search_google_results`, `web_search` |
-| Organic social — Instagram | `scrape_instagram`, `scrape_instagram_posts`, `scrape_instagram_followers_count` |
-| Organic social — TikTok | `scrape_tiktok_videos`, `scrape_tiktok_comments` |
+| Brand mentions in AI search & SERPs | `hyperseo_ai_overviews_get`, `hyperseo_ai_search_volume_get`, `hyperseo_mentions_track`, `google_search_results_search`, `web_search` |
+| Organic social — Instagram | `instagram_scrape`, `instagram_posts_scrape`, `instagram_followers_count_scrape` |
+| Organic social — TikTok | `tiktok_videos_scrape`, `tiktok_comments_scrape` |
 | Organic social — LinkedIn | `scrape_linkedin_profiles` *(conditional — only available when the LinkedIn-scraper integration is enabled in your Hyper workspace)* |
-| Organic social — Twitter / X | `search_tweets` |
-| Community / sentiment — Reddit | `scrape_reddit`, `scrape_reddit_leads` |
-| Ecommerce competitor specifics | `scrape_ecommerce_products`, `scrape_ecommerce_reviews` |
-| Demand / trend signals | `scrape_google_trends`, `hyperseo_search_volume_get`, `hyperseo_intents_search` |
+| Organic social — Twitter / X | `x_tweets_search` |
+| Community / sentiment — Reddit | `reddit_scrape`, `reddit_leads_scrape` |
+| Ecommerce competitor specifics | `ecommerce_products_scrape`, `ecommerce_reviews_scrape` |
+| Demand / trend signals | `google_trends_scrape`, `hyperseo_search_volume_get`, `hyperseo_intents_search` |
 | Optional: comparison-page assets | `images_generate` |
 
 ## Critical rules
@@ -63,7 +75,7 @@ If none of those tool prefixes appear in the agent's tool list (`firecrawl_*`, `
 7. **Don't over-interpret single data points.** "Competitor X dropped a Reel that got 12K likes" is noise. "Competitor X has averaged 8K likes/post for the last 30 days, up from 2K" is signal. Build comparisons on aggregates, not anecdotes.
 8. **Stay clearly factual.** Use neutral language ("Competitor X published Y on date Z, copy reads as…") not value judgments ("Competitor X's strategy is broken…"). The brief is intel, not opinion.
 9. **Disambiguate brand-name SERPs.** A search for `<competitor>` alone often returns unrelated results that share the brand name (e.g. a search for "hyperfx" returns mostly HyperX headphones, not hyperfx.ai). Always pair the brand with a category modifier — `<competitor> alternative`, `<competitor> reviews`, `<competitor> pricing`, `<competitor> vs <us>` — to get clean SERPs.
-10. **Apify-backed scrapers fail intermittently.** Expect occasional `"fetch failed"` or empty-result responses from `scrape_instagram*`, `scrape_tiktok*`, `scrape_reddit*`, `scrape_google_trends`, `search_tweets`, and `search_google_results`. Retry once after a short delay before reporting the source as missing — and surface partial results to the user rather than failing the whole brief if a scraper stays down.
+10. **Apify-backed scrapers fail intermittently.** Expect occasional `"fetch failed"` or empty-result responses from `instagram_scrape*`, `scrape_tiktok*`, `reddit_scrape*`, `google_trends_scrape`, `x_tweets_search`, and `google_search_results_search`. Retry once after a short delay before reporting the source as missing — and surface partial results to the user rather than failing the whole brief if a scraper stays down.
 
 ## Workflow
 
@@ -100,7 +112,7 @@ Not every source matters for every competitor or every job. Per-competitor, deci
 | Competitor type | Sources that matter most |
 | --- | --- |
 | **Direct SaaS / B2B** | Site, blog, pricing page, LinkedIn company posts (if available), AI-search citations (`hyperseo_ai_overviews_get`), domain rank delta |
-| **Ecommerce / DTC brand** | Site, product catalog (`scrape_ecommerce_products`), product reviews (`scrape_ecommerce_reviews`), Instagram, TikTok, Reddit threads, Google Trends interest |
+| **Ecommerce / DTC brand** | Site, product catalog (`ecommerce_products_scrape`), product reviews (`ecommerce_reviews_scrape`), Instagram, TikTok, Reddit threads, Google Trends interest |
 | **Consumer / creator brand** | Instagram, TikTok, Twitter, YouTube *(via the YouTube toolkit if connected)*, Reddit |
 | **Content-led / publication** | Site, blog (full crawl), backlinks history, AI-search citations, search rank trend |
 | **Local / multi-location** | Site, Google search results for "[brand] near me", Reddit / Twitter sentiment, Google Trends regional |
@@ -134,15 +146,15 @@ firecrawl_urls_scrape(url="https://<competitor>.com/")
 firecrawl_branding_extract(url="https://<competitor>.com")  # logo, colors, voice
 ```
 
-For a full-blog-archive deep dive use `firecrawl_websites_crawl` once and check status with `firecrawl_crawls_status_check`. If Firecrawl returns near-empty for a JS-heavy SPA, fall back to `web_scrape_page(url=..., use_proxy=true, ai_query="extract pricing tiers and prices")`.
+For a full-blog-archive deep dive use `firecrawl_websites_crawl` once and check status with `firecrawl_crawls_status_check`. If Firecrawl returns near-empty for a JS-heavy SPA, fall back to `web_pages_scrape(url=..., use_proxy=true, ai_query="extract pricing tiers and prices")`.
 
 3. **Social — sequenced per platform** (note: most scrapers take *arrays* of identifiers, not a single username):
 
 ```
-scrape_instagram(direct_urls=["https://www.instagram.com/<competitor>/"], results_type="posts", results_limit=30)
-scrape_instagram_followers_count(usernames=["<competitor>"])  # cheap, do it weekly
-scrape_tiktok_videos(profiles=["<competitor>"], results_per_page=30)
-search_tweets(from_user="<competitor_handle>", max_items=50)
+instagram_scrape(direct_urls=["https://www.instagram.com/<competitor>/"], results_type="posts", results_limit=30)
+instagram_followers_count_scrape(usernames=["<competitor>"])  # cheap, do it weekly
+tiktok_videos_scrape(profiles=["<competitor>"], results_per_page=30)
+x_tweets_search(from_user="<competitor_handle>", max_items=50)
 
 # Only if scrape_linkedin_profiles is in your MCP tool list:
 scrape_linkedin_profiles(urls=["https://www.linkedin.com/company/<competitor>"])
@@ -151,13 +163,13 @@ scrape_linkedin_profiles(urls=["https://www.linkedin.com/company/<competitor>"])
 4. **Sentiment & demand:**
 
 ```
-scrape_reddit(searches=["<competitor>"], max_items=50, sort="new", time="month")
-scrape_google_trends(
+reddit_scrape(searches=["<competitor>"], max_items=50, sort="new", time="month")
+google_trends_scrape(
   search_terms=["<competitor>", "yourbrand"],
   time_range="today 3-m",  # options: now 7-d, today 1-m, today 3-m, today 5-y, all
   geo="US"
 )
-search_google_results(query="<competitor> reviews", num_results=20, country="us")
+google_search_results_search(query="<competitor> reviews", num_results=20, country="us")
 ```
 
 5. **AI search visibility (only for SaaS/B2B usually):**

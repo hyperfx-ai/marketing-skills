@@ -15,7 +15,7 @@ Step-by-step guide for finding and prioritizing keyword opportunities using the 
 
 Start with the user's seed terms and expand them.
 
-1. Run `hyperseo_keyword_ideas` with their seed keywords (set `limit` to 30–50 for a broad view).
+1. Run `hyperseo_keyword_ideas_generate` with their seed keywords (set `limit` to 30–50 for a broad view).
 2. Review the ideas for relevance — discard anything off-topic.
 3. If the user has a domain, also run `hyperseo_site_keywords_search` to discover terms their site naturally aligns with.
 
@@ -31,7 +31,7 @@ Take the most promising candidates and check real demand.
 
 Filter by what's actually achievable and classify intent.
 
-1. Run `hyperseo_keyword_difficulty` on the shortlist.
+1. Run `hyperseo_keyword_difficulty_get` on the shortlist.
 2. Run `hyperseo_intents_search` on the same keywords to classify intent (informational, navigational, commercial, transactional).
 3. Score each keyword against the priority framework below.
 4. Intent classification helps you decide the right content format before you start writing.

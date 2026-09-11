@@ -50,7 +50,7 @@ WHERE conversion_action.status != 'REMOVED'
 ## Building a dashboard from this report
 
 ```python
-result = hyper_data_build_dashboard(
+result = data_apps_build(
     name="Conversion Tracking Audit",
     tool_data_sources={
         "raw": {

@@ -31,7 +31,7 @@ Get a high-level snapshot of domain health.
 
 If the user has Google Search Console connected in Hyper:
 
-1. Call `google_search_console_list_sites()` to confirm the domain is verified and get the exact `site_url` as registered in GSC.
+1. Call `google_search_console_sites_list()` to confirm the domain is verified and get the exact `site_url` as registered in GSC.
 2. Call `google_search_console_performance_get` for the search analytics. It reads the Search Console API directly, so there is no cache to warm and no sync step:
    ```
    google_search_console_performance_get(
@@ -69,7 +69,7 @@ Understand what the domain already ranks for and how it's trending.
 Find untapped potential.
 
 1. Run `hyperseo_site_keywords_search` to discover keywords the domain could target but isn't.
-2. Cross-check the best opportunities with `hyperseo_keyword_difficulty`.
+2. Cross-check the best opportunities with `hyperseo_keyword_difficulty_get`.
 3. Focus on keywords where:
    - The domain has topical relevance.
    - Difficulty is achievable for the domain's authority level.
@@ -90,7 +90,7 @@ Assess the domain's link profile.
 No audit is complete without context.
 
 1. Run `hyperseo_competitor_domains_search` to find competitors based on shared organic keywords.
-2. Run `hyperseo_bulk_traffic` on the user's domain + top 3 – 5 competitors to compare traffic levels quickly.
+2. Run `hyperseo_traffic_get_bulk` on the user's domain + top 3 – 5 competitors to compare traffic levels quickly.
 3. Run `hyperseo_domain_overview_get` on the top 3 competitors for detailed metrics.
 4. Compare: how does the domain stack up on authority, traffic, and backlinks?
 5. This frames the audit findings — "you rank for 500 keywords" means different things if competitors rank for 500 vs 50,000.
@@ -166,7 +166,7 @@ Core Web Vitals for key pages (mobile and desktop). Flag any metrics outside acc
 
 **9. Competitive benchmark**
 
-Side-by-side comparison with top 3 competitors using `hyperseo_bulk_traffic` and `hyperseo_domain_overview_get`.
+Side-by-side comparison with top 3 competitors using `hyperseo_traffic_get_bulk` and `hyperseo_domain_overview_get`.
 
 **10. AI visibility status**
 

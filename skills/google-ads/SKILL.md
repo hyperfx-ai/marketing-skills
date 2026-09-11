@@ -16,7 +16,19 @@ Strategic guide for building new Google Ads campaigns and reporting on existing 
 - **Hyper MCP installed and connected.** [https://app.hyperfx.ai/mcp](https://app.hyperfx.ai/mcp)
 - **Google Ads integration connected** at [https://app.hyperfx.ai/apps](https://app.hyperfx.ai/apps).
 
-If `google_ads_accounts_list` is not in the tool list, stop and tell the user to enable Hyper MCP and connect Google Ads.
+If `search("google_ads_accounts_list")` does not find `google_ads_accounts_list`, stop and tell the user to enable Hyper MCP and connect Google Ads.
+
+### How to call tools on the Hyper MCP
+
+The Hyper MCP lists six tools: `search`, `describe`, `call`, `connections_list`, `connections_use`, `info`. Every tool named in this skill runs through `call`:
+
+```text
+search("<what you want to do>")      # find the tool name and its toolkit
+describe("<tool name>")              # read the input schema
+call("<tool name>", {...})           # run it
+```
+
+The names in this skill are the `name` argument of `call`. A tool that is not enabled for the workspace, or whose integration is not connected, is not found by `search`; stop and tell the user which integration to connect.
 
 ## Out of scope
 
@@ -43,7 +55,7 @@ Reads are GAQL (`google_ads_gaql_query` covers every resource). Writes are one t
 | `google_ads_asset_groups_create` | PMax asset group (atomic: text + image assets in one call). |
 | `google_ads_conversion_actions_create`, `google_ads_user_lists_create`, `google_ads_bidding_strategies_create`, `google_ads_shared_sets_create`, … | Full per-resource CRUD surface — same naming pattern. |
 | `google_ads_request` | Raw escape hatch for any uncovered endpoint. |
-| `hyper_data_build_dashboard`, `hyper_data_refresh_dashboard` | Optional dashboards / data apps for reports. |
+| `data_apps_build`, `data_apps_refresh` | Optional dashboards / data apps for reports. |
 
 ## Rules that must never be forgotten
 

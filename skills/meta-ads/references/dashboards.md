@@ -12,7 +12,7 @@ Read the Meta context block in the toolkit for the table name and last sync time
 
 ### 2. Build the dashboard
 
-Build the dashboard using `hyper_data_build_dashboard` with `tool_data_sources` and `sql_data_sources` (see the custom pattern below). Inspect the live tool schema before calling — it documents the accepted data-source shapes and UI components. Do not invent dashboard patterns.
+Build the dashboard using `data_apps_build` with `tool_data_sources` and `sql_data_sources` (see the custom pattern below). Inspect the live tool schema before calling — it documents the accepted data-source shapes and UI components. Do not invent dashboard patterns.
 
 ### 3. Cache refresh policy
 
@@ -27,7 +27,7 @@ If no cached data exists yet, use Meta API tools directly as a fallback and cach
 Use `tool_data_sources` to fetch from Meta API and save to a cache table. Use `sql_data_sources` to query the cache for UI variables. Pass `scalar` or `rows` shapes explicitly — do not embed raw SQL in UI props.
 
 ```python
-hyper_data_build_dashboard(
+data_apps_build(
     name="Meta Ads Performance",
     tool_data_sources={
         "meta_campaigns": {

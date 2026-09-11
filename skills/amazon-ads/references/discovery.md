@@ -2,7 +2,7 @@
 
 ## Phase 1: Profile Discovery
 
-Call `amazon_ads_list_profiles()` to list advertising profiles.
+Call `amazon_ads_profiles_list()` to list advertising profiles.
 
 - Each profile corresponds to a marketplace (US, BR, CA, MX, UK, DE, JP, etc.).
 - Profiles are either **seller** or **vendor** type.
@@ -10,13 +10,13 @@ Call `amazon_ads_list_profiles()` to list advertising profiles.
 - If single: inform the user and proceed.
 - Note the `profileId` — it's required for every subsequent API call.
 
-**Health Check**: Call `amazon_ads_run_health_check()` to verify OAuth tokens, profile access, and billing status.
+**Health Check**: Call `amazon_ads_health_check()` to verify OAuth tokens, profile access, and billing status.
 
 ## Phase 2: Account Assessment
 
 ### Existing Campaign Audit
 ```
-amazon_ads_list_campaigns(profile_id=PROFILE_ID)
+amazon_ads_campaigns_list(profile_id=PROFILE_ID)
 ```
 Review active campaigns, budgets, and targeting types (auto vs manual).
 

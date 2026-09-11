@@ -4,7 +4,7 @@
 
 ### Create Performance Report
 ```
-amazon_ads_create_report(
+amazon_ads_reports_create(
     profile_id=PROFILE_ID,
     report_type="spCampaigns",
     columns=["impressions", "clicks", "cost", "spend"],
@@ -17,7 +17,7 @@ amazon_ads_create_report(
 
 ### Check Report Status
 ```
-amazon_ads_get_report_status(profile_id=PROFILE_ID, report_id=REPORT_ID)
+amazon_ads_reports_status_get(profile_id=PROFILE_ID, report_id=REPORT_ID)
 ```
 
 Reports are async. Status transitions: PENDING → PROCESSING → COMPLETED.
@@ -51,7 +51,7 @@ Reports are async. Status transitions: PENDING → PROCESSING → COMPLETED.
 Get theme-based bid recommendations for an existing ad group:
 
 ```
-amazon_ads_get_bid_recommendations(
+amazon_ads_bid_recommendations_get(
     profile_id=PROFILE_ID,
     campaign_id=CAMPAIGN_ID,
     ad_group_id=AD_GROUP_ID,

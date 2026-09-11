@@ -2,7 +2,7 @@
 
 ## Phase 1: Account Discovery
 
-Call `pinterest_ads_list_ad_accounts()` to list accessible accounts.
+Call `pinterest_ads_ad_accounts_list()` to list accessible accounts.
 
 - If multiple: ask the user to select one.
 - If single: inform the user and proceed.
@@ -15,11 +15,11 @@ Call `pinterest_ads_list_ad_accounts()` to list accessible accounts.
 Run these in parallel to understand the account state:
 
 ```python
-pinterest_ads_list_campaigns(ad_account_id="<AD_ACCOUNT_ID>")
-pinterest_ads_list_ad_groups(ad_account_id="<AD_ACCOUNT_ID>")
-pinterest_ads_list_ads(ad_account_id="<AD_ACCOUNT_ID>")
-pinterest_ads_list_audiences(ad_account_id="<AD_ACCOUNT_ID>")
-pinterest_ads_list_conversion_tags(ad_account_id="<AD_ACCOUNT_ID>")
+pinterest_ads_campaigns_list(ad_account_id="<AD_ACCOUNT_ID>")
+pinterest_ads_ad_groups_list(ad_account_id="<AD_ACCOUNT_ID>")
+pinterest_ads_list(ad_account_id="<AD_ACCOUNT_ID>")
+pinterest_ads_audiences_list(ad_account_id="<AD_ACCOUNT_ID>")
+pinterest_ads_conversion_tags_list(ad_account_id="<AD_ACCOUNT_ID>")
 ```
 
 ### Research & confirm

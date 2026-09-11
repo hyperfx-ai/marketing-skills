@@ -82,7 +82,7 @@ WHERE segments.date DURING LAST_30_DAYS
 Skip this phase for plain written reports. When the user asks for a dashboard or data app, or an interactive view is clearly the best presentation, use the matching report's dashboard section as the implementation recipe.
 
 Before authoring a custom dashboard:
-- Inspect the live `hyper_data_build_dashboard` tool schema first — it documents the accepted data-source shapes and UI components. Do not invent dashboard patterns or component names.
+- Inspect the live `data_apps_build` tool schema first — it documents the accepted data-source shapes and UI components. Do not invent dashboard patterns or component names.
 
 The implementation pattern is:
 
@@ -92,7 +92,7 @@ The implementation pattern is:
 4. `refresh` — set `{"mode": "scheduled", "cron": "0 * * * *"}` to keep the dashboard live; default is manual.
 
 ```python
-hyper_data_build_dashboard(
+data_apps_build(
     name="Google Ads Report",
     tool_data_sources={
         "raw": {
@@ -107,20 +107,20 @@ hyper_data_build_dashboard(
 )
 ```
 
-The tool source name is not a Python variable. It populates the cache table. SQL sources create the variables used by the interface code. Re-run the same call (or call `hyper_data_refresh_dashboard`) to refresh without re-invoking the agent. Do not inject Google Ads credentials into the dashboard/data app runtime.
+The tool source name is not a Python variable. It populates the cache table. SQL sources create the variables used by the interface code. Re-run the same call (or call `data_apps_refresh`) to refresh without re-invoking the agent. Do not inject Google Ads credentials into the dashboard/data app runtime.
 
 ## Phase 5: Response format
 
 Use the template in [report-template.md](report-template.md). State what data was queried, which date range was used, and whether the final output is a written report, dashboard, data app, or published interface.
 
-## Cached Data (optional, when `google_ads_query_insights` is exposed)
+## Cached Data (optional, when `google_ads_insights_query` is exposed)
 
-If the MCP exposes `google_ads_query_insights`, use it for large multi-account performance queries — it reads from a local cache refreshed hourly and avoids API timeouts entirely.
+If the MCP exposes `google_ads_insights_query`, use it for large multi-account performance queries — it reads from a local cache refreshed hourly and avoids API timeouts entirely.
 
-Call `google_ads_query_insights` — its built-in description includes the exact table name, schema, and example queries. Read the tool description first, then pass a SQL query targeting that table. Typical pattern:
+Call `google_ads_insights_query` — its built-in description includes the exact table name, schema, and example queries. Read the tool description first, then pass a SQL query targeting that table. Typical pattern:
 
 ```
-google_ads_query_insights(
+google_ads_insights_query(
   query="SELECT date, campaign_name, SUM(cost_micros) as spend, SUM(clicks) as clicks
          FROM <table>
          WHERE customer_id = '1234567890'
@@ -129,7 +129,7 @@ google_ads_query_insights(
 )
 ```
 
-Replace `<table>` with the table name shown in the `google_ads_query_insights` tool description. Cache is refreshed hourly — no manual sync needed.
+Replace `<table>` with the table name shown in the `google_ads_insights_query` tool description. Cache is refreshed hourly — no manual sync needed.
 
 > **If the tool returns a "no data cached" error**, check the `suggestion` field in the response — it will contain the correct workspace-specific table name. Retry the query using that suggested table name instead.
 

@@ -6,7 +6,7 @@ The reply rate on the first touch is the floor, not the ceiling. Most positive r
 
 1. **Each follow-up adds something new.** A different angle, fresh proof, a useful resource. "Just checking in" is a tax on the reader's attention with no payoff — it nukes reply rates and trains the prospect to ignore you.
 2. **Each email stands alone.** Don't assume the prospect read the previous touches. A follow-up that only makes sense if you read touch 1 has already lost.
-3. **Always reply in the original thread.** Use `gmail_reply_to_message` with the `thread_id` from touch 1 (saved from the `gmail_messages_send` response). Threading preserves context and helps deliverability — Gmail treats threaded replies more favorably than fresh sends to the same address.
+3. **Always reply in the original thread.** Use `gmail_messages_reply` with the `thread_id` from touch 1 (saved from the `gmail_messages_send` response). Threading preserves context and helps deliverability — Gmail treats threaded replies more favorably than fresh sends to the same address.
 4. **Widen the gaps as the sequence goes.** First gap is short, last gap is long. Hammering on a tight cadence reads as desperate and trips spam filters.
 5. **Honor the breakup.** If the breakup email is "closing your file unless I hear back," actually close the file. Sending a sneaky "actually one more thing" after a breakup nukes credibility.
 
@@ -15,10 +15,10 @@ The reply rate on the first touch is the floor, not the ceiling. Most positive r
 | Touch | Day | Gap | Angle | Subject pattern | Tool |
 | --- | --- | --- | --- | --- | --- |
 | 1 | 0 | — | Initial framework (Observation / Question / Trigger / Story) | Short and lowercase | `gmail_messages_send` |
-| 2 | +3 | 3d | Same angle, sharpened — add a one-line specific proof | Reply (no subject change) | `gmail_reply_to_message` |
-| 3 | +7 | 4d | *Different* angle from touch 1 | Reply | `gmail_reply_to_message` |
-| 4 | +14 | 7d | Useful free resource (case study, calculator, teardown) | Reply | `gmail_reply_to_message` |
-| 5 | +21 | 7d | Breakup. "Closing your file." | Reply | `gmail_reply_to_message` |
+| 2 | +3 | 3d | Same angle, sharpened — add a one-line specific proof | Reply (no subject change) | `gmail_messages_reply` |
+| 3 | +7 | 4d | *Different* angle from touch 1 | Reply | `gmail_messages_reply` |
+| 4 | +14 | 7d | Useful free resource (case study, calculator, teardown) | Reply | `gmail_messages_reply` |
+| 5 | +21 | 7d | Breakup. "Closing your file." | Reply | `gmail_messages_reply` |
 
 Adjust to context: a high-stakes enterprise campaign might run 7 touches over 6 weeks; a SMB volume play might run 3 touches in 7 days. Five touches over 21 days is the sane default.
 
@@ -130,7 +130,7 @@ Once a day the user says: "Run the cold-email cadence — send any due touches a
 1. gmail_messages_list(query="label:cold/<campaign> is:unread newer_than:1d")
    → process replies, apply classification labels, prune sequence
 2. For each prospect with no reply and last touch > N days ago:
-     - gmail_reply_to_message(thread_id=..., body=<next angle>)
+     - gmail_messages_reply(thread_id=..., body=<next angle>)
      - gmail_labels_add(message_id=..., label_ids=["cold/<campaign>/touch-N"])
 3. Report: X sent, Y replied, breakdown by classification.
 ```
@@ -147,7 +147,7 @@ Same toolchain, just on-demand instead of daily. Useful for low-volume / high-st
 
 ## Subject lines on follow-ups
 
-Don't change the subject line on follow-ups — keeping the same subject preserves threading and signals to Gmail that this is conversational, not promotional. The `gmail_reply_to_message` tool handles this automatically (it uses `Re:` if Gmail's UI does).
+Don't change the subject line on follow-ups — keeping the same subject preserves threading and signals to Gmail that this is conversational, not promotional. The `gmail_messages_reply` tool handles this automatically (it uses `Re:` if Gmail's UI does).
 
 If a thread goes very long (10+ messages), Gmail clients sometimes collapse it. At that point a fresh send with a slightly different subject is fine — but you've already lost the thread.
 

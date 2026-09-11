@@ -93,7 +93,7 @@ The Hyper MCP doesn't manage DNS — these have to be set on the registrar / DNS
 
 Bad addresses tank deliverability faster than bad copy. Before adding a prospect to a campaign:
 
-1. **Use Apollo's verified emails.** Pass `reveal_personal_emails=True` on `apollo_people_bulk_match` — Apollo flags verified vs guessed.
+1. **Use Apollo's verified emails.** Pass `reveal_personal_emails=True` on `apollo_people_match_bulk` — Apollo flags verified vs guessed.
 2. **Skip the role-based addresses for cold outbound.** `info@`, `sales@`, `hello@` rarely reply and often hit shared inboxes that spam-flag everything.
 3. **Honor Apollo's `email_status`.** If status is `unverified` or `bounced`, drop the prospect — don't try to email anyway.
 4. **Drop prospects who have ever replied "remove me / unsubscribe / not interested" — across any campaign in the workspace.** Maintain a global `unsubscribed` Gmail label and check against it before each campaign:

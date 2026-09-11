@@ -16,7 +16,7 @@ Step-by-step guide for building a data-informed content strategy using the Hyper
 Understand what the user's content should cover.
 
 1. Ask for their core topics or business areas (2 – 5 seed themes).
-2. Run `hyperseo_keyword_ideas` for each seed theme (limit 30 – 50).
+2. Run `hyperseo_keyword_ideas_generate` for each seed theme (limit 30 – 50).
 3. This gives a broad view of the keyword landscape around their topics.
 
 ### Step 2: Validate demand and intent
@@ -24,7 +24,7 @@ Understand what the user's content should cover.
 Not every idea has search demand. Validate.
 
 1. Run `hyperseo_search_volume_get` on the most relevant keyword candidates.
-2. Run `hyperseo_keyword_difficulty` on the same set.
+2. Run `hyperseo_keyword_difficulty_get` on the same set.
 3. Run `hyperseo_intents_search` to classify intent at scale — this determines the right content format for each keyword.
 4. Also run `hyperseo_ai_search_volume_get` to check AI channel demand.
 5. Discard keywords with no meaningful volume (< 100 / month) unless strategically important.

@@ -199,8 +199,8 @@ All data above pulled on [date]. Pricing and features can change — re-pull bef
 | Organic search (est. monthly traffic) | [N] | [N] | [N] | [N] | hyperseo_domain_overview_get |
 | Backlinks (90d delta) | +[N] | +[N] | +[N] | +[N] | hyperseo_backlinks_history_get |
 | AI Overview citations (count over [keywords]) | [N] | [N] | [N] | [N] | hyperseo_ai_overviews_get |
-| Instagram followers (current / 90d delta) | [N] / +[N] | [N] / +[N] | [N] / +[N] | [N] / +[N] | scrape_instagram |
-| TikTok median views/post (90d) | [N] | [N] | [N] | [N] | scrape_tiktok_videos |
+| Instagram followers (current / 90d delta) | [N] / +[N] | [N] / +[N] | [N] / +[N] | [N] / +[N] | instagram_scrape |
+| TikTok median views/post (90d) | [N] | [N] | [N] | [N] | tiktok_videos_scrape |
 
 ## Rank position on the 10 keywords that matter most
 | Keyword | Us | [Comp A] | [Comp B] | [Comp C] | 90d delta (us) |

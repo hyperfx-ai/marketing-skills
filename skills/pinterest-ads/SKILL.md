@@ -27,20 +27,32 @@ Strategic skill for managing Pinterest Ads campaigns via the Pinterest Ads API v
 - **Hyper MCP installed and connected.** [https://app.hyperfx.ai/mcp](https://app.hyperfx.ai/mcp)
 - **Pinterest Ads integration connected** at [https://app.hyperfx.ai/apps](https://app.hyperfx.ai/apps) (Pinterest Business account with ad account access).
 
-If `pinterest_ads_list_ad_accounts` is not in the tool list, stop and tell the user to enable the Hyper MCP and connect Pinterest Ads.
+If `search("pinterest_ads_ad_accounts_list")` does not find `pinterest_ads_ad_accounts_list`, stop and tell the user to enable the Hyper MCP and connect Pinterest Ads.
+
+### How to call tools on the Hyper MCP
+
+The Hyper MCP lists six tools: `search`, `describe`, `call`, `connections_list`, `connections_use`, `info`. Every tool named in this skill runs through `call`:
+
+```text
+search("<what you want to do>")      # find the tool name and its toolkit
+describe("<tool name>")              # read the input schema
+call("<tool name>", {...})           # run it
+```
+
+The names in this skill are the `name` argument of `call`. A tool that is not enabled for the workspace, or whose integration is not connected, is not found by `search`; stop and tell the user which integration to connect.
 
 ## Tool surface
 
 | Tool group | Tools |
 | --- | --- |
-| Accounts | `pinterest_ads_list_ad_accounts`, `pinterest_ads_get_ad_account` |
-| Campaigns | `pinterest_ads_list_campaigns`, `pinterest_ads_get_campaign`, `pinterest_ads_create_campaign`, `pinterest_ads_update_campaign` |
-| Ad groups | `pinterest_ads_list_ad_groups`, `pinterest_ads_get_ad_group`, `pinterest_ads_create_ad_group`, `pinterest_ads_update_ad_group` |
-| Ads | `pinterest_ads_list_ads`, `pinterest_ads_get_ad`, `pinterest_ads_create_ad`, `pinterest_ads_update_ad` |
-| Audiences | `pinterest_ads_list_audiences`, `pinterest_ads_create_audience`, `pinterest_ads_create_customer_list` |
-| Conversion | `pinterest_ads_list_conversion_tags`, `pinterest_ads_create_conversion_tag`, `pinterest_ads_send_conversion_event` |
-| Keywords | `pinterest_ads_create_keyword` |
-| Analytics | `pinterest_ads_get_campaign_analytics` |
+| Accounts | `pinterest_ads_ad_accounts_list`, `pinterest_ads_ad_accounts_get` |
+| Campaigns | `pinterest_ads_campaigns_list`, `pinterest_ads_campaigns_get`, `pinterest_ads_campaigns_create`, `pinterest_ads_campaigns_update` |
+| Ad groups | `pinterest_ads_ad_groups_list`, `pinterest_ads_ad_groups_get`, `pinterest_ads_ad_groups_create`, `pinterest_ads_ad_groups_update` |
+| Ads | `pinterest_ads_list`, `pinterest_ads_get`, `pinterest_ads_create`, `pinterest_ads_update` |
+| Audiences | `pinterest_ads_audiences_list`, `pinterest_ads_audiences_create`, `pinterest_ads_customer_lists_create` |
+| Conversion | `pinterest_ads_conversion_tags_list`, `pinterest_ads_conversion_tags_create`, `pinterest_ads_conversion_events_send` |
+| Keywords | `pinterest_ads_keywords_create` |
+| Analytics | `pinterest_ads_campaign_analytics_get` |
 
 ## Critical Rules
 

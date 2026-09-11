@@ -26,15 +26,27 @@ Data-driven SEO research and analysis. Every recommendation must be backed by re
 - **Hyper MCP installed and connected.** [https://app.hyperfx.ai/mcp](https://app.hyperfx.ai/mcp)
 - **HyperSEO toolkit enabled** at [https://app.hyperfx.ai/apps](https://app.hyperfx.ai/apps) — provides the `hyperseo_*` tool surface that wraps DataForSEO and AI search query data.
 
-If `hyperseo_search_volume_get` is not in the tool list, stop and tell the user to enable the Hyper MCP and turn on the HyperSEO toolkit.
+If `search("hyperseo_search_volume_get")` does not find `hyperseo_search_volume_get`, stop and tell the user to enable the Hyper MCP and turn on the HyperSEO toolkit.
+
+### How to call tools on the Hyper MCP
+
+The Hyper MCP lists six tools: `search`, `describe`, `call`, `connections_list`, `connections_use`, `info`. Every tool named in this skill runs through `call`:
+
+```text
+search("<what you want to do>")      # find the tool name and its toolkit
+describe("<tool name>")              # read the input schema
+call("<tool name>", {...})           # run it
+```
+
+The names in this skill are the `name` argument of `call`. A tool that is not enabled for the workspace, or whose integration is not connected, is not found by `search`; stop and tell the user which integration to connect.
 
 ## Tool surface
 
 | Tool group | Tools |
 | --- | --- |
-| Keyword research | `hyperseo_search_volume_get`, `hyperseo_keyword_difficulty`, `hyperseo_keyword_ideas`, `hyperseo_site_keywords_search`, `hyperseo_intents_search` |
+| Keyword research | `hyperseo_search_volume_get`, `hyperseo_keyword_difficulty_get`, `hyperseo_keyword_ideas_generate`, `hyperseo_site_keywords_search`, `hyperseo_intents_search` |
 | SERP & AI Overviews | `hyperseo_serp_results_get`, `hyperseo_ai_overviews_get` |
-| Competitor analysis | `hyperseo_competitors_search`, `hyperseo_competitor_domains_search`, `hyperseo_domain_intersections_search`, `hyperseo_bulk_traffic` |
+| Competitor analysis | `hyperseo_competitors_search`, `hyperseo_competitor_domains_search`, `hyperseo_domain_intersections_search`, `hyperseo_traffic_get_bulk` |
 | Domain & rankings | `hyperseo_domain_overview_get`, `hyperseo_domain_keywords_get`, `hyperseo_rank_history_get` |
 | Backlinks | `hyperseo_backlinks_history_get` |
 | AI search visibility | `hyperseo_ai_search_volume_get`, `hyperseo_mentions_track` |
@@ -85,8 +97,8 @@ Apply these throughout all analysis.
 | Task | Tool | Key output |
 | --- | --- | --- |
 | Check search volume and CPC | `hyperseo_search_volume_get` | Monthly volume, CPC, competition. |
-| Assess ranking difficulty | `hyperseo_keyword_difficulty` | Difficulty score 0–100. |
-| Generate keyword ideas | `hyperseo_keyword_ideas` | Related keywords with metrics. |
+| Assess ranking difficulty | `hyperseo_keyword_difficulty_get` | Difficulty score 0–100. |
+| Generate keyword ideas | `hyperseo_keyword_ideas_generate` | Related keywords with metrics. |
 | Find keywords for a site | `hyperseo_site_keywords_search` | Keywords a domain could target. |
 | See who ranks on Google | `hyperseo_serp_results_get` | Top positions, URLs, domains. |
 | Check Google AI Overview | `hyperseo_ai_overviews_get` | AI-generated summary and cited sources. |
@@ -97,7 +109,7 @@ Apply these throughout all analysis.
 | Track backlink trends | `hyperseo_backlinks_history_get` | New / lost backlinks over time. |
 | Check AI chatbot query volume | `hyperseo_ai_search_volume_get` | Monthly queries to ChatGPT, Claude, etc. |
 | Track brand mentions in LLMs | `hyperseo_mentions_track` | Brand citations across AI models. |
-| Compare traffic across domains | `hyperseo_bulk_traffic` | Organic / paid ETV and keyword counts per domain. |
+| Compare traffic across domains | `hyperseo_traffic_get_bulk` | Organic / paid ETV and keyword counts per domain. |
 | Track ranking history over time | `hyperseo_rank_history_get` | Monthly organic traffic and keyword trends. |
 | Classify keyword search intent | `hyperseo_intents_search` | Intent type with confidence scores. |
 | Find keyword overlaps between domains | `hyperseo_domain_intersections_search` | Shared SERP keywords with positions. |

@@ -69,7 +69,7 @@ Pass any of these to override mode defaults:
 ## Example
 
 ```python
-create_ugc_video(
+ugc_videos_create(
     product=ProductContext(
         name="Ember Travel Mug",
         category="insulated travel mug",

@@ -5,7 +5,7 @@
 ### Create audience
 
 ```python
-pinterest_ads_create_audience(
+pinterest_ads_audiences_create(
     ad_account_id="<AD_ACCOUNT_ID>",
     name="Website Visitors",
     audience_type="VISITOR",
@@ -27,7 +27,7 @@ pinterest_ads_create_audience(
 ### Create customer list
 
 ```python
-pinterest_ads_create_customer_list(
+pinterest_ads_customer_lists_create(
     ad_account_id="<AD_ACCOUNT_ID>",
     name="Email Subscribers",
     records="user1@example.com,user2@example.com,...",
@@ -44,13 +44,13 @@ pinterest_ads_create_customer_list(
 ### List existing tags
 
 ```python
-pinterest_ads_list_conversion_tags(ad_account_id="<AD_ACCOUNT_ID>")
+pinterest_ads_conversion_tags_list(ad_account_id="<AD_ACCOUNT_ID>")
 ```
 
 ### Create conversion tag
 
 ```python
-pinterest_ads_create_conversion_tag(
+pinterest_ads_conversion_tags_create(
     ad_account_id="<AD_ACCOUNT_ID>",
     name="Purchase Tracking",
     aem_enabled=true,
@@ -60,7 +60,7 @@ pinterest_ads_create_conversion_tag(
 ### Send conversion event
 
 ```python
-pinterest_ads_send_conversion_event(
+pinterest_ads_conversion_events_send(
     ad_account_id="<AD_ACCOUNT_ID>",
     event_name="checkout",
     action_source="web",

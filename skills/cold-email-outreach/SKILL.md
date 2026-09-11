@@ -29,21 +29,33 @@ End-to-end cold outreach: research, draft, send, follow up, route replies. Strat
 - **Firecrawl** (bundled) — for company-page signals.
 - **Optional: LinkedIn scraper** (bundled, runs through Apify) — for richer per-prospect personalization.
 
-If `gmail_messages_send` and `apollo_mixed_people_search` are not in the agent's tool list, stop and tell the user to enable the Hyper MCP and connect Gmail + Apollo.
+If `gmail_messages_send` and `apollo_people_search` are not in the agent's tool list, stop and tell the user to enable the Hyper MCP and connect Gmail + Apollo.
+
+### How to call tools on the Hyper MCP
+
+The Hyper MCP lists six tools: `search`, `describe`, `call`, `connections_list`, `connections_use`, `info`. Every tool named in this skill runs through `call`:
+
+```text
+search("<what you want to do>")      # find the tool name and its toolkit
+describe("<tool name>")              # read the input schema
+call("<tool name>", {...})           # run it
+```
+
+The names in this skill are the `name` argument of `call`. A tool that is not enabled for the workspace, or whose integration is not connected, is not found by `search`; stop and tell the user which integration to connect.
 
 ## Tool surface
 
 | Phase | Tools |
 | --- | --- |
-| Prospect research | `apollo_mixed_people_search`, `apollo_mixed_companies_search`, `apollo_people_bulk_match` (preferred for 2+ enrich), `apollo_people_match` (single only) |
+| Prospect research | `apollo_people_search`, `apollo_companies_search`, `apollo_people_match_bulk` (preferred for 2+ enrich), `apollo_people_match` (single only) |
 | Per-prospect signals | `firecrawl_urls_scrape`, `firecrawl_urls_scrape_batch`, `firecrawl_branding_extract`, `firecrawl_screenshots_create`, `scrape_linkedin_profiles` *(conditional — requires LinkedIn Apify integration)* |
 | Drafting | `gmail_drafts_create`, `gmail_drafts_update`, `gmail_drafts_get`, `gmail_drafts_list` |
-| Sending | `gmail_messages_send`, `gmail_drafts_send`, `gmail_reply_to_message` |
-| Reply routing | `gmail_messages_list`, `gmail_get_message`, `gmail_labels_create`, `gmail_labels_add`, `gmail_labels_remove`, `gmail_messages_move_to_label` *(takes `label_id` string, not `label_ids` array)* |
+| Sending | `gmail_messages_send`, `gmail_drafts_send`, `gmail_messages_reply` |
+| Reply routing | `gmail_messages_list`, `gmail_messages_get`, `gmail_labels_create`, `gmail_labels_add`, `gmail_labels_remove`, `gmail_messages_move_to_label` *(takes `label_id` string, not `label_ids` array)* |
 
 ## Critical rules
 
-1. **Never loop `apollo_people_match` for multiple prospects.** For 2+ records always batch into `apollo_people_bulk_match`. Apollo's tool description warns about this explicitly — looping single-match calls burns credits and is much slower.
+1. **Never loop `apollo_people_match` for multiple prospects.** For 2+ records always batch into `apollo_people_match_bulk`. Apollo's tool description warns about this explicitly — looping single-match calls burns credits and is much slower.
 2. **Default send mode = drafts-first for review.** For any campaign with 4+ prospects, draft the first 1–3 with `gmail_drafts_create`, show them to the user, get explicit approval, then batch-send the rest with `gmail_messages_send`. Never send a full campaign without showing samples first.
 3. **One label per campaign.** Create a `cold/<campaign-name>` label with `gmail_labels_create` at the start, apply it to every send, then track replies by searching that label. This is what makes Phase 6 reply routing actually work.
 4. **Stay under Gmail's send limits.** ~500 messages/day per consumer Gmail account, ~2,000/day per Workspace user. Space sends out — see [`references/deliverability.md`](./references/deliverability.md) for warming and per-day pacing.
@@ -71,7 +83,7 @@ If they're stuck on any of these, push back. A campaign without proof or a clear
 
 ```
 # Search by ICP
-apollo_mixed_people_search(
+apollo_people_search(
   person_titles=["Head of Growth", "VP Growth", "Director of Growth"],
   organization_num_employees_ranges=["11,50"],
   person_locations=["United States"],
@@ -83,7 +95,7 @@ Then for the prospects you actually want to contact, batch-enrich for emails:
 
 ```
 # CORRECT — one bulk call for many prospects
-apollo_people_bulk_match(
+apollo_people_match_bulk(
   details=[
     {"first_name": "...", "last_name": "...", "domain": "..."},
     ...up to 10 per call...
@@ -94,7 +106,7 @@ apollo_people_bulk_match(
 
 Only fall back to `apollo_people_match` for single-prospect lookups (e.g., the user pastes one LinkedIn URL).
 
-For deeper company-level context (industry, revenue range, tech stack), call `apollo_mixed_companies_search` by organization name on the companies you want to enrich. Note that person search results already include core company fields (headcount, industry, location) — only reach for `apollo_mixed_companies_search` when you need data beyond what the person search returns.
+For deeper company-level context (industry, revenue range, tech stack), call `apollo_companies_search` by organization name on the companies you want to enrich. Note that person search results already include core company fields (headcount, industry, location) — only reach for `apollo_companies_search` when you need data beyond what the person search returns.
 
 ### Phase 3 — Per-prospect signals (the personalization layer)
 
@@ -185,12 +197,12 @@ Default cadence (adjust to the user's situation):
 | Touch | Day | Angle | Tool |
 | --- | --- | --- | --- |
 | 1 | 0 | Initial framework (observation/question/trigger/story) | `gmail_messages_send` |
-| 2 | +3 | Reply in the same thread, add a one-line specific proof | `gmail_reply_to_message` |
-| 3 | +7 | Different angle (if 1 was observation, try question or value-first) | `gmail_reply_to_message` |
-| 4 | +14 | Useful free resource — case study, calculator, teardown | `gmail_reply_to_message` |
-| 5 | +21 | Breakup email. "Closing your file unless I hear back. Worth keeping the door open?" | `gmail_reply_to_message` |
+| 2 | +3 | Reply in the same thread, add a one-line specific proof | `gmail_messages_reply` |
+| 3 | +7 | Different angle (if 1 was observation, try question or value-first) | `gmail_messages_reply` |
+| 4 | +14 | Useful free resource — case study, calculator, teardown | `gmail_messages_reply` |
+| 5 | +21 | Breakup email. "Closing your file unless I hear back. Worth keeping the door open?" | `gmail_messages_reply` |
 
-Always reply in the original thread (`gmail_reply_to_message` with the `message_id` returned from the touch-1 send) — preserves context and improves deliverability. See [`references/follow-up-sequences.md`](./references/follow-up-sequences.md) for angle rotation, breakup-email templates, and how to prune prospects mid-sequence.
+Always reply in the original thread (`gmail_messages_reply` with the `message_id` returned from the touch-1 send) — preserves context and improves deliverability. See [`references/follow-up-sequences.md`](./references/follow-up-sequences.md) for angle rotation, breakup-email templates, and how to prune prospects mid-sequence.
 
 ### Phase 6 — Track replies and route them
 
@@ -199,7 +211,7 @@ Always reply in the original thread (`gmail_reply_to_message` with the `message_
 gmail_messages_list(query="label:cold/q3-growth-leads is:unread newer_than:7d")
 ```
 
-For each reply, read the body with `gmail_get_message(message_id=...)`, classify it, and label:
+For each reply, read the body with `gmail_messages_get(message_id=...)`, classify it, and label:
 
 | Classification | Label | What to do |
 | --- | --- | --- |

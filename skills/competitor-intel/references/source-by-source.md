@@ -28,7 +28,7 @@ Firecrawl is the backbone for any web-content slice. Use it whenever the questio
 
 ### Pitfalls
 
-- **JS-heavy SPAs may not render fully.** If the page comes back near-empty, fall back to `web_scrape_page` (stealth-proxy + JS render). Bonus: `web_scrape_page` accepts an `ai_query` argument that extracts targeted info from the page in one call (e.g. `ai_query="extract the pricing tier names and monthly prices"`).
+- **JS-heavy SPAs may not render fully.** If the page comes back near-empty, fall back to `web_pages_scrape` (stealth-proxy + JS render). Bonus: `web_pages_scrape` accepts an `ai_query` argument that extracts targeted info from the page in one call (e.g. `ai_query="extract the pricing tier names and monthly prices"`).
 - **`firecrawl_websites_crawl` can be slow + credit-heavy.** Cap with `max_pages` for first run. A 200-post blog archive easily becomes a 10-minute job.
 - **Pricing pages with toggles (monthly / annual).** A single scrape captures the default state. Run twice — once for monthly, once for annual — by including the URL parameter or hash in the URL.
 - **Geo-fenced pages.** Firecrawl scrapes from a default region; pricing in EUR vs USD vs GBP varies. Note the apparent locale of the result in the brief.
@@ -69,9 +69,9 @@ The Apify-backed scrapers each handle one platform. Use the right one for each p
 
 | Tool | What it pulls |
 | --- | --- |
-| `scrape_instagram(direct_urls=["https://www.instagram.com/<user>/"], results_type="posts", results_limit=50)` | General-purpose: pull posts, comments, details, or reels from a profile/hashtag/place URL. Set `results_type` to switch what you get. |
-| `scrape_instagram_posts(usernames=["<user>"], results_limit=24)` | Targeted post pull — recent posts from known accounts with engagement data. Takes an array of usernames. |
-| `scrape_instagram_followers_count(usernames=["<user1>", "<user2>"])` | Just the follower count — cheap and batchable. Track over time for growth-rate signal. Takes an array. |
+| `instagram_scrape(direct_urls=["https://www.instagram.com/<user>/"], results_type="posts", results_limit=50)` | General-purpose: pull posts, comments, details, or reels from a profile/hashtag/place URL. Set `results_type` to switch what you get. |
+| `instagram_posts_scrape(usernames=["<user>"], results_limit=24)` | Targeted post pull — recent posts from known accounts with engagement data. Takes an array of usernames. |
+| `instagram_followers_count_scrape(usernames=["<user1>", "<user2>"])` | Just the follower count — cheap and batchable. Track over time for growth-rate signal. Takes an array. |
 
 **Useful for:** organic engagement trend, content cadence, hashtag patterns, what creative is working for them. Don't mistake total followers for engagement health — a 200K-follower account averaging 800 likes/post is in trouble; a 30K averaging 4K is winning.
 
@@ -81,8 +81,8 @@ The Apify-backed scrapers each handle one platform. Use the right one for each p
 
 | Tool | What it pulls |
 | --- | --- |
-| `scrape_tiktok_videos(profiles=["<user>"], results_per_page=30)` | Recent videos — caption, view count, like count, comment count, share count, posted-at, video URL. Also accepts `hashtags`, `search_queries`, or `post_urls` instead of `profiles`. |
-| `scrape_tiktok_comments(post_urls=["https://..."], comments_per_post=50)` | Comments on a specific video — useful for sentiment / customer-language mining. |
+| `tiktok_videos_scrape(profiles=["<user>"], results_per_page=30)` | Recent videos — caption, view count, like count, comment count, share count, posted-at, video URL. Also accepts `hashtags`, `search_queries`, or `post_urls` instead of `profiles`. |
+| `tiktok_comments_scrape(post_urls=["https://..."], comments_per_post=50)` | Comments on a specific video — useful for sentiment / customer-language mining. |
 
 **Useful for:** posting cadence, viral moments, content format trends (which videos hit 100K vs 5K). TikTok's algorithm is hit-driven, so look at the *distribution* of view counts across the last 30 videos, not the average.
 
@@ -104,7 +104,7 @@ The Apify-backed scrapers each handle one platform. Use the right one for each p
 
 | Tool | What it pulls |
 | --- | --- |
-| `search_tweets(from_user=..., max_items=...)` | Tweets from a specific account. Also supports `search_terms`, `to_user`, `mention`, `since` / `until` (YYYY-MM-DD_HH:MM:SS_UTC), `min_faves`, `filter_replies`, `lang`, etc. — rich filter surface, prefer the typed args over a freeform query string. |
+| `x_tweets_search(from_user=..., max_items=...)` | Tweets from a specific account. Also supports `search_terms`, `to_user`, `mention`, `since` / `until` (YYYY-MM-DD_HH:MM:SS_UTC), `min_faves`, `filter_replies`, `lang`, etc. — rich filter surface, prefer the typed args over a freeform query string. |
 
 **Useful for:** real-time signals, launch announcements, exec / founder voice, where in the funnel a customer is when they tweet about the competitor.
 
@@ -114,8 +114,8 @@ The Apify-backed scrapers each handle one platform. Use the right one for each p
 
 | Tool | What it pulls |
 | --- | --- |
-| `scrape_reddit(searches=["<term>"], max_items=50, sort="new", time="month")` | Posts and threads matching the search terms — title, body, upvotes, comments, subreddit. Also accepts `start_urls=["https://www.reddit.com/r/<sub>/"]` to scrape a specific subreddit. `time` filter: "all" / "day" / "week" / "month" / "year". |
-| `scrape_reddit_leads(searches=[{"keyword": ..., "subreddit": ...}], hours_back=24, max_items=100)` | Lead-flavored variant: structured keyword + optional subreddit search, with `negative_keywords` filter and `hours_back` lookback. Use for "find people complaining about [competitor]" or "find buying-intent posts." |
+| `reddit_scrape(searches=["<term>"], max_items=50, sort="new", time="month")` | Posts and threads matching the search terms — title, body, upvotes, comments, subreddit. Also accepts `start_urls=["https://www.reddit.com/r/<sub>/"]` to scrape a specific subreddit. `time` filter: "all" / "day" / "week" / "month" / "year". |
+| `reddit_leads_scrape(searches=[{"keyword": ..., "subreddit": ...}], hours_back=24, max_items=100)` | Lead-flavored variant: structured keyword + optional subreddit search, with `negative_keywords` filter and `hours_back` lookback. Use for "find people complaining about [competitor]" or "find buying-intent posts." |
 
 **Useful for:** unfiltered customer sentiment, competitive comparisons users do themselves, complaints / praise. The single best source for "what do real people say about this competitor."
 
@@ -125,16 +125,16 @@ The Apify-backed scrapers each handle one platform. Use the right one for each p
 
 | Tool | What it pulls |
 | --- | --- |
-| `search_google_results(query=..., num_results=10, country="us", language="en", max_age_days=...)` | Google SERPs — organic results, People Also Ask, related queries, paid results. Returns titles, URLs, descriptions, positions. |
-| `web_search(...)` | Generic web search — fallback if `search_google_results` returns empty or is rate-limited |
-| `scrape_google_trends(search_terms=[...], time_range="today 3-m", geo="US")` | Trend interest over time. `time_range` options: `now 1-H`, `now 4-H`, `now 1-d`, `now 7-d`, `today 1-m`, `today 3-m`, `today 5-y`, `all`. Empty `geo` = worldwide. |
+| `google_search_results_search(query=..., num_results=10, country="us", language="en", max_age_days=...)` | Google SERPs — organic results, People Also Ask, related queries, paid results. Returns titles, URLs, descriptions, positions. |
+| `web_search(...)` | Generic web search — fallback if `google_search_results_search` returns empty or is rate-limited |
+| `google_trends_scrape(search_terms=[...], time_range="today 3-m", geo="US")` | Trend interest over time. `time_range` options: `now 1-H`, `now 4-H`, `now 1-d`, `now 7-d`, `today 1-m`, `today 3-m`, `today 5-y`, `all`. Empty `geo` = worldwide. |
 
 **Useful for:**
 
-- `search_google_results(query="<competitor> reviews", num_results=20)` — what review sites surface, what's on page 1 (positive / negative).
-- `search_google_results(query="<competitor> alternative", num_results=20)` — who Google considers their competition.
-- `search_google_results(query="<competitor> vs <us>", num_results=20)` — existing comparison content (gold for understanding the conversation already happening).
-- `scrape_google_trends(search_terms=["<competitor>", "<us>"], time_range="today 3-m", geo="US")` — relative interest delta. The single chart that always lands in a board update.
+- `google_search_results_search(query="<competitor> reviews", num_results=20)` — what review sites surface, what's on page 1 (positive / negative).
+- `google_search_results_search(query="<competitor> alternative", num_results=20)` — who Google considers their competition.
+- `google_search_results_search(query="<competitor> vs <us>", num_results=20)` — existing comparison content (gold for understanding the conversation already happening).
+- `google_trends_scrape(search_terms=["<competitor>", "<us>"], time_range="today 3-m", geo="US")` — relative interest delta. The single chart that always lands in a board update.
 
 **Pitfalls:** SERPs are personalized. Results vary by location and history. Always set `geo=` explicitly when using trends, and assume search results are roughly directional, not exact.
 
@@ -143,16 +143,16 @@ The Apify-backed scrapers each handle one platform. Use the right one for each p
 For sites Firecrawl can't render (heavy SPA, JS-locked, anti-bot):
 
 ```
-web_scrape_page(url=..., use_proxy=true, stealth_proxy=true, ai_query="extract the pricing tier names and monthly prices")
+web_pages_scrape(url=..., use_proxy=true, stealth_proxy=true, ai_query="extract the pricing tier names and monthly prices")
 ```
 
 The `ai_query` argument turns one scrape call into a one-shot extraction — no follow-up parsing needed for well-defined fields. Use it whenever you know in advance what slice of the page matters.
 
 Lighter-weight alternatives:
-- `web_fetch_page(url=...)` — straight HTTP fetch, no JS render
-- `web_loader(url=...)` — quick text extraction, less overhead than `web_scrape_page`
+- `web_pages_fetch(url=...)` — straight HTTP fetch, no JS render
+- `web_pages_load(url=...)` — quick text extraction, less overhead than `web_pages_scrape`
 
-Order of fallback when Firecrawl is empty: `web_scrape_page` (with `ai_query`) → `web_fetch_page` → `web_loader`.
+Order of fallback when Firecrawl is empty: `web_pages_scrape` (with `ai_query`) → `web_pages_fetch` → `web_pages_load`.
 
 ## Ecommerce competitor specifics
 
@@ -160,8 +160,8 @@ When the competitor is a DTC / ecommerce brand:
 
 | Tool | What it pulls |
 | --- | --- |
-| `scrape_ecommerce_products(...)` | Product listings — title, price, availability, variants. Useful for catalog deltas. |
-| `scrape_ecommerce_reviews(...)` | Product reviews — useful for sentiment + product-feedback mining at scale. |
+| `ecommerce_products_scrape(...)` | Product listings — title, price, availability, variants. Useful for catalog deltas. |
+| `ecommerce_reviews_scrape(...)` | Product reviews — useful for sentiment + product-feedback mining at scale. |
 
 These are stronger than `firecrawl_urls_scrape` on a PDP because they normalize the product fields across platforms (Shopify / WooCommerce / etc.) instead of returning raw HTML.
 
@@ -172,12 +172,12 @@ These are stronger than `firecrawl_urls_scrape` on a PDP because they normalize 
 | "What changed on [competitor]'s pricing page?" | Firecrawl on the pricing URL — diff against last scrape |
 | "Are they ranking for X?" | `hyperseo_domain_keywords_get` (filter the result) — `hyperseo_rank_history_get` returns *domain-wide* trend, not per-keyword |
 | "What keywords do they have that we don't?" | `hyperseo_domain_intersections_search` (returns keywords *both* rank for at what positions; gap = ours zero / theirs non-zero) |
-| "How fast are they growing on Instagram?" | `scrape_instagram_followers_count(usernames=[...])` (trend over multiple runs) |
+| "How fast are they growing on Instagram?" | `instagram_followers_count_scrape(usernames=[...])` (trend over multiple runs) |
 | "What's the conversation about them online?" | Reddit + Twitter + Google reviews search |
 | "Who shows up in AI Overviews for our category?" | `hyperseo_ai_overviews_get(keyword=..., location_code=...)` per keyword |
 | "Who do LLMs cite when asked about our category?" | `hyperseo_mentions_track(query="best [category] tools", brands=[...])` |
 | "Are they hiring?" | LinkedIn (`scrape_linkedin_profiles` on the company URL) — check team size + recent posts about hiring |
-| "Did they just raise / launch / pivot?" | Twitter (`search_tweets(from_user=...)`) + News via `search_google_results` |
+| "Did they just raise / launch / pivot?" | Twitter (`x_tweets_search(from_user=...)`) + News via `google_search_results_search` |
 
 ## Cost & rate-limit discipline
 

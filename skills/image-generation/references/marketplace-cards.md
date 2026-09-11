@@ -43,7 +43,7 @@ Every asset prompt includes preservation clauses (logo/text exact, geometry, col
 ## Example
 
 ```python
-create_marketplace_cards(
+images_marketplace_cards_create(
     product=ProductContext(
         name="Glow Vitamin C Serum",
         brand_name="Glow Lab",

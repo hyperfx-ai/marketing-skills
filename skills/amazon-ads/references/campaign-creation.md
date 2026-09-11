@@ -62,7 +62,7 @@ Wait for explicit approval.
 
 ### 1. Create Campaign
 ```
-amazon_ads_create_campaign(
+amazon_ads_campaigns_create(
     profile_id=PROFILE_ID,
     name="SP - Manual - [Product]",
     targeting_type="MANUAL",
@@ -76,7 +76,7 @@ Returns: `campaignId`.
 
 ### 2. Create Ad Group
 ```
-amazon_ads_create_ad_group(
+amazon_ads_ad_groups_create(
     profile_id=PROFILE_ID,
     campaign_id=CAMPAIGN_ID,
     name="[Product] - Exact Keywords",
@@ -88,7 +88,7 @@ Returns: `adGroupId`.
 
 ### 3. Add Product Ads
 ```
-amazon_ads_create_product_ad(
+amazon_ads_product_ads_create(
     profile_id=PROFILE_ID,
     ad_group_id=AD_GROUP_ID,
     campaign_id=CAMPAIGN_ID,
@@ -99,7 +99,7 @@ amazon_ads_create_product_ad(
 
 ### 4. Add Keywords (MANUAL campaigns only)
 ```
-amazon_ads_create_keyword(
+amazon_ads_keywords_create(
     profile_id=PROFILE_ID,
     ad_group_id=AD_GROUP_ID,
     campaign_id=CAMPAIGN_ID,
@@ -111,7 +111,7 @@ amazon_ads_create_keyword(
 
 ### 5. Add Negative Keywords (Campaign Level)
 ```
-amazon_ads_create_campaign_negative_keyword(
+amazon_ads_campaign_negative_keywords_create(
     profile_id=PROFILE_ID,
     campaign_id=CAMPAIGN_ID,
     keyword_text="cheap",
@@ -121,7 +121,7 @@ amazon_ads_create_campaign_negative_keyword(
 
 ### 6. Add Negative Keywords (Ad Group Level)
 ```
-amazon_ads_create_negative_keyword(
+amazon_ads_negative_keywords_create(
     profile_id=PROFILE_ID,
     ad_group_id=AD_GROUP_ID,
     campaign_id=CAMPAIGN_ID,
@@ -132,7 +132,7 @@ amazon_ads_create_negative_keyword(
 
 ### 7. Product Targeting (alternative to keywords — separate ad group)
 ```
-amazon_ads_create_product_target(
+amazon_ads_product_targets_create(
     profile_id=PROFILE_ID,
     ad_group_id=AD_GROUP_ID,
     campaign_id=CAMPAIGN_ID,
@@ -149,7 +149,7 @@ Available expression types:
 
 ### 8. Negative Product Targets (Ad Group Level)
 ```
-amazon_ads_create_negative_product_target(
+amazon_ads_negative_product_targets_create(
     profile_id=PROFILE_ID,
     ad_group_id=AD_GROUP_ID,
     campaign_id=CAMPAIGN_ID,

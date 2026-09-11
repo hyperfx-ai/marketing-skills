@@ -27,13 +27,25 @@ Strategic guide for creating and managing Meta advertising campaigns, analyzing 
 - **Meta Business integration connected** (Facebook + Instagram, with at least one ad account and one Page) at [https://app.hyperfx.ai/apps](https://app.hyperfx.ai/apps).
 - **Firecrawl integration connected** for site research and screenshot grounding (discovery phase).
 
-If `meta_ads_adaccount_list` is not in the tool list, stop and tell the user to enable Hyper MCP and connect Meta Business.
+If `search("meta_ads_adaccount_list")` does not find `meta_ads_adaccount_list`, stop and tell the user to enable Hyper MCP and connect Meta Business.
 
 If you suspect a connection issue (missing ad accounts, page publishing failures, or permission errors), call `meta_ads_health_check()` and report the diagnostics before proceeding.
 
+### How to call tools on the Hyper MCP
+
+The Hyper MCP lists six tools: `search`, `describe`, `call`, `connections_list`, `connections_use`, `info`. Every tool named in this skill runs through `call`:
+
+```text
+search("<what you want to do>")      # find the tool name and its toolkit
+describe("<tool name>")              # read the input schema
+call("<tool name>", {...})           # run it
+```
+
+The names in this skill are the `name` argument of `call`. A tool that is not enabled for the workspace, or whose integration is not connected, is not found by `search`; stop and tell the user which integration to connect.
+
 ## Tool names
 
-Use the **exact tool name from your connected tool list**. Canonical names are `meta_ads_*` (listed below). On Hyper platform chat, legacy `meta_business_*` names (e.g. `meta_business_list_ad_accounts`) and the retired plural names (e.g. `meta_ads_campaigns_create`) resolve to the same tools via aliases — if a call fails with "tool not found", search the live catalog for the canonical name.
+Use the **exact tool name from your connected tool list**. Canonical names are `meta_ads_*` (listed below). On Hyper platform chat, legacy `meta_business_*` names (e.g. `meta_ads_adaccount_list`) and the retired plural names (e.g. `meta_ads_campaign_create`) resolve to the same tools via aliases — if a call fails with "tool not found", search the live catalog for the canonical name.
 
 | Group | Tools |
 | --- | --- |
@@ -42,7 +54,7 @@ Use the **exact tool name from your connected tool list**. Canonical names are `
 | Tracking assets | `meta_ads_ad_pixels_list`, `meta_ads_ad_pixels_get`, `meta_ads_custom_audiences_list`, `meta_ads_lookalike_audiences_list`, `meta_ads_targeting_search` |
 | Step-by-step creation (preferred) | `meta_ads_campaign_create`, `meta_ads_adset_create`, `meta_ads_ad_create`, `meta_ads_ad_images_upload`, `meta_ads_creative_create` |
 | Read & preview | `meta_ads_campaign_get`, `meta_ads_campaigns_search`, `meta_ads_adset_list`, `meta_ads_ad_list`, `meta_ads_ad_get`, `meta_ads_ad_previews_get` |
-| Insights & dashboards | `meta_ads_insights_get`, `hyper_data_build_dashboard`, `database_query` |
+| Insights & dashboards | `meta_ads_insights_get`, `data_apps_build`, `database_query` |
 | Launch & edits | `meta_ads_campaigns_activate`, `meta_ads_campaign_update`, `meta_ads_adset_update`, `meta_ads_ad_update` |
 | Automated rules | `meta_ads_adrule_create`, `meta_ads_adrule_list`, `meta_ads_adrule_get`, `meta_ads_adrule_update`, `meta_ads_adrule_delete`, `meta_ads_adrule_history_list` |
 | Site research | `firecrawl_branding_extract`, `firecrawl_screenshots_create` |
@@ -63,11 +75,11 @@ CLI users: translate tool names with the `hyper-cli` skill (`hyperai search "<to
 
 > **REGULATED ADVERTISERS NEED `special_ad_categories`**: For gambling, financial, housing, employment, credit, or political advertisers, declare the category on `meta_ads_campaign_create` (e.g. `special_ad_categories=["ONLINE_GAMBLING_AND_GAMING"]`).
 
-> **FIXED RUN WINDOWS GO ON THE AD SET**: When the user gives a run duration or dates ("run it for 7 days", "through end of month"), set `start_time` AND `end_time` (ISO 8601) on `meta_ads_ad_sets_create`. A daily-budget ad set with no `end_time` runs continuously until manually paused — the requested window is silently lost.
+> **FIXED RUN WINDOWS GO ON THE AD SET**: When the user gives a run duration or dates ("run it for 7 days", "through end of month"), set `start_time` AND `end_time` (ISO 8601) on `meta_ads_adset_create`. A daily-budget ad set with no `end_time` runs continuously until manually paused — the requested window is silently lost.
 
 > **GROUND COPY IN THE DESTINATION PAGE (RESEARCH FIRST)**: When the brief centers on a URL ("build a campaign for https://..."), fetch that page FIRST (`web_pages_fetch`) — before discovery and before writing any copy — and ground ad copy in what the page actually says (product name, value props, offer). Never invent copy for a page you have not read; even when the user supplies exact copy or headlines, fetch the page to verify the destination matches the offer.
 
-> **EU-TARGETED AD SETS NEED DSA FIELDS**: If an ad set targets the EU, set `dsa_beneficiary` and `dsa_payor` on `meta_ads_ad_sets_create` (who benefits from / pays for the ad) — required under the EU Digital Services Act, or delivery is restricted.
+> **EU-TARGETED AD SETS NEED DSA FIELDS**: If an ad set targets the EU, set `dsa_beneficiary` and `dsa_payor` on `meta_ads_adset_create` (who benefits from / pays for the ad) — required under the EU Digital Services Act, or delivery is restricted.
 
 > **UTMs ON EVERY DESTINATION AD (`url_tags`)**: Set `url_tags` (UTM params, e.g. `utm_source=meta&utm_medium=paid&utm_campaign=...`) on every creative that drives to a destination — downstream measurement (e.g. AppsFlyer + a data warehouse) stitches on these, so an ad without UTMs is effectively unmeasurable. Use the advertiser's canonical template; if you don't have one, ask rather than ship untracked.
 

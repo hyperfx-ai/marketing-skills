@@ -23,7 +23,7 @@ Don't assume who the competitors are — discover them from data.
 
 For each competitor (and the user's own domain).
 
-1. Run `hyperseo_bulk_traffic` with all domains at once to get a quick traffic comparison across all competitors in a single call.
+1. Run `hyperseo_traffic_get_bulk` with all domains at once to get a quick traffic comparison across all competitors in a single call.
 2. Run `hyperseo_domain_overview_get` on each domain for detailed metrics (authority, backlinks, referring domains).
 3. Present as a comparison matrix.
 
@@ -41,7 +41,7 @@ Find what competitors rank for that the user doesn't.
 1. Run `hyperseo_domain_intersections_search` between the user's domain and each top competitor to find keywords where both appear in SERPs — this reveals direct keyword battlegrounds.
 2. Run `hyperseo_domain_keywords_get` on the top 2 – 3 competitors (limit 50 each) to find keywords the user is missing entirely.
 3. Compare: which high-value keywords do competitors have that the user is missing?
-4. Cross-check the gaps with `hyperseo_keyword_difficulty` to find achievable targets.
+4. Cross-check the gaps with `hyperseo_keyword_difficulty_get` to find achievable targets.
 
 ### Step 4: Backlink comparison
 

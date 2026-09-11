@@ -18,7 +18,19 @@ This skill is for **paid TikTok ads** (the TikTok Marketing API surface).
 - **Hyper MCP installed and connected.** [https://app.hyperfx.ai/mcp](https://app.hyperfx.ai/mcp)
 - **TikTok Marketing integration connected** (TikTok Ads Manager / Business Center) at [https://app.hyperfx.ai/apps](https://app.hyperfx.ai/apps).
 
-If `tiktok_get_advertiser_accounts` is not in the tool list, stop and tell the user to enable Hyper MCP and connect TikTok Marketing.
+If `search("tiktok_ads_advertiser_accounts_list")` does not find `tiktok_ads_advertiser_accounts_list`, stop and tell the user to enable Hyper MCP and connect TikTok Marketing.
+
+### How to call tools on the Hyper MCP
+
+The Hyper MCP lists six tools: `search`, `describe`, `call`, `connections_list`, `connections_use`, `info`. Every tool named in this skill runs through `call`:
+
+```text
+search("<what you want to do>")      # find the tool name and its toolkit
+describe("<tool name>")              # read the input schema
+call("<tool name>", {...})           # run it
+```
+
+The names in this skill are the `name` argument of `call`. A tool that is not enabled for the workspace, or whose integration is not connected, is not found by `search`; stop and tell the user which integration to connect.
 
 ## Out of scope — defer to other skills
 
@@ -30,30 +42,30 @@ If `tiktok_get_advertiser_accounts` is not in the tool list, stop and tell the u
 
 | Tool | Purpose |
 | --- | --- |
-| `tiktok_get_advertiser_accounts` | Discovery: list advertiser IDs available to the connected user. |
-| `tiktok_get_campaigns`, `tiktok_create_campaign`, `tiktok_update_campaign`, `tiktok_update_campaign_status` | Campaign lifecycle. |
-| `tiktok_get_adgroups`, `tiktok_create_adgroup`, `tiktok_update_adgroup`, `tiktok_update_adgroup_status` | Ad group lifecycle. |
-| `tiktok_get_ads`, `tiktok_create_ad`, `tiktok_update_ad_status` | Ad lifecycle. Note: `tiktok_update_ad` does not exist in the MCP — ad content edits (creative, copy, URL) require the TikTok Ads Manager UI. Only status changes (enable / pause / delete) are available via MCP. |
-| `tiktok_ad_video_upload`, `tiktok_ad_video_info`, `tiktok_ad_video_search` | Video creative upload + lookup. |
-| `tiktok_report_integrated_get` | Performance reporting. |
-| `tiktok_create_custom_audience`, `tiktok_list_custom_audiences`, `tiktok_create_lookalike_audience` | Audience management (optional). |
+| `tiktok_ads_advertiser_accounts_list` | Discovery: list advertiser IDs available to the connected user. |
+| `tiktok_ads_campaigns_get`, `tiktok_ads_campaigns_create`, `tiktok_ads_campaigns_update`, `tiktok_ads_campaigns_status_update` | Campaign lifecycle. |
+| `tiktok_ads_ad_groups_list`, `tiktok_ads_ad_groups_create`, `tiktok_ads_ad_groups_update`, `tiktok_ads_ad_groups_status_update` | Ad group lifecycle. |
+| `tiktok_ads_list`, `tiktok_ads_create`, `tiktok_ads_ad_status_update` | Ad lifecycle. Note: `tiktok_update_ad` does not exist in the MCP — ad content edits (creative, copy, URL) require the TikTok Ads Manager UI. Only status changes (enable / pause / delete) are available via MCP. |
+| `tiktok_ads_videos_upload`, `tiktok_ads_videos_get`, `tiktok_ads_videos_search` | Video creative upload + lookup. |
+| `tiktok_ads_integrated_reports_get` | Performance reporting. |
+| `tiktok_ads_custom_audiences_create`, `tiktok_ads_custom_audiences_list`, `tiktok_ads_lookalike_audiences_create` | Audience management (optional). |
 
 ## Phase 1: Account Discovery
 
 ### Initial Setup
-- Use `tiktok_get_advertiser_accounts()` to get advertiser IDs.
+- Use `tiktok_ads_advertiser_accounts_list()` to get advertiser IDs.
 - If multiple accounts: ask the user to select one.
 - If single account: inform the user and proceed.
 
 ### Bid Benchmarks (optional but recommended)
 
-Before setting bid prices, call `tiktok_ad_benchmarks` to retrieve industry-specific CPM/CPC benchmarks. This prevents using placeholder values that may be too low to win auctions or too high for the user's budget.
+Before setting bid prices, call `tiktok_ads_benchmarks_get` to retrieve industry-specific CPM/CPC benchmarks. This prevents using placeholder values that may be too low to win auctions or too high for the user's budget.
 
 ```python
-tiktok_ad_benchmarks(
+tiktok_ads_benchmarks_get(
     advertiser_id="123456789",
     dimensions=["industry"],
-    filtering={"industry": "292801"}  # industry code from tiktok_get_advertiser_accounts
+    filtering={"industry": "292801"}  # industry code from tiktok_ads_advertiser_accounts_list
 )
 ```
 
@@ -76,7 +88,7 @@ tiktok_ad_benchmarks(
 - `budget_mode`: `BUDGET_MODE_INFINITE` (CBO), `BUDGET_MODE_DAY`, or `BUDGET_MODE_TOTAL`.
 
 ```python
-tiktok_create_campaign(
+tiktok_ads_campaigns_create(
     advertiser_id="123456789",
     campaign_name="Summer Sale 2026",
     objective_type="TRAFFIC",
@@ -97,7 +109,7 @@ tiktok_create_campaign(
 
 **For TRAFFIC Campaigns:**
 ```python
-tiktok_create_adgroup(
+tiktok_ads_ad_groups_create(
     advertiser_id="123456789",
     campaign_id="1234567890123456",
     adgroup_name="Website Traffic - Summer Sale",
@@ -117,7 +129,7 @@ tiktok_create_adgroup(
 
 **For REACH Campaigns:**
 ```python
-tiktok_create_adgroup(
+tiktok_ads_ad_groups_create(
     advertiser_id="123456789",
     campaign_id="1234567890123456",
     adgroup_name="Brand Awareness US",
@@ -142,7 +154,7 @@ tiktok_create_adgroup(
 Upload one video per creative variant. Capture the returned `video_id` — you'll need it in Step 4.
 
 ```python
-video_response = tiktok_ad_video_upload(
+video_response = tiktok_ads_videos_upload(
     advertiser_id="123456789",
     video_file=video_data,
     upload_type="UPLOAD_BY_FILE"
@@ -150,12 +162,12 @@ video_response = tiktok_ad_video_upload(
 video_id = video_response["data"]["video_id"]
 ```
 
-> Already-uploaded videos can be reused. Use `tiktok_ad_video_search` to find existing videos by name or `tiktok_ad_video_info` to fetch metadata for a known video ID.
+> Already-uploaded videos can be reused. Use `tiktok_ads_videos_search` to find existing videos by name or `tiktok_ads_videos_get` to fetch metadata for a known video ID.
 
 ### Step 4: Create the Ad
 
 ```python
-tiktok_create_ad(
+tiktok_ads_create(
     advertiser_id="123456789",
     adgroup_id="1234567890123456",
     ad_name="Summer Sale - Hero Video",
@@ -210,7 +222,7 @@ Always create ads paused (`operation_status="DISABLE"`) and only flip them to `E
 ## Reporting
 
 ```python
-tiktok_report_integrated_get(
+tiktok_ads_integrated_reports_get(
     advertiser_id="123456789",
     report_type="BASIC",
     data_level="AUCTION_AD",

@@ -106,7 +106,7 @@ sandbox; cache tables are only needed for dashboard/data-app builds.
 # stages = ["application_submitted", "lead_reached",
 #           "scheduled_for_training", "showed_for_training",
 #           "launched_from_training", "rep_that_sells"]
-result = hyper_data_build_dashboard(
+result = data_apps_build(
     name="Lead-Gen Funnel",
     tool_data_sources={
         "raw_conversions": {

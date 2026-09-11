@@ -21,12 +21,24 @@ This is the hub in a hub-and-spoke model. Ad copy, blog posts, cold email, socia
 - **Recommended for auto-draft**, enabled at https://app.hyperfx.ai/apps: **Firecrawl** (read the brand's site and extract visual identity). Without it, skip auto-draft and use the interview path — the skill still works.
 - **Optional enrichment:** the Apify scrapers used by `customer-research` (verbatim customer language) and **HyperSEO** (competitive landscape). Both are nice-to-have; mark any section built without real data as unverified rather than inventing content.
 
+### How to call tools on the Hyper MCP
+
+The Hyper MCP lists six tools: `search`, `describe`, `call`, `connections_list`, `connections_use`, `info`. Every tool named in this skill runs through `call`:
+
+```text
+search("<what you want to do>")      # find the tool name and its toolkit
+describe("<tool name>")              # read the input schema
+call("<tool name>", {...})           # run it
+```
+
+The names in this skill are the `name` argument of `call`. A tool that is not enabled for the workspace, or whose integration is not connected, is not found by `search`; stop and tell the user which integration to connect.
+
 ## Tool surface
 
 | Job | Tools |
 | --- | --- |
 | Read, create, update `brand-context.md` | your file tools (`read_file`, `create_file`, `edit_file`) |
-| Auto-draft from the brand's site | `firecrawl_urls_scrape` (homepage, about, pricing, product pages), `web_scrape_page` fallback |
+| Auto-draft from the brand's site | `firecrawl_urls_scrape` (homepage, about, pricing, product pages), `web_pages_scrape` fallback |
 | Visual identity (colors, logo, typography) | `firecrawl_branding_extract` |
 | Verbatim customer language (optional) | defer to `customer-research` |
 | Competitive landscape (optional) | defer to `competitor-intel`, `seo-research` |

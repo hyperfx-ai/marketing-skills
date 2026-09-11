@@ -50,7 +50,7 @@ WHERE segments.date BETWEEN '{start}' AND '{end}'
 ## Building a dashboard from this report
 
 ```python
-result = hyper_data_build_dashboard(
+result = data_apps_build(
     name="Search Terms Waste",
     tool_data_sources={
         "raw": {

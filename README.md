@@ -29,6 +29,18 @@ What's in it:
 
 ---
 
+### Calling tools
+
+The Hyper MCP lists six tools: `search`, `describe`, `call`, `connections_list`, `connections_use`, `info`. Every tool a skill names runs through `call`:
+
+```text
+search("<what you want to do>")      # find the tool name and its toolkit
+describe("<tool name>")              # read the input schema
+call("<tool name>", {...})           # run it
+```
+
+The names in a skill are the `name` argument of `call`. A client that sends a tool name directly still works: the server runs it with the same checks.
+
 ## Install
 
 ```bash

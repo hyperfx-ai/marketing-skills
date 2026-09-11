@@ -18,7 +18,7 @@ Reddit is typically the highest-signal source for most B2B and B2C ICPs. People 
 
 ```python
 # Broad pain/frustration sweep
-scrape_reddit(
+reddit_scrape(
     searches=["[product category] frustrating", "[product category] problems", "[product name] vs"],
     sort="top",
     time="year",
@@ -29,7 +29,7 @@ scrape_reddit(
 )
 
 # Competitor switching conversations
-scrape_reddit(
+reddit_scrape(
     searches=["switched from [competitor]", "moved away from [competitor]", "[competitor] alternative"],
     sort="top",
     time="year",
@@ -37,7 +37,7 @@ scrape_reddit(
 )
 
 # Subreddit-specific (when you know where your ICP hangs out)
-scrape_reddit(
+reddit_scrape(
     start_urls=[
         "https://www.reddit.com/r/marketing/",
         "https://www.reddit.com/r/entrepreneur/"
@@ -137,28 +137,28 @@ Twitter is best for complaints (they're short and sharp), product comparisons, a
 
 ```python
 # Frustrated customers
-search_tweets(
+x_tweets_search(
     search_terms='"[product name]" (frustrating OR broken OR terrible OR "doesn\'t work" OR canceled)',
     max_items=50,
     min_faves=5
 )
 
 # Switching conversations
-search_tweets(
+x_tweets_search(
     search_terms='"switched from [product name]" OR "moved from [product name]" OR "[product name] alternative"',
     max_items=40,
     min_faves=3
 )
 
 # Request threads — people mid-decision
-search_tweets(
+x_tweets_search(
     search_terms='"looking for" "[product category]" (recommend OR suggestions OR alternatives)',
     max_items=30,
     min_replies=2
 )
 
 # Competitor comparisons
-search_tweets(
+x_tweets_search(
     search_terms='"[competitor] vs [product]" OR "[product] vs [competitor]"',
     max_items=30,
     min_faves=3
@@ -177,14 +177,14 @@ Review sites are goldmines for structured pain/benefit language. 1–3 star revi
 
 ```python
 # Product reviews
-web_scrape_page(
+web_pages_scrape(
     url="https://www.g2.com/products/[product-slug]/reviews",
     ai_query="Extract verbatim customer quotes about: (1) biggest pain points, (2) what they wish the product did differently, (3) what convinced them to buy. Include the star rating context.",
     use_proxy=True
 )
 
 # Competitor reviews (what do their customers complain about?)
-web_scrape_page(
+web_pages_scrape(
     url="https://www.g2.com/products/[competitor-slug]/reviews?filters%5Bnps_score%5D%5B%5D=3&filters%5Bnps_score%5D%5B%5D=2&filters%5Bnps_score%5D%5B%5D=1",
     ai_query="What are the most common complaints about this product? Extract verbatim quotes.",
     use_proxy=True
@@ -194,7 +194,7 @@ web_scrape_page(
 **Capterra:**
 
 ```python
-web_scrape_page(
+web_pages_scrape(
     url="https://www.capterra.com/p/[id]/[product-name]/",
     ai_query="Extract the top pros and cons in customers' own words. Pull verbatim quotes from negative reviews.",
     use_proxy=True
@@ -204,7 +204,7 @@ web_scrape_page(
 **Trustpilot (B2C products):**
 
 ```python
-web_scrape_page(
+web_pages_scrape(
     url="https://www.trustpilot.com/review/[domain.com]",
     ai_query="Extract the most common complaint themes from low-rated reviews. Include verbatim quotes.",
     use_proxy=True
@@ -215,14 +215,14 @@ web_scrape_page(
 
 ```python
 # iOS
-web_scrape_page(
+web_pages_scrape(
     url="https://apps.apple.com/us/app/[app-name]/id[app-id]",
     ai_query="Extract the most common pain points from 1-3 star reviews. Include exact customer quotes.",
     use_proxy=True
 )
 ```
 
-**Tip:** If `web_scrape_page` returns JavaScript-blocked content, try `firecrawl_urls_scrape` instead:
+**Tip:** If `web_pages_scrape` returns JavaScript-blocked content, try `firecrawl_urls_scrape` instead:
 
 ```python
 firecrawl_urls_scrape(
@@ -239,19 +239,19 @@ Best for B2C and consumer-facing products. The comment sections on product revie
 
 ```python
 # Search for product/category conversations
-scrape_tiktok_videos(
+tiktok_videos_scrape(
     search_queries=["[product category] honest review", "[product name] worth it"],
     results_per_page=30
 )
 
 # Hashtag mining (when you know the community hashtag)
-scrape_tiktok_videos(
+tiktok_videos_scrape(
     hashtags=["[producthashtag]", "[categoryhashtag]"],
     results_per_page=30
 )
 ```
 
-Note: `scrape_tiktok_videos` returns video metadata and engagement stats, not the comments themselves. Use the video titles and captions as research signal. For comment text, note the video URLs and scrape comments via the Hyper browser tools if needed.
+Note: `tiktok_videos_scrape` returns video metadata and engagement stats, not the comments themselves. Use the video titles and captions as research signal. For comment text, note the video URLs and scrape comments via the Hyper browser tools if needed.
 
 **Bias note:** TikTok skews younger and consumer-oriented. Strong for CPG, lifestyle, and consumer SaaS. Less useful for enterprise B2B.
 
@@ -263,33 +263,33 @@ Google is useful for discovering discussion sources you haven't thought of, not 
 
 ```python
 # Find Reddit threads about a specific pain
-search_google_results(
+google_search_results_search(
     query='site:reddit.com "[product category]" "I switched" OR "I quit" OR "stopped using"',
     num_results=20
 )
 
 # Find competitor complaints across the web
-search_google_results(
+google_search_results_search(
     query='"[competitor name]" problems OR complaints OR "doesn\'t work" -site:[competitor.com]',
     num_results=20,
     max_age_days=365
 )
 
 # Find community discussions (forums, Slack archives, Hacker News)
-search_google_results(
+google_search_results_search(
     query='"[product category]" ("tell me" OR "recommend" OR "alternatives") site:news.ycombinator.com',
     num_results=10
 )
 
 # Find review roundups
-search_google_results(
+google_search_results_search(
     query='"best [product category]" OR "[product category] alternatives" 2026',
     num_results=15,
     max_age_days=180
 )
 ```
 
-Then use `firecrawl_urls_scrape` or `web_scrape_page` to read the most relevant URLs.
+Then use `firecrawl_urls_scrape` or `web_pages_scrape` to read the most relevant URLs.
 
 ---
 
@@ -299,20 +299,20 @@ Best for pulling content from brand or community accounts — useful when resear
 
 ```python
 # Competitor brand posts
-scrape_instagram_posts(
+instagram_posts_scrape(
     usernames=["competitor_handle"],
     results_limit=30,
     data_detail_level="detailedData"
 )
 
 # Community / niche accounts
-scrape_instagram_posts(
+instagram_posts_scrape(
     usernames=["niche_community_account"],
     results_limit=20
 )
 ```
 
-Note: `scrape_instagram_posts` returns post captions, engagement, and metadata — not comment text. It's most useful for researching competitor messaging and content angles, not direct customer voice.
+Note: `instagram_posts_scrape` returns post captions, engagement, and metadata — not comment text. It's most useful for researching competitor messaging and content angles, not direct customer voice.
 
 ---
 
@@ -321,6 +321,6 @@ Note: `scrape_instagram_posts` returns post captions, engagement, and metadata �
 Some scraper tools are Apify-backed and occasionally return `fetch failed` or timeout:
 
 1. Retry once after a short pause.
-2. If it fails again, try an alternative tool (e.g., `firecrawl_urls_scrape` instead of `web_scrape_page`).
+2. If it fails again, try an alternative tool (e.g., `firecrawl_urls_scrape` instead of `web_pages_scrape`).
 3. If still failing, note the source as unavailable and continue with remaining sources. Don't block the entire research on one failed scrape.
 4. Never invent data to fill a gap — mark it as "source not available."

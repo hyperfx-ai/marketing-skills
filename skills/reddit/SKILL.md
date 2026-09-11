@@ -1,6 +1,6 @@
 ---
 name: reddit
-description: Research Reddit discussions with high signal using scrape_reddit_leads and scrape_reddit — pain points, intent discovery, and trend tracking. Use when the user wants to mine subreddits for leads, find threads worth replying to, or track what a community says about a topic.
+description: Research Reddit discussions with high signal using reddit_leads_scrape and reddit_scrape — pain points, intent discovery, and trend tracking. Use when the user wants to mine subreddits for leads, find threads worth replying to, or track what a community says about a topic.
 use_cases:
   - Find customer pain points from Reddit conversations
   - Monitor keyword mentions in specific subreddits
@@ -30,12 +30,24 @@ Use these tools in this order for research quality:
 - **Hyper MCP installed and connected.** [https://app.hyperfx.ai/mcp](https://app.hyperfx.ai/mcp)
 - **Reddit scraper toolkit** enabled at [https://app.hyperfx.ai/apps](https://app.hyperfx.ai/apps).
 
-1. `scrape_reddit_leads` (precision first)
-2. `scrape_reddit` (expand recall second)
+1. `reddit_leads_scrape` (precision first)
+2. `reddit_scrape` (expand recall second)
+
+### How to call tools on the Hyper MCP
+
+The Hyper MCP lists six tools: `search`, `describe`, `call`, `connections_list`, `connections_use`, `info`. Every tool named in this skill runs through `call`:
+
+```text
+search("<what you want to do>")      # find the tool name and its toolkit
+describe("<tool name>")              # read the input schema
+call("<tool name>", {...})           # run it
+```
+
+The names in this skill are the `name` argument of `call`. A tool that is not enabled for the workspace, or whose integration is not connected, is not found by `search`; stop and tell the user which integration to connect.
 
 ## Default Workflow
 
-### Step 1: Precision pass with `scrape_reddit_leads`
+### Step 1: Precision pass with `reddit_leads_scrape`
 
 Start with focused keyword + subreddit pairs:
 
@@ -48,11 +60,11 @@ Start with focused keyword + subreddit pairs:
 
 Use 1-3 specific keywords first. Avoid broad single words.
 
-### Step 2: Expand with `scrape_reddit`
+### Step 2: Expand with `reddit_scrape`
 
 If precision results are too narrow:
 
-- run `scrape_reddit` with subreddit `start_urls`
+- run `reddit_scrape` with subreddit `start_urls`
 - add adjacent keyword variants in `searches`
 - tune `sort` and `time` for recency vs quality
 - keep `skip_comments=true` when only post-level signal is needed

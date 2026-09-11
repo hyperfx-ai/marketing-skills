@@ -24,27 +24,39 @@ End-to-end skill for publishing organic content to TikTok through the **TikTok C
 - **Hyper MCP installed and connected.** [https://app.hyperfx.ai/mcp](https://app.hyperfx.ai/mcp)
 - **TikTok integration connected** at [https://app.hyperfx.ai/apps](https://app.hyperfx.ai/apps) — this skill uses the TikTok Login Kit / Content Posting API (NOT the TikTok Marketing API).
 
-If `tiktok_open_post_form` is not in the tool list, stop and tell the user to enable Hyper MCP and connect TikTok.
+If `search("tiktok_post_form_open")` does not find `tiktok_post_form_open`, stop and tell the user to enable Hyper MCP and connect TikTok.
+
+### How to call tools on the Hyper MCP
+
+The Hyper MCP lists six tools: `search`, `describe`, `call`, `connections_list`, `connections_use`, `info`. Every tool named in this skill runs through `call`:
+
+```text
+search("<what you want to do>")      # find the tool name and its toolkit
+describe("<tool name>")              # read the input schema
+call("<tool name>", {...})           # run it
+```
+
+The names in this skill are the `name` argument of `call`. A tool that is not enabled for the workspace, or whose integration is not connected, is not found by `search`; stop and tell the user which integration to connect.
 
 ## Tool surface
 
 | Tool | Purpose |
 | --- | --- |
-| `tiktok_open_post_form` | **The only entrypoint when a user wants to post.** Opens the compliance form. |
-| `tiktok_post_video_from_url`, `tiktok_post_video_from_file`, `tiktok_post_photos` | Final posting tools — call ONLY after the user submits the form. |
-| `tiktok_get_user_info` | Authenticated user profile (does not require the form). |
-| `tiktok_query_creator_info` | Check posting capabilities and limits. |
-| `tiktok_list_videos`, `tiktok_query_videos` | Browse the user's published videos. |
-| `tiktok_get_post_status` | Check the status of a previously submitted post. |
-| `tiktok_upload_video_from_url`, `tiktok_upload_video_from_file`, `tiktok_upload_photos` | Send to inbox as draft (user posts manually in the TikTok app — bypasses the form intentionally). |
+| `tiktok_post_form_open` | **The only entrypoint when a user wants to post.** Opens the compliance form. |
+| `tiktok_videos_send_from_url`, `tiktok_post_video_from_file`, `tiktok_photos_send` | Final posting tools — call ONLY after the user submits the form. |
+| `tiktok_current_user_get` | Authenticated user profile (does not require the form). |
+| `tiktok_creator_info_get` | Check posting capabilities and limits. |
+| `tiktok_videos_list`, `tiktok_videos_query` | Browse the user's published videos. |
+| `tiktok_posts_status_get` | Check the status of a previously submitted post. |
+| `tiktok_videos_upload_from_url`, `tiktok_videos_upload_from_file`, `tiktok_photos_upload` | Send to inbox as draft (user posts manually in the TikTok app — bypasses the form intentionally). |
 
 ## Critical Rules
 
-> **CRITICAL**: ALWAYS use `tiktok_open_post_form` when a user wants to post to TikTok. NEVER call `tiktok_post_video_from_url`, `tiktok_post_photos`, or `tiktok_post_video_from_file` directly in response to a user request. The posting form is required for TikTok compliance.
+> **CRITICAL**: ALWAYS use `tiktok_post_form_open` when a user wants to post to TikTok. NEVER call `tiktok_videos_send_from_url`, `tiktok_photos_send`, or `tiktok_post_video_from_file` directly in response to a user request. The posting form is required for TikTok compliance.
 
 > **CRITICAL**: Do NOT ask the user about privacy, policies, captions, or branded content settings before opening the form. The form handles all of this interactively.
 
-> **CRITICAL**: Call `tiktok_open_post_form` immediately when the user wants to post. Do not gather information first.
+> **CRITICAL**: Call `tiktok_post_form_open` immediately when the user wants to post. Do not gather information first.
 
 ## When the User Wants to Post
 
@@ -55,10 +67,10 @@ If the user says ANY of:
 - "upload to TikTok"
 - "put this on my TikTok"
 
-**Immediately call `tiktok_open_post_form`:**
+**Immediately call `tiktok_post_form_open`:**
 
 ```python
-tiktok_open_post_form(
+tiktok_post_form_open(
     media_type="video",            # or "photo"
     media_url="<url>",             # single video / single photo URL
     media_urls=["<url>", ...]      # for photo carousels (max 35)
@@ -70,7 +82,7 @@ tiktok_open_post_form(
 - Ask about caption / title before opening the form.
 - Ask about policy acknowledgments before opening the form.
 - Request any metadata — just open the form.
-- Call `tiktok_post_video_from_url` or `tiktok_post_photos` directly.
+- Call `tiktok_videos_send_from_url` or `tiktok_photos_send` directly.
 
 ## What the Form Handles
 
@@ -90,7 +102,7 @@ The interactive posting form is TikTok Content Sharing Guidelines compliant and 
 
 ## Pre-fill Parameters
 
-When calling `tiktok_open_post_form`, provide what you know:
+When calling `tiktok_post_form_open`, provide what you know:
 
 | Parameter | When to provide |
 | --- | --- |
@@ -105,9 +117,9 @@ When calling `tiktok_open_post_form`, provide what you know:
 
 When the user fills out and submits the form, you receive a message containing all their chosen settings. At that point, call the appropriate posting tool with the exact parameters from their submission:
 
-- **Video from URL**: `tiktok_post_video_from_url`
+- **Video from URL**: `tiktok_videos_send_from_url`
 - **Video from file**: `tiktok_post_video_from_file`
-- **Photos**: `tiktok_post_photos`
+- **Photos**: `tiktok_photos_send`
 
 The posting tool will automatically poll status and return a completion message.
 
@@ -132,20 +144,20 @@ The posting tool will automatically poll status and return a completion message.
 ## Example Flow
 
 1. User: "Post this video to TikTok".
-2. You: call `tiktok_open_post_form(media_type="video", media_url="<url>")`.
+2. You: call `tiktok_post_form_open(media_type="video", media_url="<url>")`.
 3. The posting form opens in the artifact panel.
 4. User configures privacy, caption, policies, etc.
 5. User clicks "Post to TikTok".
 6. You receive their settings as a message.
-7. You: call `tiktok_post_video_from_url(...)` with the submitted parameters.
+7. You: call `tiktok_videos_send_from_url(...)` with the submitted parameters.
 8. Tool auto-polls and returns status (complete, failed, or timeout).
 
 ## Inbox / Draft Path (no form required)
 
 These tools intentionally bypass the form — they send content to the user's TikTok app for manual posting:
 
-- `tiktok_upload_video_from_url` — send video to inbox as draft.
-- `tiktok_upload_video_from_file` — upload file to inbox as draft.
-- `tiktok_upload_photos` — send photos to inbox as draft.
+- `tiktok_videos_upload_from_url` — send video to inbox as draft.
+- `tiktok_videos_upload_from_file` — upload file to inbox as draft.
+- `tiktok_photos_upload` — send photos to inbox as draft.
 
 Use these only when the user explicitly asks to "send to my TikTok drafts" or "I want to post manually in the app". Otherwise, default to the form path.

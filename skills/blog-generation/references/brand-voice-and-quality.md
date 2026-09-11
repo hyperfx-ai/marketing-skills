@@ -8,7 +8,7 @@ Do this **before** writing the first draft, and enforce the gate at the end befo
 
 ## 1. Build a voice profile from the brand's own site
 
-Read the customer's existing site with `firecrawl_urls_scrape` / `web_scrape_page`: homepage, an about page, two or three of their best existing posts, and any product or pricing pages. From that, write a short profile that every draft must honor:
+Read the customer's existing site with `firecrawl_urls_scrape` / `web_pages_scrape`: homepage, an about page, two or three of their best existing posts, and any product or pricing pages. From that, write a short profile that every draft must honor:
 
 - **What they actually sell**, in one sentence, in their words.
 - **Who it is for** (the specific customer, not "businesses").

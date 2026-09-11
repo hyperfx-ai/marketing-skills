@@ -31,6 +31,18 @@ End-to-end lifecycle email — pick the right provider for the job, build the au
 
 If none of those tool prefixes (`klaviyo_*`, `resend_*`, `beehiiv_*`, `gmail_*`) appear in the agent's tool list, stop and tell the user to enable the Hyper MCP and connect the provider they intend to use.
 
+### How to call tools on the Hyper MCP
+
+The Hyper MCP lists six tools: `search`, `describe`, `call`, `connections_list`, `connections_use`, `info`. Every tool named in this skill runs through `call`:
+
+```text
+search("<what you want to do>")      # find the tool name and its toolkit
+describe("<tool name>")              # read the input schema
+call("<tool name>", {...})           # run it
+```
+
+The names in this skill are the `name` argument of `call`. A tool that is not enabled for the workspace, or whose integration is not connected, is not found by `search`; stop and tell the user which integration to connect.
+
 ## Provider selection
 
 The wrong provider is the most common reason a lifecycle program fails. Pick first.
@@ -48,10 +60,10 @@ You can run more than one. The pattern is: Klaviyo for marketing, Resend for tra
 
 | Phase | Klaviyo | Resend | Beehiiv | Gmail |
 | --- | --- | --- | --- | --- |
-| Audience setup | `klaviyo_create_list`, `klaviyo_add_member_to_list`, `klaviyo_create_segment`, `klaviyo_create_profile`, `klaviyo_update_profile` | `resend_create_audience`, `resend_create_contact`, `resend_list_contacts`, `resend_update_contact` | `beehiiv_create_subscription`, `beehiiv_create_segment`, `beehiiv_add_tags`, `beehiiv_list_subscriptions` | `gmail_labels_create`, `gmail_labels_add`, `gmail_labels_remove` |
-| Sequence build | `klaviyo_create_campaign`, `klaviyo_update_campaign_message` | `resend_create_automation`, `resend_update_automation`, `resend_get_automation` | `beehiiv_create_post`, `beehiiv_list_automations`, `beehiiv_add_to_automation` | `gmail_drafts_create`, `gmail_drafts_update` |
-| Send / launch | `klaviyo_send_campaign`, `klaviyo_get_campaign_send_job` | `resend_send_email`, `resend_send_broadcast` | `beehiiv_create_post` (publish), `beehiiv_update_post` | `gmail_messages_send`, `gmail_drafts_send` |
-| Measure | `klaviyo_get_metrics`, `klaviyo_get_metric`, `klaviyo_get_campaign` | `resend_list_automation_runs`, `resend_get_automation_run` | `beehiiv_get_post_stats`, `beehiiv_get_subscription` | `gmail_messages_list` |
+| Audience setup | `klaviyo_lists_create`, `klaviyo_list_members_add`, `klaviyo_segments_create`, `klaviyo_profiles_create`, `klaviyo_profiles_update` | `resend_audiences_create`, `resend_contacts_create`, `resend_contacts_list`, `resend_contacts_update` | `beehiiv_subscriptions_create`, `beehiiv_segments_create`, `beehiiv_tags_add`, `beehiiv_subscriptions_list` | `gmail_labels_create`, `gmail_labels_add`, `gmail_labels_remove` |
+| Sequence build | `klaviyo_campaigns_create`, `klaviyo_campaign_messages_update` | `resend_automations_create`, `resend_automations_update`, `resend_automations_get` | `beehiiv_posts_create`, `beehiiv_automations_list`, `beehiiv_automations_subscribers_add` | `gmail_drafts_create`, `gmail_drafts_update` |
+| Send / launch | `klaviyo_campaigns_send`, `klaviyo_campaign_send_jobs_get` | `resend_emails_send`, `resend_broadcasts_send` | `beehiiv_posts_create` (publish), `beehiiv_posts_update` | `gmail_messages_send`, `gmail_drafts_send` |
+| Measure | `klaviyo_metrics_list`, `klaviyo_metrics_get`, `klaviyo_campaigns_get` | `resend_automation_runs_list`, `resend_automation_runs_get` | `beehiiv_posts_stats_get`, `beehiiv_subscriptions_get` | `gmail_messages_list` |
 
 Full per-provider mechanics, gotchas, and concrete tool-call examples in [`references/provider-mechanics.md`](./references/provider-mechanics.md).
 
@@ -62,7 +74,7 @@ Full per-provider mechanics, gotchas, and concrete tool-call examples in [`refer
 3. **One purpose per sequence.** A "welcome + onboarding + product education + first purchase nudge" mega-flow is brittle and impossible to measure. Split into separate flows wired together.
 4. **Honor unsubscribes globally, not per-list.** When a profile unsubscribes, suppress them across every flow in the workspace — not just the one they unsubscribed from. All four providers expose this; it's not optional.
 5. **Test sends with a real seed inbox before going live.** Every provider supports a test send. Do not launch a 10-email sequence to a 50,000-person list without seeing every email render in Gmail / Outlook / Apple Mail / mobile.
-6. **Stay under provider rate limits.** Especially for `resend_send_broadcast` (large blast → throttled), `gmail_messages_send` (~500/day soft cap), and `klaviyo_send_campaign` (account-tier dependent).
+6. **Stay under provider rate limits.** Especially for `resend_broadcasts_send` (large blast → throttled), `gmail_messages_send` (~500/day soft cap), and `klaviyo_campaigns_send` (account-tier dependent).
 7. **Track conversion metric, not opens.** Apple Mail Privacy Protection makes open rates ~useless on iOS. Configure conversion events at the provider level (Klaviyo metrics, Resend automation completion, Beehiiv segment transitions) and report on those.
 
 ## Workflow
@@ -98,7 +110,7 @@ Audience setup is provider-specific. Examples for the most common case (welcome 
 **Klaviyo** — create the list, then a flow trigger on "Subscribed to List":
 
 ```
-klaviyo_create_list(list_name="newsletter-2026")
+klaviyo_lists_create(list_name="newsletter-2026")
 # triggers + flows are configured in Klaviyo UI; the API surface here is
 # for adding profiles, building segments, and sending one-off campaigns.
 ```
@@ -106,8 +118,8 @@ klaviyo_create_list(list_name="newsletter-2026")
 **Resend** — create an audience, then an automation triggered by `contact.created`:
 
 ```
-resend_create_audience(name="newsletter-2026")
-resend_create_automation(
+resend_audiences_create(name="newsletter-2026")
+resend_automations_create(
   name="welcome-2026",
   trigger="contact.created",
   audience_id="aud_...",
@@ -118,12 +130,12 @@ resend_create_automation(
 **Beehiiv** — subscriptions trigger automations directly when added to a segment / publication:
 
 ```
-beehiiv_create_subscription(
+beehiiv_subscriptions_create(
   publication_id="pub_...",
   email="user@example.com",
   utm_source="signup-form",
 )
-beehiiv_add_to_automation(
+beehiiv_automations_subscribers_add(
   automation_id="aut_...",
   subscription_id="sub_...",
 )
@@ -162,9 +174,9 @@ Pull the *conversion to goal* metric, not opens or clicks. Open rate post-MPP is
 
 | Provider | Conversion metric source |
 | --- | --- |
-| Klaviyo | `klaviyo_get_metric(metric_id=<conversion-event>)` — e.g., Placed Order attributed to the flow |
-| Resend | `resend_list_automation_runs(automation_id=...)` — count completed runs that hit the goal step |
-| Beehiiv | `beehiiv_get_post_stats(post_id=...)` and segment-membership transitions |
+| Klaviyo | `klaviyo_metrics_get(metric_id=<conversion-event>)` — e.g., Placed Order attributed to the flow |
+| Resend | `resend_automation_runs_list(automation_id=...)` — count completed runs that hit the goal step |
+| Beehiiv | `beehiiv_posts_stats_get(post_id=...)` and segment-membership transitions |
 | Gmail | `gmail_messages_list(query="label:lifecycle/<program> newer_than:30d")` — look for replies / conversions |
 
 Iteration rule: don't tune copy until the audience is right. If the welcome flow has a 1.2% conversion and the same product organic conversion is 4%, the audience is misaligned (too broad, wrong source, suppression rules missing) — fix that first. Copy comes second.

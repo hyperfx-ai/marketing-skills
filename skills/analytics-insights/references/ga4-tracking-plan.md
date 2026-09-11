@@ -73,7 +73,7 @@ GA4 distinguishes:
 **Rule:** every parameter you want to *report on* must be registered as either a custom dimension (string) or custom metric (number). Register them ahead of the event firing — backfill doesn't happen for older data.
 
 ```
-google_analytics_create_custom_dimension(
+google_analytics_custom_dimensions_create(
   parent="properties/123456789",       # note: arg is "parent", not "property_id"
   parameter_name="plan_tier",          # the event param name
   display_name="Plan Tier",            # what shows in the UI
@@ -81,7 +81,7 @@ google_analytics_create_custom_dimension(
   description="Plan the user is on at time of event",
 )
 
-google_analytics_create_custom_metric(
+google_analytics_custom_metrics_create(
   parent="properties/123456789",       # note: arg is "parent", not "property_id"
   parameter_name="lesson_seconds",
   display_name="Lesson Duration (s)",
@@ -113,10 +113,10 @@ Not every event is a conversion. Mark only the ones that map to *business outcom
 | Lead-gen / B2B | `form_submit` (with `form_id=demo-request`), `book_meeting` |
 | Content / publisher | `subscribe_newsletter`, time-on-site engagement (custom) |
 
-Mark with `google_analytics_create_key_event`:
+Mark with `google_analytics_key_events_create`:
 
 ```
-google_analytics_create_key_event(
+google_analytics_key_events_create(
   parent="properties/123456789",     # note: arg is "parent", not "property_id"
   event_name="purchase",
   counting_method="ONCE_PER_EVENT",  # or ONCE_PER_SESSION
