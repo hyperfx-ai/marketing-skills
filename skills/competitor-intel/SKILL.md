@@ -36,17 +36,16 @@ End-to-end competitor research and monitoring. Define the set, pull from every p
 
 If none of those tool prefixes appear in the agent's tool list (`firecrawl_*`, `hyperseo_*`, `instagram_scrape*`, `scrape_tiktok*`, `x_tweets_search`, `reddit_scrape*`, `google_search_results_search`, `google_trends_scrape`, `web_pages_scrape`), stop and tell the user to enable the Hyper MCP and connect at least Firecrawl + one social scraper. The LinkedIn scraper (`scrape_linkedin_profiles`) is only present when that specific integration is enabled — gracefully skip the LinkedIn slice if it's missing rather than failing the whole brief.
 
-### How to call tools on the Hyper MCP
+### How to run the tools in this skill
 
-The Hyper MCP lists six tools: `search`, `describe`, `call`, `connections_list`, `connections_use`, `info`. Every tool named in this skill runs through `call`:
+Every tool in this skill is named by its canonical tool name. Run it with the call your surface gives you:
 
-```text
-search("<what you want to do>")      # find the tool name and its toolkit
-describe("<tool name>")              # read the input schema
-call("<tool name>", {...})           # run it
-```
+| Surface | Find a tool | Run it |
+| --- | --- | --- |
+| MCP client (Claude, Cursor, Codex, ChatGPT) | `search("<what you want to do>")`, then `describe("<name>")` | `call("<name>", {...})` |
+| Hyper CLI | `hyperai search "<what you want to do>"`, then `hyperai describe <name>` | `hyperai call <name> --json '{...}'` |
 
-The names in this skill are the `name` argument of `call`. A tool that is not enabled for the workspace, or whose integration is not connected, is not found by `search`; stop and tell the user which integration to connect.
+If a tool is not found, its integration is not connected or not enabled for the workspace: stop and tell the user which integration to connect.
 
 ## Tool surface
 

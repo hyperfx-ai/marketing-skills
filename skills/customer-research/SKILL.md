@@ -32,17 +32,16 @@ The goal is always the same: surface what customers actually say (in their own w
 
 Not all scrapers need to be active for every run — enable the ones relevant to your ICP (Reddit and one review site is the minimum). If a scraper tool is missing from the tool list, skip that source and continue with the others.
 
-### How to call tools on the Hyper MCP
+### How to run the tools in this skill
 
-The Hyper MCP lists six tools: `search`, `describe`, `call`, `connections_list`, `connections_use`, `info`. Every tool named in this skill runs through `call`:
+Every tool in this skill is named by its canonical tool name. Run it with the call your surface gives you:
 
-```text
-search("<what you want to do>")      # find the tool name and its toolkit
-describe("<tool name>")              # read the input schema
-call("<tool name>", {...})           # run it
-```
+| Surface | Find a tool | Run it |
+| --- | --- | --- |
+| MCP client (Claude, Cursor, Codex, ChatGPT) | `search("<what you want to do>")`, then `describe("<name>")` | `call("<name>", {...})` |
+| Hyper CLI | `hyperai search "<what you want to do>"`, then `hyperai describe <name>` | `hyperai call <name> --json '{...}'` |
 
-The names in this skill are the `name` argument of `call`. A tool that is not enabled for the workspace, or whose integration is not connected, is not found by `search`; stop and tell the user which integration to connect.
+If a tool is not found, its integration is not connected or not enabled for the workspace: stop and tell the user which integration to connect.
 
 ## Tool surface
 

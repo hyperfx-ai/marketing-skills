@@ -74,7 +74,7 @@ Skills are NOT tools. They are markdown instructions plus optional reference fil
 
 | Skill | What it does |
 | --- | --- |
-| [`hyper-cli`](./skills/hyper-cli) | Bridge skill for running the marketing skills through `hyperai`, including how to translate raw MCP tool names into CLI aliases or raw toolkit calls. |
+| [`hyper-cli`](./skills/hyper-cli) | Run any marketing skill from a terminal with `hyperai`: auth, search, describe, call, and switching connected accounts. |
 
 ### Apps & channels
 
@@ -98,8 +98,7 @@ See [`CONTRIBUTING.md`](./CONTRIBUTING.md) for details.
 
 ## Repo conventions
 
-- **Tool names are referenced verbatim from the Hyper MCP, in their current form.** The Hyper MCP lists `search`, `describe`, `call`, `connections_list`, `connections_use` and `info`; every other tool runs through `call("<tool name>", {...})`. Verify a name with `search` or `describe` against the live catalog. Never write a legacy name: the catalog is the only source of truth, and it wins over codebase function names, prior skill content, or memory.
-- **CLI aliases are a separate surface.** Marketing skills name raw MCP tools like `gmail_messages_send`; the Hyper CLI may expose that as `gmail messages send`. Use `hyper-cli` for CLI execution guidance and always inspect the live CLI schema before calling.
+- **One canonical tool name, every surface.** A skill names a tool once, by its canonical name, for example `gmail_messages_send`. That name runs on MCP with `call("<name>", {...})` and on the CLI with `hyperai call <name> --json '{...}'`. Never write a legacy name and never write a CLI alias path such as `gmail messages send`: the live catalog (`search`, `describe`) is the only source of truth, and it wins over codebase function names, prior skill content, or memory.
 - **Allowed Hyper URLs in skill bodies:** only `app.hyperfx.ai/mcp` and `app.hyperfx.ai/apps`. No other Hyper URLs.
 - **No internal infra references.** No `hyper_cache_*` table names in skills, and no instructions to discover one at runtime — those tables and the `*_insights_query` / `*_sync_*` tools that fed them are being removed. For live data, call the provider's own API tool. For a workspace's own warehouse tables, use the `database` toolkit — it is the single database path in Hyper: `database_tables_list` to discover, `database_tables_describe` for real columns, then `database_query`. Never hardcode or guess a table name. Also no internal filesystem paths and no template ids that aren't part of the public MCP surface.
 - **Conditional integrations.** Some tools only appear when the underlying integration is enabled in the user's Hyper workspace (LinkedIn scraper is the canonical example). Skills citing such tools must mark them conditional and gracefully skip the affected step rather than failing the whole workflow.

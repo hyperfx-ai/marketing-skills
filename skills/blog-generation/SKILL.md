@@ -25,17 +25,16 @@ The whole game is captured in two ideas. First, AI search visibility is SEO done
 - **A brand strategy doc** (`blog-strategy.md`) in persistent files. If it does not exist yet, the engine builds one on the first run (Step 0). This is what lets it write in the brand's real voice and avoid repeats.
 - **Recommended toolkits**, enabled at https://app.hyperfx.ai/apps: **Firecrawl** (read the brand's site), **HyperSEO** (validate topics, see what ranks and what AI cites), **Google Search Console** (mine real signals and measure). Without them you can still draft, but flag that topic and ranking calls are unvalidated.
 
-### How to call tools on the Hyper MCP
+### How to run the tools in this skill
 
-The Hyper MCP lists six tools: `search`, `describe`, `call`, `connections_list`, `connections_use`, `info`. Every tool named in this skill runs through `call`:
+Every tool in this skill is named by its canonical tool name. Run it with the call your surface gives you:
 
-```text
-search("<what you want to do>")      # find the tool name and its toolkit
-describe("<tool name>")              # read the input schema
-call("<tool name>", {...})           # run it
-```
+| Surface | Find a tool | Run it |
+| --- | --- | --- |
+| MCP client (Claude, Cursor, Codex, ChatGPT) | `search("<what you want to do>")`, then `describe("<name>")` | `call("<name>", {...})` |
+| Hyper CLI | `hyperai search "<what you want to do>"`, then `hyperai describe <name>` | `hyperai call <name> --json '{...}'` |
 
-The names in this skill are the `name` argument of `call`. A tool that is not enabled for the workspace, or whose integration is not connected, is not found by `search`; stop and tell the user which integration to connect.
+If a tool is not found, its integration is not connected or not enabled for the workspace: stop and tell the user which integration to connect.
 
 ## Tool surface
 
