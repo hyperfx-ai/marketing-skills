@@ -56,7 +56,7 @@ For users prepping to publish. Run sequentially and present each result before m
 3. Don't dump base64 image data or thumbnail URLs into the chat. Pass the `file_id` and let the platform render it.
 4. For style-cloning, always show the user the top thumbnails first and let them pick the rank. Style-cloning a low-ranked or off-topic video produces bad results.
 5. If the user uploads multiple face photos, prefer the most recent and ignore the rest unless they ask you to compose them.
-6. Use `images_generate_nano_banana` (flash) for cheap iteration and `pro` only when the thumbnail needs strong rendered text inside the image. Use `images_edit_openai` when composing multiple reference images (face + brand + product).
+6. Use `images_generate` for every generation: `model="nano-banana"` for cheap iteration, `model="nano-banana-pro"` only when the thumbnail needs strong rendered text inside the image, and `model="gpt-image-2.5-sunburst"` when composing multiple reference images (face + brand + product).
 
 ## Reference
 
