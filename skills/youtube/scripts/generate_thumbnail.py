@@ -1,18 +1,17 @@
 """Generate a single YouTube thumbnail.
 
-Routing logic chooses the right image-gen tool based on inputs:
+Every call goes through ``images_generate``; the inputs pick the ``model``:
 
-- ``style_reference_file_id`` set     -> ``images_edit_nano_banana`` with that
-                                          file as the base image (best for
-                                          cloning a single style reference).
+- ``style_reference_file_id`` set     -> ``nano-banana`` (``nano-banana-pro``
+                                          when the prompt needs rendered text)
+                                          with that file in ``reference_images``.
 - ``brand_file_ids`` or
-  ``face_file_ids`` set               -> ``images_edit_openai`` with combined
-                                          reference_images (better at composing
-                                          multiple reference assets).
-- otherwise                           -> ``images_generate_nano_banana``
-                                          (``model='pro'`` if the prompt has
-                                          explicit text overlay, ``flash``
-                                          otherwise).
+  ``face_file_ids`` set               -> ``gpt-image-2.5-sunburst`` with the
+                                          combined ``reference_images`` (best
+                                          at composing several references).
+- otherwise                           -> ``nano-banana-pro`` if the prompt
+                                          has explicit text overlay,
+                                          ``nano-banana`` otherwise.
 
 All tool calls go through the sandbox RPC, so generated images are persisted
 as ``DBFile``s in the conversation thread and metering fires automatically.
@@ -53,6 +52,10 @@ def _normalise_aspect(aspect_ratio: str | None) -> str:
     return aspect_ratio or "16:9"
 
 
+# images_generate takes a quality tier; map the script's resolution knob onto it.
+_QUALITY_BY_SIZE = {"1K": "draft", "2K": "standard", "4K": "high"}
+
+
 async def run(
     prompt: str,
     face_file_ids: list[str] | None = None,
@@ -73,56 +76,45 @@ async def run(
         refs.extend(brand_file_ids)
 
     aspect = _normalise_aspect(aspect_ratio)
-    chosen_model = model
-    used_tool: str
-    result: dict[str, Any]
+    quality = _QUALITY_BY_SIZE[image_size]
 
+    def gemini_model() -> str:
+        if model == "pro":
+            return "nano-banana-pro"
+        if model == "flash":
+            return "nano-banana"
+        return "nano-banana-pro" if _looks_text_heavy(prompt) else "nano-banana"
+
+    request: dict[str, Any] = {"id": "thumbnail", "prompt": prompt}
     if style_reference_file_id:
-        used_tool = "images_edit_nano_banana"
-        if chosen_model == "auto":
-            chosen_model = "pro" if _looks_text_heavy(prompt) else "flash"
-        result = await call_tool(
-            used_tool,
-            file_id=style_reference_file_id,
-            prompt=prompt,
-            n=n,
-            model=chosen_model,
-            aspect_ratio=aspect,
-            image_size=image_size,
-        )
+        chosen_model = gemini_model()
+        request["reference_images"] = [style_reference_file_id]
     elif refs:
-        used_tool = "images_edit_openai"
-        # OpenAI image-edit only supports its native sizes.
-        openai_size = "1536x1024" if aspect.startswith("16") else "1024x1024"
-        result = await call_tool(
-            used_tool,
-            requests=[{"prompt": prompt, "reference_images": refs}],
-            size=openai_size,
-            quality="high",
-        )
+        chosen_model = "gpt-image-2.5-sunburst"
+        request["reference_images"] = refs
     else:
-        used_tool = "images_generate_nano_banana"
-        if chosen_model == "auto":
-            chosen_model = "pro" if _looks_text_heavy(prompt) else "flash"
-        result = await call_tool(
-            used_tool,
-            requests=[{"id": "thumbnail", "prompt": prompt}],
-            n=n,
-            model=chosen_model,
-            aspect_ratio=aspect,
-            image_size=image_size,
-        )
+        chosen_model = gemini_model()
+
+    result = await call_tool(
+        "images_generate",
+        requests=[request],
+        n=n,
+        model=chosen_model,
+        aspect_ratio=aspect,
+        quality=quality,
+    )
 
     images = result.get("images", []) if isinstance(result, dict) else []
     if not images:
-        raise RuntimeError(f"{used_tool} returned no images: {result}")
+        raise RuntimeError(f"images_generate returned no images: {result}")
 
     primary = images[0]
     return {
-        "tool_used": used_tool,
-        "model": chosen_model if used_tool != "images_edit_openai" else "gpt-image-2",
+        "tool_used": "images_generate",
+        "model": chosen_model,
         "aspect_ratio": aspect,
         "image_size": image_size,
+        "quality": quality,
         "primary": {
             "file_id": primary.get("file_id"),
             "url": primary.get("url"),

@@ -1,6 +1,6 @@
 ---
 name: image-generation
-description: Generate images through the Hyper MCP with the unified `images_generate` tool — text-to-image, image-to-image, and branded ad creatives — choosing the model (gpt-image-2, nano-banana, nano-banana-pro, seedream-4.5) per task. Use when the user asks to generate an image, create an ad creative, do an image-to-image edit, render text inside an image, or produce a print-quality poster.
+description: Generate images through the Hyper MCP with the unified `images_generate` tool — text-to-image, image-to-image, and branded ad creatives — choosing the model (gpt-image-2.5-flare, gpt-image-2.5-sunburst, nano-banana, nano-banana-pro, seedream-4.5) per task. Use when the user asks to generate an image, create an ad creative, do an image-to-image edit, render text inside an image, or produce a print-quality poster.
 metadata:
   version: 1.0.0
 requires_toolkits:
@@ -26,7 +26,7 @@ work, Firecrawl must also be configured under your Hyper integrations.
 ```python
 images_generate(
     requests=[{"id": "ad1", "prompt": "A polished SaaS ad, clean composition"}],
-    aspect_ratio="16:9",     # "1:1" (default), "9:16", "16:9", "4:5", "2:3", "3:2", "3:4", "4:3", "21:9", ...
+    aspect_ratio="16:9",     # "1:1" (default), "9:16", "16:9", "4:5", "5:4", "2:3", "3:2", "3:4", "4:3", "21:9"
     quality="standard",      # "draft" | "standard" | "high"
     n=1,                      # 1-4 images per request
     model="auto",            # see "Choosing a model" below
@@ -46,8 +46,9 @@ specific model:
 
 | Task | `model` |
 |------|---------|
-| First-pass concepts / quick ad ideation | `gpt-image-2` |
-| Image-to-image with references, high-resolution refinement, broad aspect ratios | `nano-banana` |
+| First-pass concepts / quick ad ideation / everyday generation | `gpt-image-2.5-flare` |
+| Precise edits and branded compositions from reference images, production creative | `gpt-image-2.5-sunburst` |
+| Cheap iteration, image-to-image, the widest aspect ratios (adds 1:4, 1:8, 4:1, 8:1) | `nano-banana` |
 | Readable text inside the image (posters, labels, infographics) or search-grounded scenes | `nano-banana-pro` |
 | Product photography, material/fabric fidelity, accurate spatial depth | `seedream-4.5` |
 

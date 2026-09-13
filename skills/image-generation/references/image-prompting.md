@@ -8,18 +8,20 @@ calls for a specific one; otherwise let `auto` decide.
 
 | Need | `model` |
 |------|---------|
-| First-pass concepts, ad ideation, compositions with reference images | `gpt-image-2` |
-| High-resolution refinement, broad aspect ratios, image-to-image with multiple references | `nano-banana` |
+| First-pass concepts, ad ideation, everyday generation | `gpt-image-2.5-flare` |
+| Precise edits, compositions with reference images, production creative | `gpt-image-2.5-sunburst` |
+| Cheap iteration, the widest aspect ratios, image-to-image with multiple references | `nano-banana` |
 | Readable text inside the image (posters, labels, infographics) or search-grounded scenes | `nano-banana-pro` |
 | Product photography, material/fabric fidelity, accurate spatial depth | `seedream-4.5` |
 | No strong preference | `auto` (default) |
 
 ## Per-model prompt shapes
 
-### `gpt-image-2` (OpenAI)
-- Best for: first-pass concepts, ad creative ideation, compositions with references.
+### `gpt-image-2.5-flare` and `gpt-image-2.5-sunburst` (OpenAI)
+- Flare: first-pass concepts, ad creative ideation, fast everyday generation.
+- Sunburst: precise edits and compositions from references, production creative.
 - Prompt sections: objective → composition → style → brand constraints.
-- Avoid long blocks of literal text and aspect ratios beyond 1:1, 2:3, 3:2.
+- Both take every aspect ratio between 1:3 and 3:1. Avoid long blocks of literal text.
 
 ### `nano-banana` (Gemini)
 - Best for: high-resolution refinements, broad aspect ratios, image-to-image with multiple references.

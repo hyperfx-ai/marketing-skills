@@ -7,8 +7,8 @@ Two-phase script:
   ask which rank to clone.
 
 * Phase 2 (``chosen_rank`` set): looks up the chosen thumbnail's
-  ``thumbnail_file_id`` and runs ``images_edit_nano_banana`` with that file as
-  the style reference. If a ``face_file_id`` is provided, the prompt is
+  ``thumbnail_file_id`` and runs ``images_generate`` with that file as the
+  style reference. If a ``face_file_id`` is provided, the prompt is
   augmented to composite the user's face into the cloned style.
 """
 
@@ -23,7 +23,7 @@ from seti.sandbox import call_tool
 
 async def _research(query: str, top_k: int) -> list[dict[str, Any]]:
     res = await call_tool(
-        "youtube_videos_search_top",
+        "youtube_top_videos",
         query=query,
         max_results=top_k,
         sort_by="views",
@@ -113,31 +113,23 @@ async def run(
     )
 
     if face_file_id:
-        # OpenAI edit composes multiple references better than nano-banana edit
-        # when we need to preserve a person's identity.
-        result = await call_tool(
-            "images_edit_openai",
-            requests=[
-                {
-                    "prompt": prompt,
-                    "reference_images": [style_file_id, face_file_id],
-                }
-            ],
-            size="1536x1024",
-            quality="high",
-        )
-        used_tool = "images_edit_openai"
+        # Sunburst composes several references while preserving a person's
+        # identity; the Gemini models are better with one style reference.
+        chosen_model = "gpt-image-2.5-sunburst"
+        reference_images = [style_file_id, face_file_id]
     else:
-        result = await call_tool(
-            "images_edit_nano_banana",
-            file_id=style_file_id,
-            prompt=prompt,
-            n=1,
-            model="pro",
-            aspect_ratio="16:9",
-            image_size="2K",
-        )
-        used_tool = "images_edit_nano_banana"
+        chosen_model = "nano-banana-pro"
+        reference_images = [style_file_id]
+    used_tool = "images_generate"
+    result = await call_tool(
+        used_tool,
+        requests=[
+            {"id": "thumbnail", "prompt": prompt, "reference_images": reference_images}
+        ],
+        model=chosen_model,
+        aspect_ratio="16:9",
+        quality="standard",
+    )
 
     images = result.get("images", []) if isinstance(result, dict) else []
     if not images:
