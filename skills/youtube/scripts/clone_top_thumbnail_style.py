@@ -23,7 +23,7 @@ from seti.sandbox import call_tool
 
 async def _research(query: str, top_k: int) -> list[dict[str, Any]]:
     res = await call_tool(
-        "youtube_top_videos",
+        "youtube_videos_search_top",
         query=query,
         max_results=top_k,
         sort_by="views",

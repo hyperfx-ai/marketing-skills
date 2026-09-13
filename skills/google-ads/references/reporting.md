@@ -6,7 +6,7 @@ Report on existing Google Ads accounts using GAQL-backed data. Dashboards and da
 
 - Use `google_ads_gaql_query` as the canonical Google Ads data tool.
 - Written GAQL-backed reports are valid outputs. Build a dashboard or data app only when the user asks for one or when an interactive view materially improves the answer.
-- Do not use the alternate GAQL alias (`google_ads_run_gaql`) in new examples — `execute_gaql` works on both manager and sub-accounts.
+- Read the `google_ads_gaql_query` descriptor and select the account whose data the report needs.
 - Treat rows as evidence, not as automatic recommendations ([heuristics.md](heuristics.md)).
 - Keep reporting separate from live account changes.
 - Do not mention internal dashboard implementation details to the user unless they explicitly ask how the interface is built.
@@ -113,30 +113,8 @@ The tool source name is not a Python variable. It populates the cache table. SQL
 
 Use the template in [report-template.md](report-template.md). State what data was queried, which date range was used, and whether the final output is a written report, dashboard, data app, or published interface.
 
-## Cached Data (optional, when `google_ads_insights_query` is exposed)
+## Warehouse data
 
-If the MCP exposes `google_ads_insights_query`, use it for large multi-account performance queries — it reads from a local cache refreshed hourly and avoids API timeouts entirely.
+When the workspace has a Google Ads warehouse connection, inspect its available tables and columns and query the selected connection through `database_query`. Existing warehouse data remains available independently of native Google Ads API calls.
 
-Call `google_ads_insights_query` — its built-in description includes the exact table name, schema, and example queries. Read the tool description first, then pass a SQL query targeting that table. Typical pattern:
-
-```
-google_ads_insights_query(
-  query="SELECT date, campaign_name, SUM(cost_micros) as spend, SUM(clicks) as clicks
-         FROM <table>
-         WHERE customer_id = '1234567890'
-           AND date >= CURRENT_DATE - INTERVAL '7 days'
-         GROUP BY date, campaign_name ORDER BY date DESC"
-)
-```
-
-Replace `<table>` with the table name shown in the `google_ads_insights_query` tool description. Cache is refreshed hourly — no manual sync needed.
-
-> **If the tool returns a "no data cached" error**, check the `suggestion` field in the response — it will contain the correct workspace-specific table name. Retry the query using that suggested table name instead.
-
-Key columns available (verify in tool description):
-- **Hierarchy:** `date`, `customer_id`, `campaign_id`, `campaign_name`, `campaign_status`
-- **Volume:** `impressions`, `clicks`, `cost_micros` (÷ 1,000,000 for dollars)
-- **Conversions:** `conversions`, `conversions_value`, `conversion_rate`
-- **Efficiency:** `ctr`, `average_cpc`, `average_cpm`
-
-Supports standard SQL aggregations and window functions. For cross-account queries, omit the `customer_id` filter and `GROUP BY` it instead.
+Check Warehouse Data Status for that connection and report its last successful refresh. Name the customer IDs, date boundaries, currency units and metric definitions. Do not assume an hourly cache, fixed table name or fresh rows merely because the connection is healthy. Use `google_ads_gaql_query` when the requested data is not in the configured warehouse.

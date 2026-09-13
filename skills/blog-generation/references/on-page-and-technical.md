@@ -95,7 +95,7 @@ Content the engines cannot reach cannot rank or be cited. These are gates.
 Set the expectation up front: content changes show up in classic search in days to weeks, and in AI answers in weeks.
 
 **Classic search signal**
-- `google_search_console_insights_query`: track impressions, clicks, CTR, and average position by query and page. Watch for pages climbing positions, and high-impression / low-CTR pages that need a title or meta rewrite.
+- `google_search_console_performance_get`: track impressions, clicks, CTR, and average position by query and page. Watch for pages climbing positions, and high-impression / low-CTR pages that need a title or meta rewrite.
 
 **AI search visibility**
 - `hyperseo_mentions_track`: ask the questions a customer would ("best [category] for [use case]") with the brand and 2 to 3 competitors, and see which models name whom, and what they cite. Run before optimizing (baseline) and monthly after.

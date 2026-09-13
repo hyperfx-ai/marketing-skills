@@ -139,7 +139,7 @@ Once you have the text, ask the user what they need — or infer it from context
 
 ## Thumbnails and SEO packaging
 
-For making or refreshing thumbnails, cloning the style of top-ranking thumbnails, adding the user's face, and generating SEO titles/descriptions, read `references/thumbnails.md`. Every thumbnail workflow is a sandbox script under `scripts/` (`generate_thumbnail.py`, `research_top_thumbnails.py`, `clone_top_thumbnail_style.py`, `analyze_thumbnail_concepts.py`, `generate_seo_titles.py`, `generate_seo_description.py`) — the reference doc is the routing table and the rules for using them.
+For making or refreshing thumbnails, cloning the style of top-ranking thumbnails, adding the user's face, and generating SEO titles/descriptions, read `references/thumbnails.md`. Every thumbnail workflow is a sandbox script under `scripts/` (`generate_thumbnail.py`, `research_top_thumbnails.py`, `clone_top_thumbnail_style.py`) — the reference doc is the routing table and the rules for using them.
 
 ## Example outputs
 
@@ -171,3 +171,5 @@ For making or refreshing thumbnails, cloning the style of top-ranking thumbnails
 | Mining comments from YouTube videos for customer research | [`customer-research`](../customer-research) |
 | Finding top YouTube videos by topic | Use `youtube_videos_search_top` directly |
 | Generating video content | [`video-generation`](../video-generation) |
+
+For title options, descriptions and thumbnail concepts, use the fetched transcript and video context to write the result directly. Follow the output contracts in `references/packaging-schemas.json`; the thumbnail reference explains the workflow.

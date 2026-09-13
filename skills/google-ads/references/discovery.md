@@ -20,12 +20,7 @@ Call `google_ads_accounts_list()` to list accessible accounts.
 4. Extract messaging: value props, differentiators, proof, offers.
 
 ### Conversion Tracking Check
-Before asking questions, run the purpose-built diagnostic (simpler than a hand-rolled GAQL query):
-```
-google_ads_diagnose_conversion_tracking(customer_id="<from list_accounts>")
-```
-
-This returns all conversion actions, their status, and any tracking signal issues in one call. If the user's MCP doesn't expose `google_ads_diagnose_conversion_tracking`, fall back to GAQL:
+Inspect conversion actions on the selected account:
 ```
 google_ads_gaql_query(
   customer_id="<from list_accounts>",
@@ -38,7 +33,7 @@ google_ads_gaql_query(
 )
 ```
 
-> **`google_ads_gaql_query` vs `google_ads_run_gaql`:** `execute_gaql` works on manager accounts (MCC) and sub-accounts. `run_gaql` is only available on non-manager accounts. Use `execute_gaql` consistently — it works everywhere.
+
 
 ### Market & Keyword Research
 - Inspect SERPs, competitors, and themes.

@@ -43,7 +43,7 @@ If a tool is not found, its integration is not connected or not enabled for the 
 | Read and write `blog-strategy.md` and the post draft | your file tools (`read_file`, `create_file`, `edit_file`) |
 | Learn the brand from their site (Step 0) | `firecrawl_urls_scrape`, `web_pages_scrape` |
 | Validate a topic and study the SERP / AI answer | `hyperseo_search_volume_get`, `hyperseo_keyword_difficulty_get`, `hyperseo_intents_search`, `hyperseo_ai_search_volume_get`, `hyperseo_serp_results_get`, `hyperseo_ai_overviews_get` |
-| Mine real-world signal and measure impact | `google_search_console_insights_query` |
+| Mine real-world signal and measure impact | `google_search_console_performance_get` |
 | Check whether AI recommends the brand | `hyperseo_mentions_track` |
 
 ## Out of scope: defer to other skills
@@ -84,7 +84,7 @@ Each run must produce something new. To choose:
 1. **Exclude everything in the Published log** and anything that merely rewords it (same intent under a different title is a repeat).
 2. **Prefer the highest-priority unblocked backlog item** that fits the brand and has real demand.
 3. **Vary the shape.** If the last few posts were listicles, write a how-to, a pain/diagnostic, or an original-data piece. A healthy blog mixes archetypes.
-4. **Pull from live signal where available**: GSC queries the brand ranks for on page two (`google_search_console_insights_query`), keyword gaps (defer to `seo-research`), recurring customer questions, or a timely news hook in the brand's space.
+4. **Pull from live signal where available**: GSC queries the brand ranks for on page two (`google_search_console_performance_get`), keyword gaps (defer to `seo-research`), recurring customer questions, or a timely news hook in the brand's space.
 5. **Lean on the brand's own substance.** The most citable, least repeatable posts use the brand's proprietary data, real customer outcomes, or first-hand expertise. Reach for these often.
 
 ## The strategy doc (`blog-strategy.md`) — the engine's memory

@@ -1,24 +1,24 @@
 
 # Thumbnail Creator
 
-Create high click-through YouTube thumbnails and the SEO assets that go with them. This skill orchestrates existing Hyper tools (YouTube research, image generation, AI extraction) through small Python scripts that run in the Hyper sandbox.
+Create high click-through YouTube thumbnails and the SEO assets that go with them. Use sandbox scripts for YouTube research and image generation. Write titles, descriptions and concepts directly from the fetched video context.
 
 ## How this skill works
 
-Every workflow is a sandbox script under `scripts/`. The agent reads the matching reference doc, calls the script via the `sandbox` toolkit, and presents the JSON result back to the user. Generated images are persisted as `DBFile`s automatically and shown in chat.
+Research and image workflows use the scripts under `scripts/`. Call the selected script through the sandbox toolkit and present its result. Generated images are persisted automatically and shown in chat. For text deliverables, follow the JSON schemas in `references/packaging-schemas.json`.
 
-You do **not** chain individual image-generation or YouTube tools yourself unless the user asks for something the scripts don't cover. The scripts are the contract.
+Fetch transcript content with `youtube_video_transcripts_fetch`; use `youtube_videos_read` when visual context is required. Ground concepts, titles, summaries and timestamps in those results.
 
 ## Routing Table
 
-| User intent | Run this script | Reference |
+| User intent | Action | Reference |
 |-------------|-----------------|-----------|
 | "Make me a thumbnail for X" | `scripts/generate_thumbnail.py` | Direct generation, optional face/brand/style references |
 | "What thumbnails work for `<niche>`?" | `scripts/research_top_thumbnails.py` | Returns top videos + downloaded thumbnails |
 | "Make me a thumbnail like the top videos for `<niche>`" | `scripts/clone_top_thumbnail_style.py` | Research → user picks rank → style-cloned generation |
-| "Analyse this video's thumbnail concepts" (URL given) | `scripts/analyze_thumbnail_concepts.py` | Returns 5 ready-to-render thumbnail concepts |
-| "Give me good titles for this video" | `scripts/generate_seo_titles.py` | Returns 10 styled SEO title options |
-| "Write the description for this video" | `scripts/generate_seo_description.py` | Returns hook, summary, takeaways, timestamps, hashtags |
+| "Analyse this video's thumbnail concepts" (URL given) | Write concepts directly | Returns 5 ready-to-render thumbnail concepts |
+| "Give me good titles for this video" | Write title variants directly | Returns 10 styled SEO title options |
+| "Write the description for this video" | Write the description directly | Returns hook, summary, takeaways, timestamps, hashtags |
 
 ## Composed Workflows
 
@@ -46,8 +46,8 @@ For users prepping to publish. Run sequentially and present each result before m
 
 1. `scripts/research_top_thumbnails.py` — what's working in the niche.
 2. `scripts/clone_top_thumbnail_style.py` — pick a winning style, generate the thumbnail.
-3. `scripts/generate_seo_titles.py` — 10 title options.
-4. `scripts/generate_seo_description.py` — full description with hashtags.
+3. Write title variants directly — 10 title options.
+4. Write the description directly — full description with hashtags.
 
 ## Rules
 
@@ -62,3 +62,13 @@ For users prepping to publish. Run sequentially and present each result before m
 
 - `references/composition-tips.md` — universal composition rules (rule of thirds, contrast, eye-line).
 - `references/youtube-thumbnail-best-practices.md` — YouTube-specific patterns (16:9, mobile-safe text, CTR triggers).
+
+## Structured text deliverables
+
+Read `references/packaging-schemas.json` and produce the corresponding object:
+
+- `analyze_thumbnail_concepts`: five concepts, each with title, composition, hook, text overlay and ready-to-use prompt. Send the chosen prompt to the image script only after the user selects a concept.
+- `generate_seo_titles`: ten titles, each with a supported style, rationale and character count. Keep titles within 70 characters and include the primary keyword naturally. Do not promise content the video does not contain.
+- `generate_seo_description`: hook, summary, key takeaways, timestamps, pull quotes, CTA, hashtags and a flattened description. Use only real timestamps and supported quotes; keep timestamps empty when the available source has none.
+
+Check required fields and item counts against the schemas before presenting the result. No separate AI helper tool is needed for this writing step.

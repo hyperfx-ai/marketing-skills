@@ -99,7 +99,7 @@ No audit is complete without context.
 
 Assess Core Web Vitals.
 
-1. Run `hyperseo_pagespeed` on the domain's homepage and 2 – 3 key pages (both mobile and desktop).
+1. Run `hyperseo_pagespeed_get` on the domain's homepage and 2 – 3 key pages (both mobile and desktop).
 2. Key metrics to evaluate:
    - **Performance score**: 90+ is good, 50 – 89 needs improvement, below 50 is poor.
    - **LCP (Largest Contentful Paint)**: should be under 2.5 s.

@@ -44,7 +44,7 @@ If a tool is not found, its integration is not connected or not enabled for the 
 | `tiktok_ads_advertiser_accounts_list` | Discovery: list advertiser IDs available to the connected user. |
 | `tiktok_ads_campaigns_get`, `tiktok_ads_campaigns_create`, `tiktok_ads_campaigns_update`, `tiktok_ads_campaigns_status_update` | Campaign lifecycle. |
 | `tiktok_ads_ad_groups_list`, `tiktok_ads_ad_groups_create`, `tiktok_ads_ad_groups_update`, `tiktok_ads_ad_groups_status_update` | Ad group lifecycle. |
-| `tiktok_ads_list`, `tiktok_ads_create`, `tiktok_ads_ad_status_update` | Ad lifecycle. Note: `tiktok_update_ad` does not exist in the MCP — ad content edits (creative, copy, URL) require the TikTok Ads Manager UI. Only status changes (enable / pause / delete) are available via MCP. |
+| `tiktok_ads_list`, `tiktok_ads_create`, `tiktok_ads_ad_status_update`, `tiktok_ads_update` | Ad lifecycle and supported incremental content changes. Describe the selected tool before editing; Smart+ ads use their dedicated tools. |
 | `tiktok_ads_videos_upload`, `tiktok_ads_videos_get`, `tiktok_ads_videos_search` | Video creative upload + lookup. |
 | `tiktok_ads_integrated_reports_get` | Performance reporting. |
 | `tiktok_ads_custom_audiences_create`, `tiktok_ads_custom_audiences_list`, `tiktok_ads_lookalike_audiences_create` | Audience management (optional). |

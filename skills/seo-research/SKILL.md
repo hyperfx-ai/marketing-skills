@@ -49,7 +49,7 @@ If a tool is not found, its integration is not connected or not enabled for the 
 | Domain & rankings | `hyperseo_domain_overview_get`, `hyperseo_domain_keywords_get`, `hyperseo_rank_history_get` |
 | Backlinks | `hyperseo_backlinks_history_get` |
 | AI search visibility | `hyperseo_ai_search_volume_get`, `hyperseo_mentions_track` |
-| Technical health | `hyperseo_pagespeed` |
+| Technical health | `hyperseo_pagespeed_get` |
 
 ## Initial Assessment
 
@@ -112,7 +112,7 @@ Apply these throughout all analysis.
 | Track ranking history over time | `hyperseo_rank_history_get` | Monthly organic traffic and keyword trends. |
 | Classify keyword search intent | `hyperseo_intents_search` | Intent type with confidence scores. |
 | Find keyword overlaps between domains | `hyperseo_domain_intersections_search` | Shared SERP keywords with positions. |
-| Check page speed / Core Web Vitals | `hyperseo_pagespeed` | Performance score, FCP, LCP, TBT, CLS. |
+| Check page speed / Core Web Vitals | `hyperseo_pagespeed_get` | Performance score, FCP, LCP, TBT, CLS. |
 
 ### Location codes
 
