@@ -21,7 +21,7 @@ Skills are NOT tools. They are markdown instructions plus optional reference fil
 | Skill | What it does |
 | --- | --- |
 | [`google-ads`](./skills/google-ads) | Plan and create new Google Ads campaigns (Search, Display, Performance Max) using the blueprint flow, plus GAQL-backed reports and dashboards on existing accounts. |
-| [`meta-ads`](./skills/meta-ads) | Plan and create Meta (Facebook/Instagram) ad campaigns with Advantage+ as the default; includes an account-audit workflow. |
+| [`meta-ads`](./skills/meta-ads) | Plan and create Meta (Facebook/Instagram) campaigns and Partnership Ads with Advantage+ as the default; includes an account-audit workflow. |
 | [`meta-ads-library`](./skills/meta-ads-library) | Search the Meta Ads Library for competitor ads, optionally enrich with page contact info, and surface structured ad-intelligence summaries inline in chat. |
 | [`amazon-ads`](./skills/amazon-ads) | Plan and create Amazon Sponsored Products campaigns with strategic targeting and budget rules. |
 | [`tiktok-ads`](./skills/tiktok-ads) | Plan and create TikTok Ads (Traffic, Reach, Conversions, App Promotion, Video View) with strict objective-specific parameter validation. |
