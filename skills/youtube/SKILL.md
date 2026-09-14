@@ -47,6 +47,7 @@ Fetch the full transcript of any YouTube video and turn it into whatever the use
 ## Requirements
 
 - **Hyper MCP installed.** [https://app.hyperfx.ai/mcp](https://app.hyperfx.ai/mcp)
+- **Sandbox text workflows:** require `ai_functions_run` in the connected catalog and the sandbox toolkit. These scripts run inline LLM calls through the sandbox tool bridge.
 - **YouTube toolkit enabled** at [https://app.hyperfx.ai/apps](https://app.hyperfx.ai/apps) — provides `youtube_video_transcripts_fetch` and `youtube_videos_read`.
 - Thumbnail workflows additionally need the image generation and sandbox toolkits.
 
@@ -172,4 +173,4 @@ For making or refreshing thumbnails, cloning the style of top-ranking thumbnails
 | Finding top YouTube videos by topic | Use `youtube_videos_search_top` directly |
 | Generating video content | [`video-generation`](../video-generation) |
 
-For title options, descriptions and thumbnail concepts, use the fetched transcript and video context to write the result directly. Follow the output contracts in `references/packaging-schemas.json`; the thumbnail reference explains the workflow.
+For title options, descriptions and thumbnail concepts, run `generate_seo_titles.py`, `generate_seo_description.py` and `analyze_thumbnail_concepts.py` under `scripts/`. They call `ai_functions_run` from the sandbox using fetched transcript and video context. Follow the output contracts in `references/packaging-schemas.json`; the thumbnail reference explains the workflow.

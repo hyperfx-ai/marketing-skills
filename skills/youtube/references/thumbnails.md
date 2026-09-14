@@ -1,11 +1,11 @@
 
 # Thumbnail Creator
 
-Create high click-through YouTube thumbnails and the SEO assets that go with them. Use sandbox scripts for YouTube research and image generation. Write titles, descriptions and concepts directly from the fetched video context.
+Create high click-through YouTube thumbnails and the SEO assets that go with them. Use sandbox scripts for YouTube research and image generation. Generate titles, descriptions and concepts through `ai_functions_run` in the bundled sandbox scripts.
 
 ## How this skill works
 
-Research and image workflows use the scripts under `scripts/`. Call the selected script through the sandbox toolkit and present its result. Generated images are persisted automatically and shown in chat. For text deliverables, follow the JSON schemas in `references/packaging-schemas.json`.
+Research, image and text workflows use the scripts under `scripts/`. Call the selected script through the sandbox toolkit and present its result. Generated images are persisted automatically and shown in chat. For text deliverables, follow the JSON schemas in `references/packaging-schemas.json`.
 
 Fetch transcript content with `youtube_video_transcripts_fetch`; use `youtube_videos_read` when visual context is required. Ground concepts, titles, summaries and timestamps in those results.
 
@@ -16,9 +16,9 @@ Fetch transcript content with `youtube_video_transcripts_fetch`; use `youtube_vi
 | "Make me a thumbnail for X" | `scripts/generate_thumbnail.py` | Direct generation, optional face/brand/style references |
 | "What thumbnails work for `<niche>`?" | `scripts/research_top_thumbnails.py` | Returns top videos + downloaded thumbnails |
 | "Make me a thumbnail like the top videos for `<niche>`" | `scripts/clone_top_thumbnail_style.py` | Research → user picks rank → style-cloned generation |
-| "Analyse this video's thumbnail concepts" (URL given) | Write concepts directly | Returns 5 ready-to-render thumbnail concepts |
-| "Give me good titles for this video" | Write title variants directly | Returns 10 styled SEO title options |
-| "Write the description for this video" | Write the description directly | Returns hook, summary, takeaways, timestamps, hashtags |
+| "Analyse this video's thumbnail concepts" (URL given) | `scripts/analyze_thumbnail_concepts.py` | Returns 5 ready-to-render thumbnail concepts |
+| "Give me good titles for this video" | `scripts/generate_seo_titles.py` | Returns 10 styled SEO title options |
+| "Write the description for this video" | `scripts/generate_seo_description.py` | Returns hook, summary, takeaways, timestamps, hashtags |
 
 ## Composed Workflows
 
@@ -46,8 +46,8 @@ For users prepping to publish. Run sequentially and present each result before m
 
 1. `scripts/research_top_thumbnails.py` — what's working in the niche.
 2. `scripts/clone_top_thumbnail_style.py` — pick a winning style, generate the thumbnail.
-3. Write title variants directly — 10 title options.
-4. Write the description directly — full description with hashtags.
+3. `scripts/generate_seo_titles.py` — 10 title options.
+4. `scripts/generate_seo_description.py` — full description with hashtags.
 
 ## Rules
 
@@ -65,10 +65,10 @@ For users prepping to publish. Run sequentially and present each result before m
 
 ## Structured text deliverables
 
-Read `references/packaging-schemas.json` and produce the corresponding object:
+The text scripts call `ai_functions_run` through the sandbox tool bridge. They return objects matching `references/packaging-schemas.json`:
 
 - `analyze_thumbnail_concepts`: five concepts, each with title, composition, hook, text overlay and ready-to-use prompt. Send the chosen prompt to the image script only after the user selects a concept.
 - `generate_seo_titles`: ten titles, each with a supported style, rationale and character count. Keep titles within 70 characters and include the primary keyword naturally. Do not promise content the video does not contain.
 - `generate_seo_description`: hook, summary, key takeaways, timestamps, pull quotes, CTA, hashtags and a flattened description. Use only real timestamps and supported quotes; keep timestamps empty when the available source has none.
 
-Check required fields and item counts against the schemas before presenting the result. No separate AI helper tool is needed for this writing step.
+Check required fields and item counts against the schemas before presenting the result. These scripts require `ai_functions_run` in the connected tool catalog. If unavailable, report the missing tool; do not claim the sandbox workflow succeeded. Tool and model failures must remain visible to the caller.
