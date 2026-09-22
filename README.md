@@ -21,7 +21,7 @@ Create, customize, and connect your MCP at [app.hyperfx.ai/mcp](https://app.hype
 What's in it:
 
 - **100+ direct integrations** — ad platforms (Google Ads, Meta, TikTok, LinkedIn, Amazon, Pinterest), social (Instagram, Reddit, Twitter, YouTube), email (Gmail, Klaviyo, Resend, Beehiiv), analytics (GA4, Search Console, BigQuery), CRM (HubSpot, Apollo), commerce (Shopify), and more.
-- **Built-in tools** — Meta Ads Library scraper, Reddit and Twitter scrapers, image generation (OpenAI, Nano Banana, Seedream), video generation (Sora, Veo, Seedance), browser automation, transcription.
+- **Built-in tools** — Meta Ads Library scraper, Reddit and Twitter scrapers, image generation (OpenAI, Nano Banana, Seedream), video generation (Veo, Seedance), browser automation, transcription.
 - **Guardrails and permissions** — every action can require approval before it runs, so your agent can't delete a campaign or send a DM without your green light.
 - **The Hyper platform** — build and manage Hyper agents, tasks, and skills directly.
 
@@ -201,7 +201,7 @@ marketing-skills/
 | Reddit Scraper | Scrape Reddit posts, threads, and comments |
 | TikTok Scraper | Scrape TikTok videos, profiles, and engagement |
 | Twitter Scraper | Scrape tweets, profiles, and threads |
-| Video Generation | Generate AI video (Sora, Veo, Seedance) |
+| Video Generation | Generate AI video (Veo, Seedance) |
 | Web Scraper | Search and scrape web pages |
 | Website Analyzer | Analyze a website's tech stack, pixels, and more |
 | YouTube | Search YouTube and fetch transcripts |

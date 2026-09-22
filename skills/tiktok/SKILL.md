@@ -110,7 +110,7 @@ When calling `tiktok_post_form_open`, provide what you know:
 | `media_urls` | Photo carousel (list of URLs, max 35). |
 | `video_duration_sec` | If known — enables duration validation. |
 | `title` | If the user mentioned a caption. |
-| `is_aigc` | If you generated the media (Sora, Veo, image gen, etc.). |
+| `is_aigc` | If you generated the media (Veo, Seedance, image gen, etc.). |
 
 ## After Form Submission
 

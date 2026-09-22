@@ -1,6 +1,6 @@
 ---
 name: video-generation
-description: End-to-end AI video production through the Hyper MCP — text-to-video and image-to-video generation (Sora, Veo, Seedance), scene chaining, video analysis, transcription, subtitles, TikTok / karaoke captions, voiceover (TTS), audio mixing, clipping, stitching, and text overlays. Use when the user asks to generate a video, create UGC, scene-chain, add captions or subtitles, add narration, stitch clips, clip a podcast highlight, or do any AI video editing.
+description: End-to-end AI video production through the Hyper MCP — text-to-video and image-to-video generation (Veo, Seedance), scene chaining, video analysis, transcription, subtitles, TikTok / karaoke captions, voiceover (TTS), audio mixing, clipping, stitching, and text overlays. Use when the user asks to generate a video, create UGC, scene-chain, add captions or subtitles, add narration, stitch clips, clip a podcast highlight, or do any AI video editing.
 requires_toolkits:
   - video_generation_toolkit
 icon: video_generation
@@ -13,7 +13,7 @@ Guide for generating, editing, analyzing, and post-processing videos using AI mo
 
 ## Requirements
 
-This skill assumes the [Hyper MCP](https://app.hyperfx.ai/mcp) is connected to your agent so the tools below are available. The underlying providers (OpenAI Sora, Google Veo, ByteDance Seedance, OpenAI TTS, transcription, etc.) are configured under your Hyper integrations.
+This skill assumes the [Hyper MCP](https://app.hyperfx.ai/mcp) is connected to your agent so the tools below are available. The underlying providers (Google Veo, ByteDance Seedance, OpenAI TTS, transcription, etc.) are configured under your Hyper integrations.
 
 ### How to run the tools in this skill
 
@@ -30,7 +30,7 @@ If a tool is not found, its integration is not connected or not enabled for the 
 
 | Group | Tools |
 |-------|-------|
-| Generation | `videos_generate`, `sora_videos_remix`, `sora_videos_delete` |
+| Generation | `videos_generate` |
 | Analysis | `videos_analyze`, `videos_frames_capture`, `videos_transcribe` |
 | Subtitles & captions | `videos_subtitles_generate`, `videos_subtitles_burn`, `videos_captions_burn_highlighted` |
 | Audio | `audio_speech_generate`, `videos_audio_add` |
@@ -47,8 +47,6 @@ If a tool is not found, its integration is not connected or not enabled for the 
 | Tool | Purpose | Runs in Background |
 |------|---------|-------------------|
 | `videos_generate` | Generate video from text / image prompt | Yes |
-| `sora_videos_remix` | Modify existing Sora video | Yes |
-| `sora_videos_delete` | Delete a Sora video | No |
 | `videos_frames_capture` | Extract frame as image | No |
 | `videos_analyze` | Watch and understand video content | No |
 | `videos_transcribe` | Extract audio transcript | No |
@@ -101,7 +99,7 @@ review = videos_analyze(file_id="video_file_id", analysis_type="quality_review")
 | Build a longer multi-scene video | [references/generation.md](references/generation.md) — script planning + scene chaining |
 | Add subtitles / captions / voiceover / overlays, or clip a video | [references/post-production.md](references/post-production.md) |
 | Produce UGC / TikTok content end-to-end | [references/ugc-video.md](references/ugc-video.md) (`ugc_videos_create` modes) → [references/workflows.md](references/workflows.md) |
-| Shape a prompt for a specific model (Sora / Veo / Seedance / Kling) | [references/video-prompting.md](references/video-prompting.md) |
+| Shape a prompt for a specific model (Veo / Seedance / Kling) | [references/video-prompting.md](references/video-prompting.md) |
 | Turn a podcast / long video into short clips | [references/workflows.md](references/workflows.md) → [references/post-production.md](references/post-production.md) |
 | Understand or QA an existing video | Use `videos_analyze` (see Video Understanding above) |
 

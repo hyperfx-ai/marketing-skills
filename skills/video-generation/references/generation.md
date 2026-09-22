@@ -6,7 +6,6 @@ For longer, cohesive videos, plan the FULL SCRIPT before generating:
 
 ### 1. Scene Breakdown
 - **Scenes:** break story into segments
-  - Sora: 4 / 8 / 12 seconds per scene
   - Veo: 4-8 seconds per scene
   - Seedance: 4-15 seconds per scene (native audio with lip-sync)
 - **Camera:** shot type (wide, close-up, tracking), angles, movement
@@ -58,7 +57,7 @@ Each scene prompt should include:
 ## Control Principles (most important)
 
 - Treat API params as the **container** and prompt text as the **content**:
-  - `model`, `size` / `aspect_ratio`, and `duration_seconds` must be set explicitly in the tool call.
+  - `model`, `aspect_ratio`, and `duration_seconds` must be set explicitly in the tool call.
   - Do not expect prose like "make it longer" or "make it vertical" to override API parameters.
 - Use detail for control, brevity for exploration:
   - Short prompts give more creative variation.
@@ -73,17 +72,15 @@ Each scene prompt should include:
 |-----------|-------------|
 | `image_file_id` | Use for image-to-video (scene continuity) |
 | `videos_frames_capture` | Extract frames with `frame_position="last"` \| `"first"` \| `"middle"` |
-| `size` | For Sora only. One of: `"720x1280"`, `"1280x720"`, `"1024x1792"`, `"1792x1024"` |
-| `aspect_ratio` | For Veo only. One of: `"16:9"` or `"9:16"` |
-| `duration_seconds` | Sora: 4, 8, or 12 seconds only. Veo: 4-8 seconds |
+| `aspect_ratio` | Veo and Seedance: `"16:9"` or `"9:16"` |
+| `duration_seconds` | Veo: 4-8 seconds. Seedance: 4-15 seconds |
 
 ## Important Input Rules
 
 - Use exact values accepted by the tool schema. Do not send aliases like `landscape`, `portrait`, `720p`, or `1080p`.
-- For Sora, prefer `size` and do not send `aspect_ratio`.
-- For Veo, prefer `aspect_ratio` and do not send `size`.
-- For Seedance, use `aspect_ratio` and optionally `resolution`. Do not pass `size`.
-- Keep the same `size` / `aspect_ratio` across chained scenes for continuity.
+- For Veo, use `aspect_ratio`.
+- For Seedance, use `aspect_ratio` and optionally `resolution`.
+- Keep the same `aspect_ratio` across chained scenes for continuity.
 
 ## Model Selection Guide
 
@@ -93,33 +90,25 @@ Each scene prompt should include:
 |-----------|-------------------|
 | "use seedance", "seedance video" | `"seedance-2"` |
 | "fast seedance" | `"seedance-2-fast"` |
-| "use sora", "sora video" | `"sora-2"` |
-| "sora pro" | `"sora-2-pro"` |
 | "use veo", "veo video" | `"veo-3.1-generate-preview"` |
 | "fast veo" | `"veo-3.1-fast-generate-preview"` |
 
+If the user asks for Sora, use `"veo-3.1-fast-generate-preview"` and tell the user in one line that Sora is retired.
+
 ## Model-Specific Parameter Matrix
 
-- **Sora models (`sora-2`, `sora-2-pro`)**
-  - Allowed sizing parameter: `size`
-  - Allowed `size` values: `"720x1280"`, `"1280x720"`, `"1024x1792"`, `"1792x1024"`
-  - Do not pass `aspect_ratio`
-  - Practical default pair: `"1280x720"` or `"720x1280"`
 - **Veo models (`veo-3.1-generate-preview`, `veo-3.1-fast-generate-preview`)**
   - Allowed sizing parameter: `aspect_ratio`
   - Allowed `aspect_ratio` values: `"16:9"`, `"9:16"`
-  - Do not pass `size`
 - **Seedance models (`seedance-2`, `seedance-2-fast`)**
   - Allowed sizing parameters: `aspect_ratio` and `resolution`
   - Allowed `aspect_ratio` values: `"16:9"`, `"9:16"`, `"1:1"`, `"4:3"`, `"3:4"`
   - Allowed `resolution` values: `"480p"`, `"720p"`
   - Supports `generate_audio=true` for native audio with lip-sync
-  - Do not pass `size`
 
 ## Duration Limits
 
-- **Sora:** 4, 8, or 12 seconds per generation. Use scene chaining + `videos_stitch` for longer videos.
-- **Veo:** 4, 5, 6, 7, or 8 seconds per generation.
+- **Veo:** 4, 5, 6, 7, or 8 seconds per generation. Use scene chaining + `videos_stitch` for longer videos.
 - **Seedance:** 4-15 seconds per generation (most flexible). Supports `generate_audio=true` for native audio with lip-sync.
 
 ## High-Control Prompt Template

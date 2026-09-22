@@ -24,10 +24,9 @@ Default generation uses `veo-3.1-fast-generate-preview`. Pass `model` explicitly
 
 - `model="veo-3.1-fast-generate-preview"`: default, fastest Veo route
 - `model="veo-3.1-generate-preview"`: higher-quality Veo route
-- `model="sora-2"` or `model="sora-2-pro"`: OpenAI Sora route
 - `model="seedance-2"` or `model="seedance-2-fast"`: Seedance route
 
-Explicit `model` selection always wins. The tool no longer switches to Sora just because voice or background sound is requested.
+Explicit `model` selection always wins.
 
 ## Style templates
 
