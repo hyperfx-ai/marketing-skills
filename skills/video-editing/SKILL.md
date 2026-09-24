@@ -1,6 +1,6 @@
 ---
 name: video-editing
-description: Edit a video the user attaches — captions timed to the spoken words, captions translated into another language, a dub in another language in a voice like the speaker's, karaoke-style captions, AI scene edits with Gemini Omni (change a scene, remove on-screen text, extend the clip), and (coming) TikTok delivery. Use when the user attaches or names a video and asks to caption it, subtitle it, translate its captions, dub it, edit it, or post it to TikTok.
+description: Edit a video the user attaches — captions timed to the spoken words, captions translated into another language, a dub in another language in a voice like the speaker's, karaoke-style captions, AI scene edits with Gemini Omni (change a scene, remove on-screen text, extend the clip), and posting or scheduling the result on TikTok. Use when the user attaches or names a video and asks to caption it, subtitle it, translate its captions, dub it, edit it, or post it to TikTok.
 use_cases:
   - Add captions to an attached video, timed word by word
   - Add captions and translate them into another language
@@ -36,7 +36,7 @@ run, `/files/video-editing/<clip>-<time>/`, so a second run never overwrites the
 | AI scene edits (remove text, change a scene) | Ready | This guide (`edit_instruction`) |
 | Extend the clip by 3 to 10 seconds | Ready | This guide (`extend_seconds`) |
 | Refine the last edit ("now make the light warmer") | Ready | This guide (`previous_interaction_id`) |
-| Posting the result to TikTok | Coming | Tell the user it is not available yet; deliver in chat |
+| Posting or scheduling the result on TikTok | Ready | This guide (`delivery: tiktok`) |
 | Generating a new video from a prompt | Other skill | [`video-generation`](../video-generation) |
 
 ## Requirements
@@ -44,6 +44,7 @@ run, `/files/video-editing/<clip>-<time>/`, so a second run never overwrites the
 - **Hyper MCP installed.** [https://app.hyperfx.ai/mcp](https://app.hyperfx.ai/mcp)
 - **Video Generation toolkit enabled** at [https://app.hyperfx.ai/apps](https://app.hyperfx.ai/apps) — provides `audio_words_transcribe` (Whisper word timestamps), `voices_create` and `voices_speak` (Gemini TTS voices), and `videos_edit` (Gemini Omni scene edits).
 - **Sandbox toolkit enabled** — the pipeline runs there (`sandbox_shell`, `sandbox_python_run`, `files_copy_to_sandbox`, `files_copy_from_sandbox`), and translation goes through `ai_functions_run` from inside it.
+- **TikTok connected** (Set up, Connect apps) when the result goes to TikTok — provides `tiktok_posts_publish` and `tiktok_posts_schedule`. Without it the plan refuses in one sentence; tell the user to connect TikTok in Set up.
 - **Background jobs enabled** for the workspace. The run is a background shell job; if `sandbox_shell(background=true)` is refused because background tools are off, tell the user that plainly and stop. Do not run the pipeline in the foreground.
 
 ### How to run the tools in this skill
@@ -68,6 +69,8 @@ If a tool is not found, its integration is not connected or not enabled for the 
 7. **A voice is made from the clip, not asked for.** With `voice: designed` the run itself creates a voice that resembles the speaker and saves it under `/files/voices/`. Reuse an existing record on the next run (see below). Ask about the voice only for a replicated (cloned) voice: it needs a consent clip, and the same question offers the designed voice as the no-recording alternative.
 8. **Baked-in text gets stripped or mentioned.** Omni redraws on-screen text with mistakes when it is not told to remove it. When the clip has text on it and the user asks for an edit, set `strip_text: yes` if they want it gone; otherwise tell them the text may come out changed before they say yes.
 9. **The whole clip is edited, in pieces.** Omni takes at most 10 seconds at a time; the script cuts a longer clip into equal pieces, edits each with the same instruction and stitches them back. Never ask which seconds to edit. Fill `edit_part` only when the user asks for a part themselves.
+10. **TikTok posts are private until the app is audited, and the yes covers the policy.** Every post lands private on the user's own account whatever they ask; say so when they ask for public. The plan's last TikTok line names TikTok's Music Usage Confirmation; the user's yes on the plan confirms it, and you never ask a second time. The AI label is set by the script from the job, never by you.
+11. **Times are the user's, never guessed.** "Schedule it" with no times is one question. The zone is the user's profile zone; ask once when there is none. A scheduled post is a row on the workspace's Scheduled tasks screen: that is where the user cancels it and where its result shows after it fires. Before scheduling, look there for a TikTok row at the same time and skip a slot that already exists.
 
 ## The settings sheet
 
@@ -86,7 +89,11 @@ The sheet is the job. Every field, its default and where it comes from is in
 | `dub` | `none` | A language code when the user asks for a dub; the output is that language only |
 | `voice` | `designed` | `designed` (made from the clip's speaker by the run), `replicated` (a clone, needs `consent_file_id`), or the name of a record in `/files/voices/` |
 | `consent_file_id` | — | Only for `replicated`: the file id of a clip in which the speaker says the consent sentence |
-| `delivery` | `chat` | Always `chat` in this version |
+| `delivery` | `chat` | `tiktok` when the result is posted or scheduled on TikTok |
+| `tiktok_caption` | — | The user's caption and hashtags, verbatim; ask when `delivery` is `tiktok` and none was given |
+| `tiktok_times` | `[]` | Local `YYYY-MM-DD HH:MM` times the user named; empty is post now; never guessed |
+| `tiktok_timezone` | the profile zone | An IANA zone name; ask once when the profile has none |
+| `tiktok_account` | — | The connected TikTok account's display name from the connections list; ask only when there are several; leave empty when there is none and the plan will say so |
 | `edit_instruction` | empty | The user's words for the change; for an extension, what happens next |
 | `strip_text` | `no` | `yes` when the user wants the on-screen text gone |
 | `edit_part` | `whole` | `start-end` seconds only when the user asks for a part |
@@ -140,6 +147,10 @@ job = {
     "voice": "designed",
     "consent_file_id": None,
     "delivery": "chat",
+    "tiktok_caption": "",
+    "tiktok_times": [],
+    "tiktok_timezone": "Europe/Amsterdam",
+    "tiktok_account": "",
     "edit_instruction": "",
     "strip_text": "no",
     "edit_part": "whole",
@@ -170,7 +181,7 @@ sandbox_shell(command="cd /home/user/video-editing && python pipeline.py run job
 
 Tell the user it is running and that you will report when it finishes. The job's completion message
 carries the result: a JSON object mapping each output name to its file id, plus `interaction_ids` when an
-edit ran.
+edit ran, plus `tiktok` when the result went to TikTok: one trigger id per scheduled post, or the publish id and status of a post made now.
 
 ### 5. Report the outputs
 
@@ -178,7 +189,7 @@ List every output with its id: `final.<lang>.mp4` per language, `captions.<lang>
 `check.<lang>.png` (one frame with a caption on it, so the user can see the placement). For a dub there is
 one language: the dubbed one. If the completion
 names a failed stage instead, say which stage failed and what it said; `out/ledger.jsonl` in the sandbox
-holds one line per stage.
+holds one line per stage. For TikTok: name each scheduled post with its time and say it is on the Scheduled tasks screen, private until the app is audited; for a post made now, give the publish id and status.
 
 ### 6. Refining an edit
 
@@ -198,7 +209,7 @@ output so each lands in the user's files in the run's folder `/files/video-editi
 translation of the whole transcript asked to fit the clip's spoken length, `voices_speak` in that voice, a
 tempo fit within 0.9 to 1.1 (one re-translation when the first take is outside it), the new audio swapped onto
 the picture, `audio_words_transcribe` again on the dubbed track, and captions timed to it. `karaoke` writes
-an ASS subtitle with one highlight per word instead of the plain SRT for the burn.
+an ASS subtitle with one highlight per word instead of the plain SRT for the burn. With `delivery: tiktok`, after the outputs land: `tiktok_posts_schedule` once per time, in time order, with the captioned video (else the edited or extended clip, else the source), the caption, the AI label and the UTC time, or `tiktok_posts_publish` once when there are no times.
 
 ## Example: a dub
 

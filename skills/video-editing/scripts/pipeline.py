@@ -20,8 +20,9 @@ import shutil
 import subprocess
 import sys
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 from seti.sandbox import call_tool
 
@@ -454,28 +455,78 @@ def tiktok_wanted(job: dict) -> bool:
     return job.get("delivery") == "tiktok"
 
 
-# TODO(HYP-1607 chunk 4): contract stubs; the build fills them in.
-# spec: hq/projects/hyper/workspace/specs/2026-09-24-video-editing-tiktok.md, Design § The plan and § The run
-# tests: tests/test_video_editing_tiktok.py
 def tiktok_slots(job: dict) -> list[tuple[str, str]]:
-    """UTC run times with the display zone, one per slot, spaced within a minute; raises on a past time."""
-    raise NotImplementedError
+    """UTC run times with the local time as typed, one per slot in time order; raises on a past time."""
+    zone = ZoneInfo(job.get("tiktok_timezone") or "UTC")
+    now = datetime.now(timezone.utc)
+    per_minute: dict[datetime, int] = {}
+    slots = []
+    for local in job.get("tiktok_times") or []:
+        when = datetime.strptime(local, "%Y-%m-%d %H:%M").replace(tzinfo=zone)
+        earlier = per_minute.get(when, 0)
+        per_minute[when] = earlier + 1
+        run_at = when.astimezone(timezone.utc) + timedelta(seconds=earlier * TIKTOK_SAME_MINUTE_SPACING_S)
+        if run_at <= now:
+            raise RuntimeError(f"the TikTok time {local} {zone.key} is in the past")
+        slots.append((run_at.isoformat(), local))
+    return sorted(slots)
 
 
 def ai_label(job: dict) -> bool:
-    raise NotImplementedError
+    """TikTok's AI-generated label: on when this pipeline edited, extended or dubbed the picture or the voice."""
+    return has_edit(job) or bool(dub_language(job))
 
 
 def post_file(job: dict, names: list[str]) -> str:
-    raise NotImplementedError
+    """The one output to post: the captioned video, else the edited or extended clip, else the source."""
+    for name in names:
+        if name.startswith("final.") and name.endswith(".mp4"):
+            return name
+    for name in ("extended.mp4", "edited.mp4"):
+        if name in names:
+            return name
+    return "source"
 
 
 def tiktok_plan_lines(job: dict, probe: Probe) -> list[str]:
-    raise NotImplementedError
+    """One line per post as it will be sent, then the policy line; refuses in one sentence and sends nothing."""
+    account = job.get("tiktok_account")
+    if not account:
+        raise RuntimeError("no TikTok connection in this workspace: connect TikTok in Set up")
+    caption = job.get("tiktok_caption") or ""
+    if len(caption) > TIKTOK_CAPTION_MAX_CHARS:
+        raise RuntimeError(f"the TikTok caption is {len(caption)} characters; TikTok allows {TIKTOK_CAPTION_MAX_CHARS}")
+    if probe.duration_s < TIKTOK_MIN_SECONDS:
+        raise RuntimeError(f"the clip is {probe.duration_s:.1f} s; TikTok wants at least {TIKTOK_MIN_SECONDS:.0f} s")
+    lines = []
+    if min(probe.width, probe.height) < TIKTOK_MIN_SHORT_SIDE:
+        lines.append(f"warning: the output is {probe.width}x{probe.height} and TikTok wants 720p and up; TikTok may refuse it")
+    zone = job.get("tiktok_timezone") or "UTC"
+    label = "yes" if ai_label(job) else "no"
+    tail = f"private until the app is audited · AI label: {label} · $0"
+    slots = tiktok_slots(job)
+    if not slots:
+        lines.append(f'TikTok post to @{account}, post now: "{caption}" · {tail}')
+    for _, local in slots:
+        lines.append(f'TikTok post to @{account}: "{caption}" at {local} {zone} · {tail}')
+    lines.append(f"Saying yes confirms TikTok's Music Usage Confirmation: {TIKTOK_MUSIC_POLICY_URL}")
+    return lines
 
 
 async def deliver(job: dict, ledger: Path, ids: dict[str, str]) -> list:
-    raise NotImplementedError
+    """Post the one output now, or schedule it once per slot; the publish result, or one trigger id per slot."""
+    file = ids.get(post_file(job, list(ids)), job["source_file_id"])
+    caption, label = job["tiktok_caption"], ai_label(job)
+    slots = tiktok_slots(job)
+    if not slots:
+        posted = await run_stage(ledger, "tiktok", call_tool("tiktok_posts_publish", file=file, caption=caption, is_aigc=label), usd=0.0)
+        return [{"publish_id": posted["publish_id"], "status": posted["status"], "fail_reason": posted.get("fail_reason")}]
+    triggers = []
+    for run_at, local in slots:
+        work = call_tool("tiktok_posts_schedule", file=file, caption=caption, is_aigc=label, run_at=run_at, timezone=job.get("tiktok_timezone") or "UTC")
+        scheduled = await run_stage(ledger, "tiktok", work, slot=local, usd=0.0)
+        triggers.append(scheduled["trigger_id"])
+    return triggers
 
 
 def tts_usd(duration_s: float, chars: int) -> float:

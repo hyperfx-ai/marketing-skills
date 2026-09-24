@@ -16,7 +16,11 @@ the attachment and asks only for the rest.
 | `dub` | `none` or an ISO 639-1 code | `none` | The user asks for a dub. The output is the dubbed language only. | Yes: a voice creation when none is on file, one translation, one speech call, one more Whisper pass |
 | `voice` | `designed`, `replicated`, or a record name | `designed` | `designed`: the run makes a voice that resembles the clip's speaker (no recording). `replicated`: a clone, needs `consent_file_id`. A name: a record in `/files/voices/`, reused as is. | `designed` and `replicated` cost one voice creation |
 | `consent_file_id` | a file id | — | Only for `replicated`: a clip of the speaker saying the consent sentence. | No |
-| `delivery` | `chat` | `chat` | Always `chat` in this version; TikTok delivery is coming. | No |
+| `delivery` | `chat`, `tiktok` | `chat` | `tiktok` when the user wants the result posted or scheduled on TikTok. | No: TikTok charges nothing |
+| `tiktok_caption` | text, at most 2200 characters | — | The user's caption and hashtags, verbatim. Ask for it when `delivery` is `tiktok` and none was given. | No |
+| `tiktok_times` | a list of `YYYY-MM-DD HH:MM` local times | `[]` | The times the user named; empty means post now. Never guessed: "schedule it" with no times is a question. | No |
+| `tiktok_timezone` | an IANA zone name (`Europe/Amsterdam`) | the user's profile zone | The profile zone when the platform has one, else asked once. Printed beside every time in the plan. | No |
+| `tiktok_account` | the connected account's display name, or empty | — | Copied from the workspace's TikTok connections; asked only when there are several. Empty makes the plan refuse with "connect TikTok in Set up". | No |
 | `edit_instruction` | text | empty | The user's words for what should change in the picture; for an extension, what happens next. An edit runs when this or `extend_seconds` is set. | Yes: one Omni call per piece |
 | `strip_text` | `no`, `yes` | `no` | `yes` when the user wants the on-screen text gone; the script adds one fixed sentence to the instruction. Omni redraws text it is not told to remove. | No |
 | `edit_part` | `whole`, `start-end` seconds | `whole` | Only when the user asks for a part of the clip ("just the first five seconds"). Never asked for. | Yes: fewer seconds |
@@ -35,6 +39,7 @@ One numbered line per call the run will make, then a total:
 4. For a dub: `voices_create` when no voice is named, the translation of the transcript with its character budget, `voices_speak` priced from the text length at the vendor's token rate, and `audio_words_transcribe` again on the dubbed track.
 5. One ffmpeg burn per language, with its check frame, at no charge.
 6. `files_copy_from_sandbox` for every output into the run's folder `/files/video-editing/<clip>-<time>/`, at no charge.
+7. With `delivery: tiktok`: one `TikTok post` line per time, or one `post now` line, each with the account, the caption as it will be sent, the local time and zone, `private until the app is audited`, `AI label: yes` or `no` (yes when the job edits, extends or dubs; code decides), and `$0`; then one line naming TikTok's Music Usage Confirmation, which the user's yes confirms. A time in the past, a caption over 2200 characters, a clip under 3 seconds or no connected account is a one-sentence refusal; an output under 720 px on its short side gets a warning line.
 
 The figures are computed by the script from the sheet and the clip. The agent shows them as printed.
 
@@ -51,6 +56,7 @@ The figures are computed by the script from the sheet and the clip. The agent sh
 | `words.<lang>.json` | language | Whisper's words with their times, for the source and for the dubbed track (stays in the sandbox) |
 | `transcript.<lang>.txt`, `speech.<lang>.wav`, `dubbed.<lang>.mp4` | dub | The translated transcript, the spoken audio, and the picture with the new audio before captions (stay in the sandbox) |
 | `captions.<lang>.ass` | karaoke | The karaoke subtitle the burn used (stays in the sandbox) |
+| `tiktok` (in the completion) | TikTok delivery | One trigger id per scheduled post, each a row on the Scheduled tasks screen, or the publish id and status of a post made now |
 | `ledger.jsonl` | run | One line per stage: started, done or failed, with its price (stays in the sandbox) |
 
 ## Voice records
