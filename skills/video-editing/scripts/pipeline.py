@@ -3,8 +3,8 @@
 Runs inside the user's sandbox. Provider calls go through the sandbox tool bridge
 (`call_tool`); ffmpeg does the cutting, burning and frame capture locally.
 
-    python pipeline.py plan job.json      # print every call the run would make, send nothing
-    python pipeline.py run job.json       # run it; every output is landed in /files with an id
+    python pipeline.py plan job.json      prints every call the run would make and sends nothing
+    python pipeline.py run job.json       runs it; every output lands in /files with an id
 
 The job is the settings sheet the skill fills in. `plan` and `run` read the same file, so what
 the user approved is what executes: one priced call list is built from the sheet, `plan` prints it
