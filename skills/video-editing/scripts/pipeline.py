@@ -379,22 +379,22 @@ def previous_ids(job: dict) -> list[str]:
 
 
 async def land_piece(job: dict, out: Path, ledger: Path, n: int, span: tuple[float, float], whole: bool) -> str:
-    """The file id Omni edits for piece n: the source itself, or the piece cut out and landed."""
+    """What Omni edits for piece n: the source itself, or the piece cut out and landed at a /files path."""
     if whole:
         return job["source_file_id"]
     piece = out / f"piece.{n}.mp4"
     await asyncio.to_thread(cut_piece, Path(job["source_path"]), span, piece)
-    landed = await run_stage(ledger, "land", call_tool("sandbox_download_file", path=str(piece)), output=piece.name, usd=0.0)
-    return landed["file_id"]
+    landed = await land(out, ledger, [piece.name], landing_folder(job))
+    return landed[piece.name]
 
 
-async def land_anchor(out: Path, ledger: Path, edited_piece: Path, n: int) -> str:
+async def land_anchor(job: dict, out: Path, ledger: Path, edited_piece: Path, n: int) -> str:
     """Land the last frame of an edited piece so the next piece can be held to its scene."""
     anchor = out / f"anchor.{n}.png"
     duration = probe_clip(edited_piece).duration_s
     ffmpeg("-ss", f"{max(0.0, duration - 0.4):.2f}", "-i", str(edited_piece), "-frames:v", "1", str(anchor))
-    landed = await run_stage(ledger, "land", call_tool("sandbox_download_file", path=str(anchor)), output=anchor.name, usd=0.0)
-    return landed["file_id"]
+    landed = await land(out, ledger, [anchor.name], landing_folder(job))
+    return landed[anchor.name]
 
 
 async def edit(job: dict, out: Path, ledger: Path, probe: Probe) -> dict:
@@ -426,7 +426,7 @@ async def edit(job: dict, out: Path, ledger: Path, probe: Probe) -> dict:
         results.append(result)
         paths.append(path)
         if n < len(pieces):
-            anchor_id = await land_anchor(out, ledger, path, n)
+            anchor_id = await land_anchor(job, out, ledger, path, n)
     name = "extended.mp4" if is_extension(job) else "edited.mp4"
     if is_extension(job):
         await asyncio.to_thread(append, Path(job["source_path"]), paths[0], probe, out / name)
@@ -434,8 +434,8 @@ async def edit(job: dict, out: Path, ledger: Path, probe: Probe) -> dict:
         await asyncio.to_thread(assemble, Path(job["source_path"]), list(zip(pieces, paths)), probe, out / name)
     first = pieces[0]
     check_frame(out / name, Cue(0, first[0], first[1], ""), out / "check.edit.png")
-    landed = await run_stage(ledger, "land", call_tool("sandbox_download_file", path=str(out / name)), output=name, usd=0.0)
-    return {"name": name, "path": str(out / name), "file_id": landed["file_id"], "interaction_ids": [result["interaction_id"] for result in results]}
+    landed = await land(out, ledger, [name], landing_folder(job))
+    return {"name": name, "path": str(out / name), "file_id": landed[name], "interaction_ids": [result["interaction_id"] for result in results]}
 
 
 def output_names(spoken: str, target: str | None, *, dub: str | None = None) -> list[str]:
@@ -464,7 +464,7 @@ def render_plan(job: dict, probe: Probe) -> str:
     if has_edit(job):
         lines, total = edit_plan_lines(job, probe)
     if not captions_wanted(job):
-        lines.append("sandbox_download_file for 2 outputs into files: $0")
+        lines.append("files_copy_from_sandbox for 2 outputs into files: $0")
         numbered = [f"{n}. {line}" for n, line in enumerate(lines, start=1)]
         return "\n".join([*numbered, f"Total: ${total:.4f}"])
     lines.append(
@@ -775,7 +775,7 @@ async def run(job: dict, out: Path) -> dict[str, str]:
         edited = await edit_task
         job["edited_path"], job["interaction_ids"] = edited["path"], edited["interaction_ids"]
         if not captions_wanted(job):
-            return with_edited(edited, await land(out, ledger, ["check.edit.png"]))
+            return with_edited(edited, await land(out, ledger, ["check.edit.png"], landing_folder(job)))
         job["words_file_id"] = edited["file_id"]
     transcribed = await transcribe(job, out, ledger, probe)
     if edit_task and edited is None:

@@ -189,7 +189,7 @@ go back to step 3: `plan`, a yes, `run`. Nothing is uploaded again; Omni continu
 ## What the script does
 
 `pipeline.py run` inside the sandbox: when an edit is asked for, ffmpeg cuts the clip into pieces of at most 10 s,
-`sandbox_download_file` lands each, `videos_edit` edits each with the same instruction (or extends the clip), `files_copy_to_sandbox`
+`files_copy_from_sandbox` lands each, `videos_edit` edits each with the same instruction (or extends the clip), `files_copy_to_sandbox`
 brings the results back, and ffmpeg scales and stitches them into `edited.mp4` (or `extended.mp4`) with the clip's own audio.
 Then, unless `captions` is `no`: `audio_words_transcribe` for the words, cues of at most 4 words or 26
 characters that break at pauses over 0.6 s, `ai_functions_run` for the translation when a second language is

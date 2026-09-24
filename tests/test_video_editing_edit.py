@@ -117,28 +117,29 @@ class RunTests(unittest.IsolatedAsyncioTestCase):
             result = await pipeline.run(job, Path(tmp) / "out")
 
             sent = names(bridge.calls)
-            piece_downloads = [kw for name, kw in bridge.calls if name == "sandbox_download_file" and "piece." in kw["path"]]
+            piece_downloads = [kw for name, kw in bridge.calls if name == "files_copy_from_sandbox" and "piece." in kw["sources"][0]]
             self.assertEqual(len(piece_downloads), 2)
             edits = [kw for name, kw in bridge.calls if name == "videos_edit"]
-            self.assertEqual([kw["file_id"] for kw in edits], ["file_piece.1.mp4", "file_piece.2.mp4"])
+            self.assertEqual([Path(kw["file_id"]).name for kw in edits], ["piece.1.mp4", "piece.2.mp4"])
+            self.assertTrue(all(kw["file_id"].startswith("/files/video-editing/") for kw in edits))
             self.assertEqual(edits[0]["instruction"], CLINIC)
             self.assertTrue(edits[1]["instruction"].startswith(CLINIC) and edits[1]["instruction"].endswith(pipeline.ANCHOR_SENTENCE))
             self.assertNotIn("reference_image_file_id", edits[0])
-            self.assertEqual(edits[1]["reference_image_file_id"], "file_anchor.1.png")
+            self.assertEqual(Path(edits[1]["reference_image_file_id"]).name, "anchor.1.png")
             self.assertEqual({kw["resolution"] for kw in edits}, {"720p"})
             self.assertEqual({kw["aspect_ratio"] for kw in edits}, {"9:16"})
             copies = [kw for name, kw in bridge.calls if name == "files_copy_to_sandbox"]
             self.assertEqual([kw["sources"] for kw in copies], [["file_omni_1"], ["file_omni_2"]])
             words = [kw for name, kw in bridge.calls if name == "audio_words_transcribe"]
             self.assertEqual([kw["file_id"] for kw in words], ["file_source"])
-            self.assertLess(max(i for i, n in enumerate(sent) if n == "sandbox_download_file" and "piece." in bridge.calls[i][1]["path"]), sent.index("videos_edit"))
+            self.assertLess(max(i for i, n in enumerate(sent) if n == "files_copy_from_sandbox" and "piece." in bridge.calls[i][1]["sources"][0]), sent.index("videos_edit"))
             first_edit, first_copy = sent.index("videos_edit"), sent.index("files_copy_to_sandbox")
-            anchor = next(i for i, (n, kw) in enumerate(bridge.calls) if n == "sandbox_download_file" and "anchor." in kw["path"])
+            anchor = next(i for i, (n, kw) in enumerate(bridge.calls) if n == "files_copy_from_sandbox" and "anchor." in kw["sources"][0])
             second_edit = [i for i, n in enumerate(sent) if n == "videos_edit"][1]
             self.assertTrue(first_edit < first_copy < anchor < second_edit)
-            output_downloads = [Path(kw["path"]).name for name, kw in bridge.calls if name == "sandbox_download_file" and "piece." not in kw["path"] and "anchor." not in kw["path"]]
+            output_downloads = [Path(kw["sources"][0]).name for name, kw in bridge.calls if name == "files_copy_from_sandbox" and "piece." not in kw["sources"][0] and "anchor." not in kw["sources"][0]]
             self.assertEqual(output_downloads, ["edited.mp4", "final.en.mp4", "captions.en.srt", "check.en.png"])
-            self.assertEqual(result, {name: f"file_{name}" for name in output_downloads})
+            self.assertEqual({name: Path(path).name for name, path in result.items()}, {name: name for name in output_downloads})
             self.assertEqual(Path(job["edited_path"]).name, "edited.mp4")
 
         bridge = EditBridge(8)
@@ -163,7 +164,7 @@ class RunTests(unittest.IsolatedAsyncioTestCase):
             edits = [kw for name, kw in bridge.calls if name == "videos_edit"]
             self.assertEqual([kw.get("previous_interaction_id") for kw in edits], ["v1_first", "v1_second"])
             self.assertEqual([kw.get("file_id") for kw in edits], [None, None])
-            self.assertEqual([kw for name, kw in bridge.calls if name == "sandbox_download_file" and "piece." in kw["path"]], [])
+            self.assertEqual([kw for name, kw in bridge.calls if name == "files_copy_from_sandbox" and "piece." in kw["sources"][0]], [])
             self.assertEqual(sorted(result), ["captions.en.srt", "check.en.png", "edited.mp4", "final.en.mp4"])
             self.assertEqual(job["interaction_ids"], ["v1_interaction_1", "v1_interaction_2"])
 
@@ -183,10 +184,10 @@ class RunTests(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(len(edits), 1)
             self.assertTrue(edits[0]["instruction"].startswith("Continue the scene for 4 seconds."))
             sent = names(bridge.calls)
-            extended_download = next(i for i, (n, kw) in enumerate(bridge.calls) if n == "sandbox_download_file" and Path(kw["path"]).name == "extended.mp4")
+            extended_download = next(i for i, (n, kw) in enumerate(bridge.calls) if n == "files_copy_from_sandbox" and Path(kw["sources"][0]).name == "extended.mp4")
             self.assertLess(extended_download, sent.index("audio_words_transcribe"))
             words = [kw for name, kw in bridge.calls if name == "audio_words_transcribe"]
-            self.assertEqual(words[0]["file_id"], "file_extended.mp4")
+            self.assertEqual(Path(words[0]["file_id"]).name, "extended.mp4")
             self.assertEqual(sorted(result), ["captions.en.srt", "check.en.png", "extended.mp4", "final.en.mp4"])
 
 
