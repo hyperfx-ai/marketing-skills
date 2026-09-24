@@ -17,16 +17,24 @@ the attachment and asks only for the rest.
 | `voice` | `designed`, `replicated`, or a record name | `designed` | `designed`: the run makes a voice that resembles the clip's speaker (no recording). `replicated`: a clone, needs `consent_file_id`. A name: a record in `/files/voices/`, reused as is. | `designed` and `replicated` cost one voice creation |
 | `consent_file_id` | a file id | — | Only for `replicated`: a clip of the speaker saying the consent sentence. | No |
 | `delivery` | `chat` | `chat` | Always `chat` in this version; TikTok delivery is coming. | No |
+| `edit_instruction` | text | empty | The user's words for what should change in the picture; for an extension, what happens next. An edit runs when this or `extend_seconds` is set. | Yes: one Omni call per piece |
+| `strip_text` | `no`, `yes` | `no` | `yes` when the user wants the on-screen text gone; the script adds one fixed sentence to the instruction. Omni redraws text it is not told to remove. | No |
+| `edit_part` | `whole`, `start-end` seconds | `whole` | Only when the user asks for a part of the clip ("just the first five seconds"). Never asked for. | Yes: fewer seconds |
+| `edit_resolution` | `auto`, `360p`, `720p` | `auto` | `auto` is 720p when the clip's short side is 720 px or more, else 360p. 1080p and 4K are not offered: Omni publishes no rate for them. | Yes: 720p is about three times 360p |
+| `extend_seconds` | `0`, or 3 to 10 | `0` | The seconds the user wants added; Omni continues the scene and the script appends the new seconds after the whole clip. | Yes: priced on the seconds asked for |
+| `previous_interaction_id` | the ids from the last completion | empty | When the user refines the edit they just got. One id per piece, in order; the clip is not uploaded again. | Yes: one Omni call per piece |
+| `captions` | `yes`, `no` | `yes` | `no` when the user wants only the edit and no captions. | No: `no` skips Whisper |
 
 ## What the plan prints
 
 One numbered line per call the run will make, then a total:
 
-1. `audio_words_transcribe` on the clip's audio length, billed per started minute.
-2. `ai_functions_run` translating the cues into the caption language, priced from the estimated text length. Only when a translation is wanted.
-3. For a dub: `voices_create` when no voice is named, the translation of the transcript with its character budget, `voices_speak` priced from the text length at the vendor's token rate, and `audio_words_transcribe` again on the dubbed track.
-4. One ffmpeg burn per language, with its check frame, at no charge.
-5. `files_copy_from_sandbox` for every output into the run's folder `/files/video-editing/<clip>-<time>/`, at no charge.
+1. `videos_edit` once per piece, naming the model, edit or extend, the piece's seconds, the resolution, the aspect ratio, the full instruction as it will be sent, and the estimated price: seconds × Omni's output tokens per second (5,792 at 720p, 1,931 at 360p) × $17.50 per million, plus the input estimate. Only when an edit is asked for. The run bills the actual usage Omni reports.
+2. `audio_words_transcribe` on the clip's audio length, billed per started minute. Skipped when `captions` is `no`.
+3. `ai_functions_run` translating the cues into the caption language, priced from the estimated text length. Only when a translation is wanted.
+4. For a dub: `voices_create` when no voice is named, the translation of the transcript with its character budget, `voices_speak` priced from the text length at the vendor's token rate, and `audio_words_transcribe` again on the dubbed track.
+5. One ffmpeg burn per language, with its check frame, at no charge.
+6. `files_copy_from_sandbox` for every output into the run's folder `/files/video-editing/<clip>-<time>/`, at no charge.
 
 The figures are computed by the script from the sheet and the clip. The agent shows them as printed.
 
@@ -34,7 +42,10 @@ The figures are computed by the script from the sheet and the clip. The agent sh
 
 | Name | One per | What it is |
 | --- | --- | --- |
-| `final.<lang>.mp4` | language | The clip with captions burned in |
+| `edited.mp4` | edit | The clip with the edit in place, at the source's size, with the source's audio |
+| `extended.mp4` | extension | The clip with the new seconds appended |
+| `check.edit.png` | edit without captions | One frame from the middle of the first edited piece |
+| `final.<lang>.mp4` | language | The clip (edited, when an edit ran) with captions burned in |
 | `captions.<lang>.srt` | language | The subtitle file, cue by cue |
 | `check.<lang>.png` | language | One frame from the middle of the first cue, to see the placement |
 | `words.<lang>.json` | language | Whisper's words with their times, for the source and for the dubbed track (stays in the sandbox) |
@@ -54,6 +65,12 @@ The translation is asked to fit the clip's spoken length (the source's character
 speech seconds). The spoken take is tempo-fitted only within 0.9 to 1.1; outside that band the script asks
 for one re-translation with the budget scaled by the miss, then fits. A second miss is fitted anyway and
 noted in the ledger.
+
+## Pieces the script cuts
+
+Omni takes at most 10 s of input. A span of 10 s or less is one piece; a longer span is cut into the fewest
+equal pieces of at most 10 s (15 s into two of 7.5 s, 30 s into three of 10 s). Every piece gets the same
+instruction; the plan shows one line per piece. An extension feeds Omni the whole clip or its last 10 s.
 
 ## Cue rules the script applies
 

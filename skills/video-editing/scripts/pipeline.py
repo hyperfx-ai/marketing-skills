@@ -52,6 +52,7 @@ OMNI_USD_PER_M_VIDEO_OUTPUT_TOKENS = 17.50
 OMNI_OUTPUT_TOKENS_PER_SECOND = {"360p": 1931, "720p": 5792}
 OMNI_INPUT_TOKENS_PER_SECOND = 1771
 STRIP_TEXT_SENTENCE = "Remove every piece of on-screen text and every caption, and do not add any text."
+ANCHOR_SENTENCE = "The attached image is the previous part of this same video after the same edit: match its scene, furniture, lighting and colour grading exactly."
 
 LANGUAGE_CODES = {
     "english": "en",
@@ -247,74 +248,194 @@ def with_edited(edited: dict | None, ids: dict[str, str]) -> dict[str, str]:
     return {edited["name"]: edited["file_id"], **ids} if edited else ids
 
 
+def edit_span(job: dict, probe: Probe) -> tuple[float, float]:
+    """The seconds to edit: the whole clip, or the user's part."""
+    part = str(job.get("edit_part") or "whole")
+    if part == "whole":
+        return (0.0, probe.duration_s)
+    start, end = (float(value) for value in part.split("-", 1))
+    if start < 0 or end <= start or end > probe.duration_s + 0.05:
+        raise RuntimeError(f"edit_part {part} is outside the clip, which is {probe.duration_s:.1f} s long")
+    return (start, min(end, probe.duration_s))
+
+
 def edit_pieces(job: dict, probe: Probe) -> list[tuple[float, float]]:
     """The spans Omni edits, each at most 10 s: the whole clip or the user's part, cut into the fewest equal pieces."""
-    # TODO spec: hq/projects/hyper/workspace/specs/2026-09-24-video-editing-scene-edit.md § Design (Long clips: pieces)
-    # TODO tests: tests/test_video_editing_edit.py rows 1-2
-    raise NotImplementedError
+    if is_extension(job):
+        return [(max(0.0, probe.duration_s - OMNI_MAX_PIECE_SECONDS), probe.duration_s)]
+    start, end = edit_span(job, probe)
+    count = max(1, math.ceil((end - start) / OMNI_MAX_PIECE_SECONDS - 1e-9))
+    length = (end - start) / count
+    return [(round(start + i * length, 3), round(start + (i + 1) * length, 3)) for i in range(count)]
 
 
 def edit_resolution(job: dict, probe: Probe) -> str:
     """360p or 720p: the sheet's value, or auto from the clip's short side."""
-    # TODO spec: hq/projects/hyper/workspace/specs/2026-09-24-video-editing-scene-edit.md § Design (The sheet)
-    # TODO tests: tests/test_video_editing_edit.py row 1
-    raise NotImplementedError
+    wanted = job.get("edit_resolution") or "auto"
+    if wanted != "auto":
+        return wanted
+    return "720p" if min(probe.width, probe.height) >= 720 else "360p"
 
 
 def aspect_ratio(probe: Probe) -> str:
     """9:16 or 16:9 from the clip; a square clip is refused."""
-    # TODO spec: hq/projects/hyper/workspace/specs/2026-09-24-video-editing-scene-edit.md § Design (The plan)
-    # TODO tests: tests/test_video_editing_edit.py row 1
-    raise NotImplementedError
+    if probe.width == probe.height:
+        raise RuntimeError("Omni edits portrait (9:16) or landscape (16:9) clips only")
+    return "9:16" if probe.height > probe.width else "16:9"
 
 
 def edit_instruction(job: dict) -> str:
     """The text sent to Omni: the strip sentence or the extend prefix, then the user's words."""
-    # TODO spec: hq/projects/hyper/workspace/specs/2026-09-24-video-editing-scene-edit.md § Design (The sheet, Extension)
-    # TODO tests: tests/test_video_editing_edit.py rows 1, 4
-    raise NotImplementedError
+    words = (job.get("edit_instruction") or "").strip()
+    if is_extension(job):
+        return f"Continue the scene for {int(job['extend_seconds'])} seconds. {words}".strip()
+    if job.get("strip_text") == "yes":
+        return f"{words} {STRIP_TEXT_SENTENCE}".strip()
+    return words
 
 
 def omni_usd(seconds: float, resolution: str) -> float:
     """Estimated dollars for one Omni call of that many output seconds."""
-    # TODO spec: hq/projects/hyper/workspace/specs/2026-09-24-video-editing-scene-edit.md § Design (The plan)
-    # TODO tests: tests/test_video_editing_edit.py row 1
-    raise NotImplementedError
+    output = seconds * OMNI_OUTPUT_TOKENS_PER_SECOND[resolution] * OMNI_USD_PER_M_VIDEO_OUTPUT_TOKENS
+    inputs = seconds * OMNI_INPUT_TOKENS_PER_SECOND * OMNI_USD_PER_M_INPUT_TOKENS
+    return (output + inputs) / 1_000_000
 
 
 def edit_plan_lines(job: dict, probe: Probe) -> tuple[list[str], float]:
     """One plan line per Omni call and their total; sends nothing."""
-    # TODO spec: hq/projects/hyper/workspace/specs/2026-09-24-video-editing-scene-edit.md § Design (The plan)
-    # TODO tests: tests/test_video_editing_edit.py rows 1, 4
-    raise NotImplementedError
+    pieces = edit_pieces(job, probe)
+    resolution = edit_resolution(job, probe)
+    ratio = aspect_ratio(probe)
+    text = edit_instruction(job)
+    lines: list[str] = []
+    total = 0.0
+    for n, (start, end) in enumerate(pieces, start=1):
+        seconds = int(job["extend_seconds"]) if is_extension(job) else end - start
+        usd = omni_usd(seconds, resolution)
+        what = f"extend by {seconds} s from the last {end - start:.1f} s" if is_extension(job) else f"edit piece {n} of {len(pieces)}, {end - start:.1f} s"
+        lines.append(f"videos_edit ({OMNI_MODEL}) {what} at {resolution} {ratio}, about ${usd:.4f}, instruction: {text}")
+        total += usd
+    return lines, total
+
+
+def probe_fps(path: Path) -> float:
+    text = subprocess.run([ffmpeg_exe(), "-i", str(path)], capture_output=True, text=True).stderr
+    for line in text.splitlines():
+        if "Video:" in line:
+            tokens = line.replace(",", " ").split()
+            for token, following in zip(tokens, tokens[1:]):
+                if following == "fps":
+                    return float(token)
+    return 24.0
 
 
 def cut_piece(source: Path, span: tuple[float, float], target: Path) -> None:
     """Cut one span out of the source with a re-encode, frame-accurate."""
-    # TODO spec: hq/projects/hyper/workspace/specs/2026-09-24-video-editing-scene-edit.md § Design (The run)
-    # TODO tests: tests/test_video_editing_edit.py row 2
-    raise NotImplementedError
+    ffmpeg("-i", str(source), "-ss", f"{span[0]:.3f}", "-to", f"{span[1]:.3f}", "-c:v", "libx264", "-pix_fmt", "yuv420p", "-c:a", "aac", str(target))
+
+
+def fitted(index: int, probe: Probe, fps: float, label: str) -> str:
+    return f"[{index}:v]scale={probe.width}:{probe.height},fps={fps:g},setsar=1,setpts=PTS-STARTPTS[{label}]"
 
 
 def assemble(source: Path, pieces: list[tuple[tuple[float, float], Path]], probe: Probe, target: Path) -> None:
     """Replace each span of the source with its edited piece at the source's size; the source's audio throughout."""
-    # TODO spec: hq/projects/hyper/workspace/specs/2026-09-24-video-editing-scene-edit.md § Design (Long clips: pieces)
-    # TODO tests: tests/test_video_editing_edit.py row 2
-    raise NotImplementedError
+    fps = probe_fps(source)
+    filters: list[str] = []
+    labels: list[str] = []
+    cursor = 0.0
+    for n, ((start, end), _path) in enumerate(pieces, start=1):
+        if start - cursor > 0.01:
+            filters.append(f"[0:v]trim=start={cursor:.3f}:end={start:.3f},setpts=PTS-STARTPTS[s{n}]")
+            labels.append(f"[s{n}]")
+        filters.append(fitted(n, probe, fps, f"p{n}"))
+        labels.append(f"[p{n}]")
+        cursor = end
+    if probe.duration_s - cursor > 0.01:
+        filters.append(f"[0:v]trim=start={cursor:.3f},setpts=PTS-STARTPTS[tail]")
+        labels.append("[tail]")
+    filters.append(f"{''.join(labels)}concat=n={len(labels)}:v=1:a=0[v]")
+    inputs: list[str] = ["-i", str(source)]
+    for _span, path in pieces:
+        inputs += ["-i", str(path)]
+    ffmpeg(*inputs, "-filter_complex", ";".join(filters), "-map", "[v]", "-map", "0:a", "-c:v", "libx264", "-pix_fmt", "yuv420p", "-c:a", "aac", "-shortest", str(target))
 
 
 def append(source: Path, continuation: Path, probe: Probe, target: Path) -> None:
     """Append the continuation after the whole source at the source's size."""
-    # TODO spec: hq/projects/hyper/workspace/specs/2026-09-24-video-editing-scene-edit.md § Design (Extension)
-    # TODO tests: tests/test_video_editing_edit.py row 4
-    raise NotImplementedError
+    fps = probe_fps(source)
+    filters = [
+        "[0:v]setpts=PTS-STARTPTS[v0]",
+        fitted(1, probe, fps, "v1"),
+        "[v0][v1]concat=n=2:v=1:a=0[v]",
+        "[0:a][1:a]concat=n=2:v=0:a=1[a]",
+    ]
+    ffmpeg("-i", str(source), "-i", str(continuation), "-filter_complex", ";".join(filters), "-map", "[v]", "-map", "[a]", "-c:v", "libx264", "-pix_fmt", "yuv420p", "-c:a", "aac", str(target))
+
+
+def previous_ids(job: dict) -> list[str]:
+    ids = job.get("previous_interaction_id") or []
+    return [ids] if isinstance(ids, str) else list(ids)
+
+
+async def land_piece(job: dict, out: Path, ledger: Path, n: int, span: tuple[float, float], whole: bool) -> str:
+    """The file id Omni edits for piece n: the source itself, or the piece cut out and landed."""
+    if whole:
+        return job["source_file_id"]
+    piece = out / f"piece.{n}.mp4"
+    await asyncio.to_thread(cut_piece, Path(job["source_path"]), span, piece)
+    landed = await run_stage(ledger, "land", call_tool("sandbox_download_file", path=str(piece)), output=piece.name, usd=0.0)
+    return landed["file_id"]
+
+
+async def land_anchor(out: Path, ledger: Path, edited_piece: Path, n: int) -> str:
+    """Land the last frame of an edited piece so the next piece can be held to its scene."""
+    anchor = out / f"anchor.{n}.png"
+    duration = probe_clip(edited_piece).duration_s
+    ffmpeg("-ss", f"{max(0.0, duration - 0.4):.2f}", "-i", str(edited_piece), "-frames:v", "1", str(anchor))
+    landed = await run_stage(ledger, "land", call_tool("sandbox_download_file", path=str(anchor)), output=anchor.name, usd=0.0)
+    return landed["file_id"]
 
 
 async def edit(job: dict, out: Path, ledger: Path, probe: Probe) -> dict:
     """Run the edit or extension branch; return the edited clip's name, path, file id and interaction ids."""
-    # TODO spec: hq/projects/hyper/workspace/specs/2026-09-24-video-editing-scene-edit.md § Design (The run, Refinement, Extension)
-    # TODO tests: tests/test_video_editing_edit.py rows 2-4
-    raise NotImplementedError
+    pieces = edit_pieces(job, probe)
+    resolution = edit_resolution(job, probe)
+    ratio = aspect_ratio(probe)
+    text = edit_instruction(job)
+    previous = previous_ids(job)
+    if previous and len(previous) != len(pieces):
+        raise RuntimeError(f"{len(previous)} previous interaction ids for {len(pieces)} pieces")
+    whole = not is_extension(job) and pieces == [(0.0, probe.duration_s)]
+    call_args = {"instruction": text, "resolution": resolution, "aspect_ratio": ratio}
+    if previous:
+        calls = [{**call_args, "previous_interaction_id": previous[n]} for n in range(len(pieces))]
+    else:
+        ids = await asyncio.gather(*(land_piece(job, out, ledger, n, span, whole) for n, span in enumerate(pieces, start=1)))
+        calls = [{**call_args, "file_id": file_id} for file_id in ids]
+    seconds = int(job["extend_seconds"]) if is_extension(job) else None
+    results: list[dict] = []
+    paths: list[Path] = []
+    anchor_id: str | None = None
+    for n, (span, args) in enumerate(zip(pieces, calls), start=1):
+        if anchor_id:
+            args = {**args, "instruction": f"{text} {ANCHOR_SENTENCE}", "reference_image_file_id": anchor_id}
+        result = await run_stage(ledger, "edit", call_tool("videos_edit", **args), output=f"omni.{n}.mp4", usd=omni_usd(seconds or (span[1] - span[0]), resolution))
+        path = out / f"omni.{n}.mp4"
+        await run_stage(ledger, "fetch", call_tool("files_copy_to_sandbox", sources=[result["file_id"]], destination=str(path)), output=path.name, usd=0.0)
+        results.append(result)
+        paths.append(path)
+        if n < len(pieces):
+            anchor_id = await land_anchor(out, ledger, path, n)
+    name = "extended.mp4" if is_extension(job) else "edited.mp4"
+    if is_extension(job):
+        await asyncio.to_thread(append, Path(job["source_path"]), paths[0], probe, out / name)
+    else:
+        await asyncio.to_thread(assemble, Path(job["source_path"]), list(zip(pieces, paths)), probe, out / name)
+    first = pieces[0]
+    check_frame(out / name, Cue(0, first[0], first[1], ""), out / "check.edit.png")
+    landed = await run_stage(ledger, "land", call_tool("sandbox_download_file", path=str(out / name)), output=name, usd=0.0)
+    return {"name": name, "path": str(out / name), "file_id": landed["file_id"], "interaction_ids": [result["interaction_id"] for result in results]}
 
 
 def output_names(spoken: str, target: str | None, *, dub: str | None = None) -> list[str]:
