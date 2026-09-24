@@ -45,6 +45,13 @@ VOICE_CREATE_USD = 0.01
 KARAOKE_HIGHLIGHT_COLOUR = "&H0000FFFF"
 TTS_OUTPUT_TOKENS_PER_SECOND = 32
 ESTIMATED_CHARS_PER_SECOND = 12
+OMNI_MODEL = "gemini-omni-1.1-flash"
+OMNI_MAX_PIECE_SECONDS = 10.0
+OMNI_USD_PER_M_INPUT_TOKENS = 1.50
+OMNI_USD_PER_M_VIDEO_OUTPUT_TOKENS = 17.50
+OMNI_OUTPUT_TOKENS_PER_SECOND = {"360p": 1931, "720p": 5792}
+OMNI_INPUT_TOKENS_PER_SECOND = 1771
+STRIP_TEXT_SENTENCE = "Remove every piece of on-screen text and every caption, and do not add any text."
 
 LANGUAGE_CODES = {
     "english": "en",
@@ -223,6 +230,93 @@ def translation_usd(duration_s: float) -> float:
     return duration_s * ESTIMATED_CHARS_PER_SECOND / 1000 * TRANSLATION_USD_PER_1K_CHARS
 
 
+def has_edit(job: dict) -> bool:
+    """An edit or an extension is asked for."""
+    return bool(job.get("edit_instruction")) or int(job.get("extend_seconds") or 0) > 0
+
+
+def is_extension(job: dict) -> bool:
+    return int(job.get("extend_seconds") or 0) > 0
+
+
+def captions_wanted(job: dict) -> bool:
+    return job.get("captions", "yes") != "no"
+
+
+def with_edited(edited: dict | None, ids: dict[str, str]) -> dict[str, str]:
+    return {edited["name"]: edited["file_id"], **ids} if edited else ids
+
+
+def edit_pieces(job: dict, probe: Probe) -> list[tuple[float, float]]:
+    """The spans Omni edits, each at most 10 s: the whole clip or the user's part, cut into the fewest equal pieces."""
+    # TODO spec: hq/projects/hyper/workspace/specs/2026-09-24-video-editing-scene-edit.md § Design (Long clips: pieces)
+    # TODO tests: tests/test_video_editing_edit.py rows 1-2
+    raise NotImplementedError
+
+
+def edit_resolution(job: dict, probe: Probe) -> str:
+    """360p or 720p: the sheet's value, or auto from the clip's short side."""
+    # TODO spec: hq/projects/hyper/workspace/specs/2026-09-24-video-editing-scene-edit.md § Design (The sheet)
+    # TODO tests: tests/test_video_editing_edit.py row 1
+    raise NotImplementedError
+
+
+def aspect_ratio(probe: Probe) -> str:
+    """9:16 or 16:9 from the clip; a square clip is refused."""
+    # TODO spec: hq/projects/hyper/workspace/specs/2026-09-24-video-editing-scene-edit.md § Design (The plan)
+    # TODO tests: tests/test_video_editing_edit.py row 1
+    raise NotImplementedError
+
+
+def edit_instruction(job: dict) -> str:
+    """The text sent to Omni: the strip sentence or the extend prefix, then the user's words."""
+    # TODO spec: hq/projects/hyper/workspace/specs/2026-09-24-video-editing-scene-edit.md § Design (The sheet, Extension)
+    # TODO tests: tests/test_video_editing_edit.py rows 1, 4
+    raise NotImplementedError
+
+
+def omni_usd(seconds: float, resolution: str) -> float:
+    """Estimated dollars for one Omni call of that many output seconds."""
+    # TODO spec: hq/projects/hyper/workspace/specs/2026-09-24-video-editing-scene-edit.md § Design (The plan)
+    # TODO tests: tests/test_video_editing_edit.py row 1
+    raise NotImplementedError
+
+
+def edit_plan_lines(job: dict, probe: Probe) -> tuple[list[str], float]:
+    """One plan line per Omni call and their total; sends nothing."""
+    # TODO spec: hq/projects/hyper/workspace/specs/2026-09-24-video-editing-scene-edit.md § Design (The plan)
+    # TODO tests: tests/test_video_editing_edit.py rows 1, 4
+    raise NotImplementedError
+
+
+def cut_piece(source: Path, span: tuple[float, float], target: Path) -> None:
+    """Cut one span out of the source with a re-encode, frame-accurate."""
+    # TODO spec: hq/projects/hyper/workspace/specs/2026-09-24-video-editing-scene-edit.md § Design (The run)
+    # TODO tests: tests/test_video_editing_edit.py row 2
+    raise NotImplementedError
+
+
+def assemble(source: Path, pieces: list[tuple[tuple[float, float], Path]], probe: Probe, target: Path) -> None:
+    """Replace each span of the source with its edited piece at the source's size; the source's audio throughout."""
+    # TODO spec: hq/projects/hyper/workspace/specs/2026-09-24-video-editing-scene-edit.md § Design (Long clips: pieces)
+    # TODO tests: tests/test_video_editing_edit.py row 2
+    raise NotImplementedError
+
+
+def append(source: Path, continuation: Path, probe: Probe, target: Path) -> None:
+    """Append the continuation after the whole source at the source's size."""
+    # TODO spec: hq/projects/hyper/workspace/specs/2026-09-24-video-editing-scene-edit.md § Design (Extension)
+    # TODO tests: tests/test_video_editing_edit.py row 4
+    raise NotImplementedError
+
+
+async def edit(job: dict, out: Path, ledger: Path, probe: Probe) -> dict:
+    """Run the edit or extension branch; return the edited clip's name, path, file id and interaction ids."""
+    # TODO spec: hq/projects/hyper/workspace/specs/2026-09-24-video-editing-scene-edit.md § Design (The run, Refinement, Extension)
+    # TODO tests: tests/test_video_editing_edit.py rows 2-4
+    raise NotImplementedError
+
+
 def output_names(spoken: str, target: str | None, *, dub: str | None = None) -> list[str]:
     names = []
     for lang in [dub] if dub else [spoken, *([target] if target else [])]:
@@ -244,11 +338,19 @@ def render_plan(job: dict, probe: Probe) -> str:
     spoken_name = "<spoken>" if spoken == "auto" else spoken
     dub = dub_language(job)
     target = None if dub else target_language(job)
-    lines = [
+    lines: list[str] = []
+    total = 0.0
+    if has_edit(job):
+        lines, total = edit_plan_lines(job, probe)
+    if not captions_wanted(job):
+        lines.append("sandbox_download_file for 2 outputs into files: $0")
+        numbered = [f"{n}. {line}" for n, line in enumerate(lines, start=1)]
+        return "\n".join([*numbered, f"Total: ${total:.4f}"])
+    lines.append(
         f"audio_words_transcribe (whisper-1) on {probe.duration_s:.1f} s of audio, "
         f"billed per started minute: ${whisper_usd(probe.duration_s):.4f}"
-    ]
-    total = whisper_usd(probe.duration_s)
+    )
+    total += whisper_usd(probe.duration_s)
     if dub:
         dub_lines, dub_usd = dub_plan_lines(job, probe)
         lines += dub_lines
@@ -266,7 +368,7 @@ def render_plan(job: dict, probe: Probe) -> str:
             f"({job.get('caption_style', 'plain')}, {job.get('caption_position', 'bottom')}) "
             f"and one check frame check.{lang}.png: $0"
         )
-    lines.append(f"files_copy_from_sandbox for {len(output_names(spoken_name, target, dub=dub))} outputs into files: $0")
+    lines.append(f"files_copy_from_sandbox for {len(output_names(spoken_name, target, dub=dub)) + int(has_edit(job))} outputs into files: $0")
     numbered = [f"{n}. {line}" for n, line in enumerate(lines, start=1)]
     return "\n".join([*numbered, f"Total: ${total:.4f}"])
 
@@ -530,7 +632,7 @@ async def transcribe(job: dict, out: Path, ledger: Path, probe: Probe) -> dict:
     words = await run_stage(
         ledger,
         "words",
-        call_tool("audio_words_transcribe", file_id=job["source_file_id"], language=None if spoken == "auto" else spoken),
+        call_tool("audio_words_transcribe", file_id=job.get("words_file_id") or job["source_file_id"], language=None if spoken == "auto" else spoken),
         usd=whisper_usd(probe.duration_s),
     )
     lang = language_code(words["language"]) if spoken == "auto" else language_code(spoken)
@@ -546,13 +648,24 @@ async def run(job: dict, out: Path) -> dict[str, str]:
     probe = probe_clip(Path(job["source_path"]))
     if not probe.has_audio:
         raise RuntimeError("the clip has no audio track, so there is nothing to caption")
+    edited: dict | None = None
+    edit_task = asyncio.create_task(edit(job, out, ledger, probe)) if has_edit(job) else None
+    if edit_task and (is_extension(job) or not captions_wanted(job)):
+        edited = await edit_task
+        job["edited_path"], job["interaction_ids"] = edited["path"], edited["interaction_ids"]
+        if not captions_wanted(job):
+            return with_edited(edited, await land(out, ledger, ["check.edit.png"]))
+        job["words_file_id"] = edited["file_id"]
     transcribed = await transcribe(job, out, ledger, probe)
+    if edit_task and edited is None:
+        edited = await edit_task
+        job["edited_path"], job["interaction_ids"] = edited["path"], edited["interaction_ids"]
     if dub_language(job):
         dubbed = await dub(job, out, ledger, probe, transcribed)
         job["dubbed_path"] = dubbed["path"]
         cues = group_words_into_cues(dubbed["words"])
         await caption_language(job, out, ledger, dubbed["language"], cues, probe, dubbed["words"])
-        return await land(out, ledger, output_names(dubbed["language"], None, dub=dubbed["language"]), landing_folder(job))
+        return with_edited(edited, await land(out, ledger, output_names(dubbed["language"], None, dub=dubbed["language"]), landing_folder(job)))
     spoken = transcribed["language"]
     cues = group_words_into_cues(transcribed["words"])
     if not cues:
@@ -565,7 +678,7 @@ async def run(job: dict, out: Path) -> dict[str, str]:
         await caption_language(job, out, ledger, target, translated, probe, transcribed["words"])
     else:
         await source_captions
-    return await land(out, ledger, output_names(spoken, target), landing_folder(job))
+    return with_edited(edited, await land(out, ledger, output_names(spoken, target), landing_folder(job)))
 
 
 def landing_folder(job: dict) -> str:
