@@ -95,6 +95,14 @@ class PlanTests(unittest.TestCase):
             self.assertEqual(pipeline.edit_pieces(edit_job(long, edit_part="2-9"), pipeline.probe_clip(long)), [(2.0, 9.0)])
             with self.assertRaises(RuntimeError):
                 pipeline.render_plan(edit_job(long, edit_part="12-20"), pipeline.probe_clip(long))
+
+            wide, square = Path(tmp) / "wide.mp4", Path(tmp) / "square.mp4"
+            make_clip(wide, 8, size="1280x720")
+            make_clip(square, 8, size="640x640")
+            self.assertIn("16:9", pipeline.render_plan(edit_job(wide), pipeline.probe_clip(wide)).splitlines()[0])
+            self.assertIn("360p", pipeline.render_plan(edit_job(tall, edit_resolution="360p"), pipeline.probe_clip(tall)).splitlines()[0])
+            with self.assertRaises(RuntimeError):
+                pipeline.render_plan(edit_job(square), pipeline.probe_clip(square))
         self.assertEqual(bridge.calls, [])
 
 
@@ -113,7 +121,10 @@ class RunTests(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(len(piece_downloads), 2)
             edits = [kw for name, kw in bridge.calls if name == "videos_edit"]
             self.assertEqual([kw["file_id"] for kw in edits], ["file_piece.1.mp4", "file_piece.2.mp4"])
-            self.assertEqual({kw["instruction"] for kw in edits}, {CLINIC})
+            self.assertEqual(edits[0]["instruction"], CLINIC)
+            self.assertTrue(edits[1]["instruction"].startswith(CLINIC) and edits[1]["instruction"].endswith(pipeline.ANCHOR_SENTENCE))
+            self.assertNotIn("reference_image_file_id", edits[0])
+            self.assertEqual(edits[1]["reference_image_file_id"], "file_anchor.1.png")
             self.assertEqual({kw["resolution"] for kw in edits}, {"720p"})
             self.assertEqual({kw["aspect_ratio"] for kw in edits}, {"9:16"})
             copies = [kw for name, kw in bridge.calls if name == "files_copy_to_sandbox"]
@@ -121,8 +132,11 @@ class RunTests(unittest.IsolatedAsyncioTestCase):
             words = [kw for name, kw in bridge.calls if name == "audio_words_transcribe"]
             self.assertEqual([kw["file_id"] for kw in words], ["file_source"])
             self.assertLess(max(i for i, n in enumerate(sent) if n == "sandbox_download_file" and "piece." in bridge.calls[i][1]["path"]), sent.index("videos_edit"))
-            self.assertLess(max(i for i, n in enumerate(sent) if n == "videos_edit"), sent.index("files_copy_to_sandbox"))
-            output_downloads = [Path(kw["path"]).name for name, kw in bridge.calls if name == "sandbox_download_file" and "piece." not in kw["path"]]
+            first_edit, first_copy = sent.index("videos_edit"), sent.index("files_copy_to_sandbox")
+            anchor = next(i for i, (n, kw) in enumerate(bridge.calls) if n == "sandbox_download_file" and "anchor." in kw["path"])
+            second_edit = [i for i, n in enumerate(sent) if n == "videos_edit"][1]
+            self.assertTrue(first_edit < first_copy < anchor < second_edit)
+            output_downloads = [Path(kw["path"]).name for name, kw in bridge.calls if name == "sandbox_download_file" and "piece." not in kw["path"] and "anchor." not in kw["path"]]
             self.assertEqual(output_downloads, ["edited.mp4", "final.en.mp4", "captions.en.srt", "check.en.png"])
             self.assertEqual(result, {name: f"file_{name}" for name in output_downloads})
             self.assertEqual(Path(job["edited_path"]).name, "edited.mp4")
