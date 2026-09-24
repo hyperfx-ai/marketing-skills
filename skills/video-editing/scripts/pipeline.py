@@ -52,6 +52,11 @@ OMNI_USD_PER_M_VIDEO_OUTPUT_TOKENS = 17.50
 OMNI_OUTPUT_TOKENS_PER_SECOND = {"360p": 1931, "720p": 5792}
 OMNI_INPUT_TOKENS_PER_SECOND = 1771
 STRIP_TEXT_SENTENCE = "Remove every piece of on-screen text and every caption, and do not add any text."
+TIKTOK_MUSIC_POLICY_URL = "https://www.tiktok.com/legal/page/global/music-usage-confirmation/en"
+TIKTOK_CAPTION_MAX_CHARS = 2200
+TIKTOK_MIN_SECONDS = 3.0
+TIKTOK_MIN_SHORT_SIDE = 720
+TIKTOK_SAME_MINUTE_SPACING_S = 15
 ANCHOR_SENTENCE = "The attached image is the previous part of this same video after the same edit: match its scene, furniture, lighting and colour grading exactly."
 
 LANGUAGE_CODES = {
@@ -445,6 +450,34 @@ def output_names(spoken: str, target: str | None, *, dub: str | None = None) -> 
     return names
 
 
+def tiktok_wanted(job: dict) -> bool:
+    return job.get("delivery") == "tiktok"
+
+
+# TODO(HYP-1607 chunk 4): contract stubs; the build fills them in.
+# spec: hq/projects/hyper/workspace/specs/2026-09-24-video-editing-tiktok.md, Design § The plan and § The run
+# tests: tests/test_video_editing_tiktok.py
+def tiktok_slots(job: dict) -> list[tuple[str, str]]:
+    """UTC run times with the display zone, one per slot, spaced within a minute; raises on a past time."""
+    raise NotImplementedError
+
+
+def ai_label(job: dict) -> bool:
+    raise NotImplementedError
+
+
+def post_file(job: dict, names: list[str]) -> str:
+    raise NotImplementedError
+
+
+def tiktok_plan_lines(job: dict, probe: Probe) -> list[str]:
+    raise NotImplementedError
+
+
+async def deliver(job: dict, ledger: Path, ids: dict[str, str]) -> list:
+    raise NotImplementedError
+
+
 def tts_usd(duration_s: float, chars: int) -> float:
     tokens_in = chars / 4
     tokens_out = duration_s * TTS_OUTPUT_TOKENS_PER_SECOND
@@ -465,6 +498,8 @@ def render_plan(job: dict, probe: Probe) -> str:
         lines, total = edit_plan_lines(job, probe)
     if not captions_wanted(job):
         lines.append("files_copy_from_sandbox for 2 outputs into files: $0")
+        if tiktok_wanted(job):
+            lines += tiktok_plan_lines(job, probe)
         numbered = [f"{n}. {line}" for n, line in enumerate(lines, start=1)]
         return "\n".join([*numbered, f"Total: ${total:.4f}"])
     lines.append(
@@ -490,6 +525,8 @@ def render_plan(job: dict, probe: Probe) -> str:
             f"and one check frame check.{lang}.png: $0"
         )
     lines.append(f"files_copy_from_sandbox for {len(output_names(spoken_name, target, dub=dub)) + int(has_edit(job))} outputs into files: $0")
+    if tiktok_wanted(job):
+        lines += tiktok_plan_lines(job, probe)
     numbered = [f"{n}. {line}" for n, line in enumerate(lines, start=1)]
     return "\n".join([*numbered, f"Total: ${total:.4f}"])
 
@@ -761,8 +798,16 @@ async def transcribe(job: dict, out: Path, ledger: Path, probe: Probe) -> dict:
     return {"language": lang, "words": words["words"]}
 
 
-async def run(job: dict, out: Path) -> dict[str, str]:
-    """Run the job; return output names mapped to their /files paths, one folder per run."""
+async def run(job: dict, out: Path) -> dict:
+    """Run the job; output names mapped to their /files paths, one folder per run, plus the TikTok posts when asked."""
+    ids = await produce(job, out)
+    if tiktok_wanted(job):
+        ids["tiktok"] = await deliver(job, out / "ledger.jsonl", ids)
+    return ids
+
+
+async def produce(job: dict, out: Path) -> dict[str, str]:
+    """Make and land every output; return output names mapped to their /files paths."""
     out.mkdir(parents=True, exist_ok=True)
     ledger = out / "ledger.jsonl"
     ensure_ffmpeg()
