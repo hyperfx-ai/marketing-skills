@@ -6,12 +6,12 @@ Spec: hq/projects/hyper/workspace/specs/2026-09-24-video-editing-tiktok.md, chun
 import asyncio
 import tempfile
 import unittest
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
-from tests.test_video_editing_edit import CLINIC, make_clip
-from tests.test_video_editing_pipeline import FakeBridge, job_for, load_pipeline
+from tests.test_video_editing_edit import CLINIC, EditBridge, make_clip
+from tests.test_video_editing_pipeline import job_for, load_pipeline
 
 CAPTION = (
     "Mystery slabs that are starting at ONE dollar for hits like these! Join our stream by clicking "
@@ -33,11 +33,11 @@ def utc_iso(local: str) -> str:
     return datetime.strptime(local, "%Y-%m-%d %H:%M").replace(tzinfo=ZoneInfo(ZONE)).astimezone(ZoneInfo("UTC")).isoformat()
 
 
-class TikTokBridge(FakeBridge):
-    """Chunk 1's bridge plus a trigger id per schedule call and one publish result."""
+class TikTokBridge(EditBridge):
+    """Chunk 3's bridge (edit answers included) plus a trigger id per schedule call and one publish result."""
 
     def __init__(self):
-        super().__init__()
+        super().__init__(stand_in_seconds=8)
         self.scheduled = 0
 
     async def __call__(self, tool_name, **kwargs):
@@ -99,10 +99,23 @@ class PlanTests(unittest.TestCase):
             self.assertIn("post now", now_lines[0])
             self.assertIn(CAPTION, now_lines[0])
 
+            lines = pipeline.render_plan(tiktok_job(clip, dub="es", caption_language="es"), probe).splitlines()
+            self.assertEqual(sum("AI label: yes" in line for line in lines), 6)
+
+            small, short = Path(tmp) / "small.mp4", Path(tmp) / "short.mp4"
+            make_clip(small, 8, size="360x640")
+            make_clip(short, 2)
+            lines = pipeline.render_plan(tiktok_job(small), pipeline.probe_clip(small)).splitlines()
+            self.assertEqual(sum("warning" in line and "720p" in line for line in lines), 1)
+
             with self.assertRaises(RuntimeError):
                 pipeline.render_plan(tiktok_job(clip, tiktok_times=["2020-01-01 12:00"]), probe)
             with self.assertRaises(RuntimeError):
                 pipeline.render_plan(tiktok_job(clip, tiktok_account=None), probe)
+            with self.assertRaises(RuntimeError):
+                pipeline.render_plan(tiktok_job(clip, tiktok_caption="x" * 2201), probe)
+            with self.assertRaises(RuntimeError):
+                pipeline.render_plan(tiktok_job(short), pipeline.probe_clip(short))
             self.assertEqual(bridge.calls, [])
 
 
@@ -119,7 +132,7 @@ class RunTests(unittest.TestCase):
             sent = names(bridge.calls)
             self.assertNotIn("tiktok_posts_publish", sent)
             self.assertEqual(sent.count("tiktok_posts_schedule"), 6)
-            self.assertLess(max(i for i, n in enumerate(sent) if n == "sandbox_download_file"), sent.index("tiktok_posts_schedule"))
+            self.assertLess(max(i for i, n in enumerate(sent) if n == "files_copy_from_sandbox"), sent.index("tiktok_posts_schedule"))
             for name in ("final.en.mp4", "captions.en.srt", "check.en.png"):
                 self.assertIn(name, result)
             for (_, kwargs), local in zip([c for c in bridge.calls if c[0] == "tiktok_posts_schedule"], TIMES):
@@ -129,6 +142,36 @@ class RunTests(unittest.TestCase):
                 self.assertEqual(kwargs["run_at"], utc_iso(local))
                 self.assertEqual(kwargs["timezone"], ZONE)
             self.assertEqual(result["tiktok"], [f"trigger_{n}" for n in range(1, 7)])
+
+    def test_run_orders_the_slots_and_spaces_a_shared_minute(self):
+        bridge = TikTokBridge()
+        pipeline = load_pipeline(bridge)
+        with tempfile.TemporaryDirectory() as tmp:
+            clip = Path(tmp) / "clip.mp4"
+            make_clip(clip, 8)
+            times = ["2026-09-29 15:00", "2026-09-29 12:00", "2026-09-29 12:00"]
+
+            asyncio.run(pipeline.run(tiktok_job(clip, tiktok_times=times), Path(tmp) / "out"))
+
+            sent = [kwargs["run_at"] for name, kwargs in bridge.calls if name == "tiktok_posts_schedule"]
+            noon = datetime.fromisoformat(utc_iso("2026-09-29 12:00"))
+            self.assertEqual(sent, [noon.isoformat(), (noon + timedelta(seconds=15)).isoformat(), utc_iso("2026-09-29 15:00")])
+
+    def test_run_without_captions_posts_the_edited_clip(self):
+        bridge = TikTokBridge()
+        pipeline = load_pipeline(bridge)
+        with tempfile.TemporaryDirectory() as tmp:
+            clip = Path(tmp) / "clip.mp4"
+            make_clip(clip, 8)
+
+            job = edited(tiktok_job(clip, tiktok_times=[]))
+            job["captions"] = "no"
+
+            result = asyncio.run(pipeline.run(job, Path(tmp) / "out"))
+
+            _, kwargs = next(c for c in bridge.calls if c[0] == "tiktok_posts_publish")
+            self.assertEqual(kwargs["file"], result["edited.mp4"])
+            self.assertIs(kwargs["is_aigc"], True)
 
     def test_run_with_no_times_publishes_once_and_ends_with_the_publish_id(self):
         bridge = TikTokBridge()
