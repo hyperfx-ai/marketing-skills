@@ -43,9 +43,9 @@ If a tool is not found, its integration is not connected or not enabled for the 
 | --- | --- |
 | `tiktok_post_form_open` | **The only entrypoint when a user wants to post.** Opens the compliance form. |
 | `tiktok_videos_send_from_url`, `tiktok_post_video_from_file`, `tiktok_photos_send` | Final posting tools — call ONLY after the user submits the form. |
-| `tiktok_current_user_get` | Authenticated user profile (does not require the form). |
+| `tiktok_current_user_get` | Authenticated user profile (does not require the form). Profile and stats fields are conditional on scopes newer connections do not carry; read only the basic fields. |
 | `tiktok_creator_info_get` | Check posting capabilities and limits. |
-| `tiktok_videos_list`, `tiktok_videos_query` | Browse the user's published videos. |
+| `tiktok_videos_list`, `tiktok_videos_query` | Browse the user's published videos. Conditional: needs the `video.list` scope, which connections made after 2026-09-24 do not carry; on a permission error, skip the step and say so. |
 | `tiktok_posts_status_get` | Check the status of a previously submitted post. |
 | `tiktok_videos_upload_from_url`, `tiktok_videos_upload_from_file`, `tiktok_photos_upload` | Send to inbox as draft (user posts manually in the TikTok app — bypasses the form intentionally). |
 
