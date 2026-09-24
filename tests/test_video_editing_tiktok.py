@@ -41,10 +41,10 @@ class TikTokBridge(EditBridge):
         self.scheduled = 0
 
     async def __call__(self, tool_name, **kwargs):
-        if tool_name == "tiktok_posts_schedule":
+        if tool_name == "tiktok_posts_publish" and "scheduled_at" in kwargs:
             self.calls.append((tool_name, kwargs))
             self.scheduled += 1
-            return {"trigger_id": f"trigger_{self.scheduled}", "run_at": kwargs["run_at"]}
+            return {"deferred": True, "trigger_id": f"trigger_{self.scheduled}", "tool_name": tool_name, "scheduled_at": kwargs["scheduled_at"], "message": "scheduled"}
         if tool_name == "tiktok_posts_publish":
             self.calls.append((tool_name, kwargs))
             return {"publish_id": "v_pub_1", "status": "PUBLISH_COMPLETE", "fail_reason": None, "processing_time_seconds": 12}
@@ -130,17 +130,16 @@ class RunTests(unittest.TestCase):
             result = asyncio.run(pipeline.run(tiktok_job(clip), Path(tmp) / "out"))
 
             sent = names(bridge.calls)
-            self.assertNotIn("tiktok_posts_publish", sent)
-            self.assertEqual(sent.count("tiktok_posts_schedule"), 6)
-            self.assertLess(max(i for i, n in enumerate(sent) if n == "files_copy_from_sandbox"), sent.index("tiktok_posts_schedule"))
+            posts = [kwargs for name, kwargs in bridge.calls if name == "tiktok_posts_publish"]
+            self.assertEqual(len(posts), 6)
+            self.assertLess(max(i for i, n in enumerate(sent) if n == "files_copy_from_sandbox"), sent.index("tiktok_posts_publish"))
             for name in ("final.en.mp4", "captions.en.srt", "check.en.png"):
                 self.assertIn(name, result)
-            for (_, kwargs), local in zip([c for c in bridge.calls if c[0] == "tiktok_posts_schedule"], TIMES):
+            for kwargs, local in zip(posts, TIMES):
                 self.assertEqual(kwargs["file"], result["final.en.mp4"])
                 self.assertEqual(kwargs["caption"], CAPTION)
                 self.assertIs(kwargs["is_aigc"], False)
-                self.assertEqual(kwargs["run_at"], utc_iso(local))
-                self.assertEqual(kwargs["timezone"], ZONE)
+                self.assertEqual(kwargs["scheduled_at"], utc_iso(local))
             self.assertEqual(result["tiktok"], [f"trigger_{n}" for n in range(1, 7)])
 
     def test_run_orders_the_slots_and_spaces_a_shared_minute(self):
@@ -153,7 +152,7 @@ class RunTests(unittest.TestCase):
 
             asyncio.run(pipeline.run(tiktok_job(clip, tiktok_times=times), Path(tmp) / "out"))
 
-            sent = [kwargs["run_at"] for name, kwargs in bridge.calls if name == "tiktok_posts_schedule"]
+            sent = [kwargs["scheduled_at"] for name, kwargs in bridge.calls if name == "tiktok_posts_publish"]
             noon = datetime.fromisoformat(utc_iso("2026-09-29 12:00"))
             self.assertEqual(sent, [noon.isoformat(), (noon + timedelta(seconds=15)).isoformat(), utc_iso("2026-09-29 15:00")])
 
@@ -183,9 +182,9 @@ class RunTests(unittest.TestCase):
             result = asyncio.run(pipeline.run(tiktok_job(clip, tiktok_times=[]), Path(tmp) / "out"))
 
             sent = names(bridge.calls)
-            self.assertNotIn("tiktok_posts_schedule", sent)
             self.assertEqual(sent.count("tiktok_posts_publish"), 1)
             _, kwargs = next(c for c in bridge.calls if c[0] == "tiktok_posts_publish")
+            self.assertNotIn("scheduled_at", kwargs)
             self.assertEqual(kwargs["file"], result["final.en.mp4"])
             self.assertEqual(kwargs["caption"], CAPTION)
             self.assertIs(kwargs["is_aigc"], False)
