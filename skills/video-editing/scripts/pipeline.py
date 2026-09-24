@@ -33,6 +33,12 @@ MARGIN_ABOVE_TEXT_RATIO = 0.19
 WHISPER_USD_PER_MINUTE = 0.006
 TRANSLATION_TIER = "fast"
 TRANSLATION_USD_PER_1K_CHARS = 0.0025
+TEMPO_MIN = 0.9
+TEMPO_MAX = 1.1
+TTS_USD_PER_M_INPUT_TOKENS = 0.5
+TTS_USD_PER_M_OUTPUT_TOKENS = 9.0
+VOICE_CREATE_USD = 0.01
+KARAOKE_HIGHLIGHT_COLOUR = "&H0000FFFF"
 ESTIMATED_CHARS_PER_SECOND = 12
 
 LANGUAGE_CODES = {
@@ -198,9 +204,9 @@ def translation_usd(duration_s: float) -> float:
     return duration_s * ESTIMATED_CHARS_PER_SECOND / 1000 * TRANSLATION_USD_PER_1K_CHARS
 
 
-def output_names(spoken: str, target: str | None) -> list[str]:
+def output_names(spoken: str, target: str | None, *, dub: str | None = None) -> list[str]:
     names = []
-    for lang in [spoken, *([target] if target else [])]:
+    for lang in [dub] if dub else [spoken, *([target] if target else [])]:
         names += [f"final.{lang}.mp4", f"captions.{lang}.srt", f"check.{lang}.png"]
     return names
 
@@ -230,7 +236,11 @@ def render_plan(job: dict, probe: Probe) -> str:
             f"({job.get('caption_style', 'plain')}, {job.get('caption_position', 'bottom')}) "
             f"and one check frame check.{lang}.png: $0"
         )
-    lines.append(f"sandbox_download_file for {len(output_names(spoken_name, target))} outputs into files: $0")
+    if dub_language(job):
+        dub_lines, dub_usd = dub_plan_lines(job, probe)
+        lines += dub_lines
+        total += dub_usd
+    lines.append(f"sandbox_download_file for {len(output_names(spoken_name, target, dub=dub_language(job)))} outputs into files: $0")
     numbered = [f"{n}. {line}" for n, line in enumerate(lines, start=1)]
     return "\n".join([*numbered, f"Total: ${total:.4f}"])
 
@@ -279,14 +289,97 @@ async def run_stage(ledger: Path, stage: str, work, **fields):
     return result
 
 
-def caption_language_sync(job: dict, out: Path, lang: str, cues: list[Cue], probe: Probe) -> None:
+def picture_path(job: dict) -> Path:
+    return Path(job.get("dubbed_path") or job.get("edited_path") or job["source_path"])
+
+
+def caption_language_sync(job: dict, out: Path, lang: str, cues: list[Cue], probe: Probe, words: list[dict] | None = None) -> None:
     write_srt(cues, out / f"captions.{lang}.srt")
-    burn(Path(job["source_path"]), out / f"captions.{lang}.srt", out / f"final.{lang}.mp4", probe, job.get("caption_position", "bottom"))
+    subs = out / f"captions.{lang}.srt"
+    if job.get("caption_style") == "karaoke":
+        subs = out / f"captions.{lang}.ass"
+        write_ass(cues, words or [], subs, probe, job.get("caption_position", "bottom"))
+    burn(picture_path(job), subs, out / f"final.{lang}.mp4", probe, job.get("caption_position", "bottom"))
     check_frame(out / f"final.{lang}.mp4", cues[0], out / f"check.{lang}.png")
 
 
-async def caption_language(job: dict, out: Path, ledger: Path, lang: str, cues: list[Cue], probe: Probe) -> None:
-    await run_stage(ledger, "burn", asyncio.to_thread(caption_language_sync, job, out, lang, cues, probe), output=f"final.{lang}.mp4", usd=0.0)
+async def caption_language(job: dict, out: Path, ledger: Path, lang: str, cues: list[Cue], probe: Probe, words: list[dict] | None = None) -> None:
+    await run_stage(ledger, "burn", asyncio.to_thread(caption_language_sync, job, out, lang, cues, probe, words), output=f"final.{lang}.mp4", usd=0.0)
+
+
+def dub_language(job: dict) -> str | None:
+    wanted = job.get("dub")
+    return None if not wanted or wanted == "none" else language_code(wanted)
+
+
+def dub_plan_lines(job: dict, probe: Probe) -> tuple[list[str], float]:
+    """The plan's lines for a dub: the voice to create when none is named, the translation with its budget, the speech, the second words pass."""
+    # TODO spec: hq/projects/hyper/workspace/specs/2026-09-24-video-editing-voice.md § Design (the plan)
+    # TODO tests: tests/test_video_editing_pipeline.py
+    raise NotImplementedError
+
+
+async def ensure_voice(job: dict, ledger: Path) -> str:
+    """Return the voice name to speak in, creating a designed voice from the clip when none is named."""
+    # TODO spec: hq/projects/hyper/workspace/specs/2026-09-24-video-editing-voice.md § Design (ensure_voice)
+    # TODO tests: tests/test_video_editing_pipeline.py
+    raise NotImplementedError
+
+
+def target_spoken_length(words: list[dict], probe: Probe) -> tuple[float, int]:
+    """Speech seconds of the source and the character budget for a translation spoken in that time."""
+    # TODO spec: hq/projects/hyper/workspace/specs/2026-09-24-video-editing-voice.md § Design (the run's dub stage, step 1)
+    # TODO tests: tests/test_video_editing_pipeline.py
+    raise NotImplementedError
+
+
+async def translate_transcript(text: str, target_language: str, budget_chars: int) -> str:
+    """One ai_functions_run call for a natural translation spoken in about budget_chars characters."""
+    # TODO spec: hq/projects/hyper/workspace/specs/2026-09-24-video-editing-voice.md § Design (the run's dub stage, step 2)
+    # TODO tests: tests/test_video_editing_pipeline.py
+    raise NotImplementedError
+
+
+def fetch_audio(url: str, target: Path) -> None:
+    """Download the spoken audio into the sandbox; patched in tests."""
+    # TODO spec: hq/projects/hyper/workspace/specs/2026-09-24-video-editing-voice.md § Design (the run's dub stage, step 3)
+    # TODO tests: tests/test_video_editing_pipeline.py
+    raise NotImplementedError
+
+
+async def speak(transcript: str, voice: str, target: Path) -> Path:
+    """voices_speak through the bridge, the audio fetched to target."""
+    # TODO spec: hq/projects/hyper/workspace/specs/2026-09-24-video-editing-voice.md § Design (the run's dub stage, step 3)
+    # TODO tests: tests/test_video_editing_pipeline.py
+    raise NotImplementedError
+
+
+def fit_audio(speech: Path, target_s: float, out: Path) -> tuple[Path, float]:
+    """Tempo-fit the speech to target_s within the band; return the fitted file and the ratio applied."""
+    # TODO spec: hq/projects/hyper/workspace/specs/2026-09-24-video-editing-voice.md § Design (the run's dub stage, step 4)
+    # TODO tests: tests/test_video_editing_pipeline.py
+    raise NotImplementedError
+
+
+def swap_audio(source: Path, fitted: Path, target: Path) -> None:
+    """The source picture with the fitted speech as its only audio track."""
+    # TODO spec: hq/projects/hyper/workspace/specs/2026-09-24-video-editing-voice.md § Design (the run's dub stage, step 5)
+    # TODO tests: tests/test_video_editing_pipeline.py
+    raise NotImplementedError
+
+
+def write_ass(cues: list[Cue], words: list[dict], path: Path, probe: Probe, position: str) -> None:
+    """Karaoke subtitles: one dialogue line per cue, one highlight per word."""
+    # TODO spec: hq/projects/hyper/workspace/specs/2026-09-24-video-editing-voice.md § Design (karaoke)
+    # TODO tests: tests/test_video_editing_pipeline.py
+    raise NotImplementedError
+
+
+async def dub(job: dict, out: Path, ledger: Path, probe: Probe, transcribed: dict) -> dict:
+    """Translate, speak, fit, swap, then transcribe the dubbed track; returns the dub's language, words and path."""
+    # TODO spec: hq/projects/hyper/workspace/specs/2026-09-24-video-editing-voice.md § Design (the run's dub stage)
+    # TODO tests: tests/test_video_editing_pipeline.py
+    raise NotImplementedError
 
 
 async def transcribe(job: dict, out: Path, ledger: Path, probe: Probe) -> dict:
@@ -311,20 +404,30 @@ async def run(job: dict, out: Path) -> dict[str, str]:
     if not probe.has_audio:
         raise RuntimeError("the clip has no audio track, so there is nothing to caption")
     transcribed = await transcribe(job, out, ledger, probe)
+    if dub_language(job):
+        dubbed = await dub(job, out, ledger, probe, transcribed)
+        job["dubbed_path"] = dubbed["path"]
+        cues = group_words_into_cues(dubbed["words"])
+        await caption_language(job, out, ledger, dubbed["language"], cues, probe, dubbed["words"])
+        return await land(out, ledger, output_names(dubbed["language"], None, dub=dubbed["language"]))
     spoken = transcribed["language"]
     cues = group_words_into_cues(transcribed["words"])
     if not cues:
         raise RuntimeError("Whisper found no words in the clip")
     target = target_language({**job, "spoken_language": spoken})
-    source_captions = caption_language(job, out, ledger, spoken, cues, probe)
+    source_captions = caption_language(job, out, ledger, spoken, cues, probe, transcribed["words"])
     if target:
         translation = run_stage(ledger, "translate", translate_cues(cues, target), usd=translation_usd(probe.duration_s))
         translated, _ = await asyncio.gather(translation, source_captions)
-        await caption_language(job, out, ledger, target, translated, probe)
+        await caption_language(job, out, ledger, target, translated, probe, transcribed["words"])
     else:
         await source_captions
+    return await land(out, ledger, output_names(spoken, target))
+
+
+async def land(out: Path, ledger: Path, names: list[str]) -> dict[str, str]:
     ids: dict[str, str] = {}
-    for name in output_names(spoken, target):
+    for name in names:
         landed = await run_stage(ledger, "land", call_tool("sandbox_download_file", path=str(out / name)), output=name, usd=0.0)
         ids[name] = landed["file_id"]
     return ids
