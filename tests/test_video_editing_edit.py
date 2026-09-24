@@ -90,9 +90,9 @@ class PlanTests(unittest.TestCase):
             self.assertEqual(len(omni_lines), 2)
             for line in omni_lines:
                 self.assertIn("7.5 s", line)
-            self.assertEqual(pipeline.edit_pieces(edit_job(long), pipeline.probe_clip(long)), [(0.0, 7.5), (7.5, 15.0)])
-            self.assertEqual(pipeline.edit_pieces(edit_job(tall), pipeline.probe_clip(tall)), [(0.0, 8.0)])
-            self.assertEqual(pipeline.edit_pieces(edit_job(long, edit_part="2-9"), pipeline.probe_clip(long)), [(2.0, 9.0)])
+            self.assertEqual(pipeline.edit_pieces(pipeline.parse_job(edit_job(long)), pipeline.probe_clip(long)), [(0.0, 7.5), (7.5, 15.0)])
+            self.assertEqual(pipeline.edit_pieces(pipeline.parse_job(edit_job(tall)), pipeline.probe_clip(tall)), [(0.0, 8.0)])
+            self.assertEqual(pipeline.edit_pieces(pipeline.parse_job(edit_job(long, edit_part="2-9")), pipeline.probe_clip(long)), [(2.0, 9.0)])
             with self.assertRaises(RuntimeError):
                 pipeline.render_plan(edit_job(long, edit_part="12-20"), pipeline.probe_clip(long))
 
@@ -139,8 +139,8 @@ class RunTests(unittest.IsolatedAsyncioTestCase):
             self.assertTrue(first_edit < first_copy < anchor < second_edit)
             output_downloads = [Path(kw["sources"][0]).name for name, kw in bridge.calls if name == "files_copy_from_sandbox" and "piece." not in kw["sources"][0] and "anchor." not in kw["sources"][0]]
             self.assertEqual(output_downloads, ["edited.mp4", "final.en.mp4", "captions.en.srt", "check.en.png"])
-            self.assertEqual({name: Path(path).name for name, path in result.items()}, {name: name for name in output_downloads})
-            self.assertEqual(Path(job["edited_path"]).name, "edited.mp4")
+            self.assertEqual({name: Path(path).name for name, path in result.items() if name != "interaction_ids"}, {name: name for name in output_downloads})
+            self.assertEqual(result["interaction_ids"], ["v1_interaction_1", "v1_interaction_2"])
 
         bridge = EditBridge(8)
         pipeline = load_pipeline(bridge)
@@ -150,7 +150,7 @@ class RunTests(unittest.IsolatedAsyncioTestCase):
             result = await pipeline.run(edit_job(clip, captions="no"), Path(tmp) / "out")
             self.assertNotIn("audio_words_transcribe", names(bridge.calls))
             self.assertNotIn("ai_functions_run", names(bridge.calls))
-            self.assertEqual(sorted(result), ["check.edit.png", "edited.mp4"])
+            self.assertEqual(sorted(result), ["check.edit.png", "edited.mp4", "interaction_ids"])
 
     async def test_refinement_sends_the_ids_and_no_pieces(self):
         bridge = EditBridge(7.5)
@@ -165,8 +165,8 @@ class RunTests(unittest.IsolatedAsyncioTestCase):
             self.assertEqual([kw.get("previous_interaction_id") for kw in edits], ["v1_first", "v1_second"])
             self.assertEqual([kw.get("file_id") for kw in edits], [None, None])
             self.assertEqual([kw for name, kw in bridge.calls if name == "files_copy_from_sandbox" and "piece." in kw["sources"][0]], [])
-            self.assertEqual(sorted(result), ["captions.en.srt", "check.en.png", "edited.mp4", "final.en.mp4"])
-            self.assertEqual(job["interaction_ids"], ["v1_interaction_1", "v1_interaction_2"])
+            self.assertEqual(sorted(result), ["captions.en.srt", "check.en.png", "edited.mp4", "final.en.mp4", "interaction_ids"])
+            self.assertEqual(result["interaction_ids"], ["v1_interaction_1", "v1_interaction_2"])
 
     async def test_extension_sends_the_extend_instruction_and_reads_words_from_the_extended_clip(self):
         bridge = EditBridge(4)
@@ -188,7 +188,7 @@ class RunTests(unittest.IsolatedAsyncioTestCase):
             self.assertLess(extended_download, sent.index("audio_words_transcribe"))
             words = [kw for name, kw in bridge.calls if name == "audio_words_transcribe"]
             self.assertEqual(Path(words[0]["file_id"]).name, "extended.mp4")
-            self.assertEqual(sorted(result), ["captions.en.srt", "check.en.png", "extended.mp4", "final.en.mp4"])
+            self.assertEqual(sorted(result), ["captions.en.srt", "check.en.png", "extended.mp4", "final.en.mp4", "interaction_ids"])
 
 
 if __name__ == "__main__":

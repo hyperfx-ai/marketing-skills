@@ -221,12 +221,11 @@ class DubFitTests(unittest.IsolatedAsyncioTestCase):
             pipeline = load_pipeline(bridge)
             clip = out / "clip.mp4"
             make_fixture_clip(clip, seconds=8)
-            probe = pipeline.probe_clip(clip)
-            job = job_for(clip, dub="es", voice="dental-presenter")
-            ledger = out / "ledger.jsonl"
-            transcribed = {"language": "en", "words": WORDS, "path": str(clip)}
+            run = pipeline.prepare(job_for(clip, dub="es", voice="dental-presenter"), out)
+            ledger = run.ledger
+            transcribed = {"language": "en", "words": WORDS}
             with patch.object(pipeline, "fetch_audio", new=fake_fetch_audio):
-                dubbed = await pipeline.dub(job, out, ledger, probe, transcribed)
+                dubbed = await pipeline.dub(run, transcribed, clip)
 
             translations = [k for t, k in bridge.calls if t == "ai_functions_run" and "transcript" in k["input"]]
             speaks = [k for t, k in bridge.calls if t == "voices_speak"]
