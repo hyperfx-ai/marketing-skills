@@ -15,11 +15,12 @@ from __future__ import annotations
 import asyncio
 import json
 import math
+import re
 import shutil
 import subprocess
 import sys
-import urllib.request
 from dataclasses import dataclass
+from datetime import datetime
 from pathlib import Path
 
 from seti.sandbox import call_tool
@@ -28,7 +29,8 @@ CUE_MAX_WORDS = 4
 CUE_MAX_CHARS = 26
 CUE_GAP_SECONDS = 0.6
 CUE_MIN_SECONDS = 0.3
-FONT_SIZE_DIVISOR = 34
+FONT_SIZE_DIVISOR = 20
+SRT_CANVAS_HEIGHT = 288
 MARGIN_BOTTOM_RATIO = 0.12
 MARGIN_ABOVE_TEXT_RATIO = 0.19
 WHISPER_USD_PER_MINUTE = 0.006
@@ -139,6 +141,20 @@ def group_words_into_cues(
     return cues
 
 
+def plain_text(text: str) -> str:
+    """Translated text with any JSON escape codes for letters turned back into the letters."""
+    return re.sub(r"\\u([0-9a-fA-F]{4})", lambda m: chr(int(m.group(1), 16)), text)
+
+
+def function_output(result: dict) -> dict:
+    """The JSON an ai_functions_run call produced, or the error it reported."""
+    first = (result.get("results") or [{}])[0]
+    output = first.get("output_json")
+    if output is None:
+        raise RuntimeError(f"the translation function returned no JSON: {first.get('error') or result.get('error') or result}")
+    return output
+
+
 async def translate_cues(cues: list[Cue], target_language: str) -> list[Cue]:
     """Translate cue text through ai_functions_run, keeping every index and timing."""
     result = await call_tool(
@@ -152,7 +168,7 @@ async def translate_cues(cues: list[Cue], target_language: str) -> list[Cue]:
         output_json_schema=TRANSLATION_SCHEMA,
         performance=TRANSLATION_TIER,
     )
-    texts = {item["i"]: item["text"] for item in result["results"][0]["output_json"]["cues"]}
+    texts = {item["i"]: plain_text(item["text"]) for item in function_output(result)["cues"]}
     return [Cue(cue.index, cue.start, cue.end, texts[cue.index]) for cue in cues]
 
 
@@ -250,7 +266,7 @@ def render_plan(job: dict, probe: Probe) -> str:
             f"({job.get('caption_style', 'plain')}, {job.get('caption_position', 'bottom')}) "
             f"and one check frame check.{lang}.png: $0"
         )
-    lines.append(f"sandbox_download_file for {len(output_names(spoken_name, target, dub=dub))} outputs into files: $0")
+    lines.append(f"files_copy_from_sandbox for {len(output_names(spoken_name, target, dub=dub))} outputs into files: $0")
     numbered = [f"{n}. {line}" for n, line in enumerate(lines, start=1)]
     return "\n".join([*numbered, f"Total: ${total:.4f}"])
 
@@ -269,11 +285,16 @@ def write_srt(cues: list[Cue], path: Path) -> None:
 
 
 def burn(source: Path, subs: Path, target: Path, probe: Probe, position: str) -> None:
-    font_size = max(12, round(probe.height / FONT_SIZE_DIVISOR))
+    """Burn subtitles; an ASS file carries its own style, an SRT gets one sized for libass's 288-pixel canvas."""
+    if subs.suffix == ".ass":
+        ffmpeg("-i", str(source), "-vf", f"subtitles='{subs.as_posix()}'", "-c:a", "copy", str(target))
+        return
+    canvas = SRT_CANVAS_HEIGHT / probe.height
+    font_size = max(4, round(probe.height / FONT_SIZE_DIVISOR * canvas))
     ratio = MARGIN_ABOVE_TEXT_RATIO if position == "above_text" else MARGIN_BOTTOM_RATIO
     style = (
         f"FontName=DejaVu Sans,FontSize={font_size},PrimaryColour=&H00FFFFFF,OutlineColour=&H00000000,"
-        f"Outline=2,Bold=1,Alignment=2,MarginV={round(probe.height * ratio)},MarginL=20,MarginR=20"
+        f"Outline=1,Bold=1,Alignment=2,MarginV={round(SRT_CANVAS_HEIGHT * ratio)},MarginL=8,MarginR=8"
     )
     ffmpeg("-i", str(source), "-vf", f"subtitles='{subs.as_posix()}':force_style='{style}'", "-c:a", "copy", str(target))
 
@@ -349,7 +370,7 @@ async def ensure_voice(job: dict, ledger: Path) -> str:
     voice = job.get("voice") or "designed"
     if voice not in ("designed", "replicated"):
         return voice
-    name = job.get("voice_name") or f"{voice}-{job['source_file_id']}"
+    name = job.get("voice_name") or f"{voice}-{Path(job['source_file_id']).stem}"
     record = await run_stage(
         ledger,
         "voice",
@@ -388,18 +409,18 @@ async def translate_transcript(text: str, target_language: str, budget_chars: in
         output_json_schema={"type": "object", "properties": {"transcript": {"type": "string"}}, "required": ["transcript"]},
         performance=TRANSLATION_TIER,
     )
-    return result["results"][0]["output_json"]["transcript"]
+    return plain_text(function_output(result)["transcript"])
 
 
-def fetch_audio(url: str, target: Path) -> None:
-    """Download the spoken audio into the sandbox; patched in tests."""
-    urllib.request.urlretrieve(url, target)
+async def fetch_audio(file_id: str, target: Path) -> None:
+    """Copy the spoken audio into the sandbox; patched in tests."""
+    await call_tool("files_copy_to_sandbox", sources=[file_id], destination=str(target))
 
 
 async def speak(transcript: str, voice: str, target: Path) -> Path:
     """voices_speak through the bridge, the audio fetched to target."""
     spoken = await call_tool("voices_speak", text=transcript, voice=voice)
-    fetch_audio(spoken["audio_url"], target)
+    await fetch_audio(spoken["file_id"], target)
     return target
 
 
@@ -496,10 +517,10 @@ async def dub(job: dict, out: Path, ledger: Path, probe: Probe, transcribed: dic
     note(ledger, "fit", "done", ratio=round(applied, 4), in_band=TEMPO_MIN <= applied <= TEMPO_MAX, usd=0.0)
     dubbed = out / f"dubbed.{target}.mp4"
     delayed = out / f"speech.{target}.delayed.wav"
-    ffmpeg("-i", str(fitted), "-af", f"adelay={int(lead_in_s * 1000)}:all=1", "-c:a", "pcm_s16le", str(delayed))
+    ffmpeg("-i", str(fitted), "-af", f"adelay={int(lead_in_s * 1000)}:all=1,apad=whole_dur={probe.duration_s}", "-c:a", "pcm_s16le", str(delayed))
     swap_audio(picture_path(job), delayed, dubbed)
-    landed = await run_stage(ledger, "land", call_tool("sandbox_download_file", path=str(dubbed)), output=dubbed.name, usd=0.0)
-    second = await run_stage(ledger, "words", call_tool("audio_words_transcribe", file_id=landed["file_id"], language=target), usd=whisper_usd(probe.duration_s))
+    landed = await land(out, ledger, [dubbed.name], landing_folder(job))
+    second = await run_stage(ledger, "words", call_tool("audio_words_transcribe", file_id=landed[dubbed.name], language=target), usd=whisper_usd(probe.duration_s))
     (out / f"words.{target}.json").write_text(json.dumps(second["words"], ensure_ascii=False, indent=1), encoding="utf-8")
     return {"language": target, "words": second["words"], "path": str(dubbed)}
 
@@ -518,7 +539,7 @@ async def transcribe(job: dict, out: Path, ledger: Path, probe: Probe) -> dict:
 
 
 async def run(job: dict, out: Path) -> dict[str, str]:
-    """Run the job; return output names mapped to their file ids in /files."""
+    """Run the job; return output names mapped to their /files paths, one folder per run."""
     out.mkdir(parents=True, exist_ok=True)
     ledger = out / "ledger.jsonl"
     ensure_ffmpeg()
@@ -531,7 +552,7 @@ async def run(job: dict, out: Path) -> dict[str, str]:
         job["dubbed_path"] = dubbed["path"]
         cues = group_words_into_cues(dubbed["words"])
         await caption_language(job, out, ledger, dubbed["language"], cues, probe, dubbed["words"])
-        return await land(out, ledger, output_names(dubbed["language"], None, dub=dubbed["language"]))
+        return await land(out, ledger, output_names(dubbed["language"], None, dub=dubbed["language"]), landing_folder(job))
     spoken = transcribed["language"]
     cues = group_words_into_cues(transcribed["words"])
     if not cues:
@@ -544,25 +565,44 @@ async def run(job: dict, out: Path) -> dict[str, str]:
         await caption_language(job, out, ledger, target, translated, probe, transcribed["words"])
     else:
         await source_captions
-    return await land(out, ledger, output_names(spoken, target))
+    return await land(out, ledger, output_names(spoken, target), landing_folder(job))
 
 
-async def land(out: Path, ledger: Path, names: list[str]) -> dict[str, str]:
+def landing_folder(job: dict) -> str:
+    """The run's folder, chosen once per job."""
+    return job.setdefault("run_folder", run_folder(job))
+
+
+def run_folder(job: dict) -> str:
+    """Where this run's outputs land: /files/video-editing/<clip>-<time>, so runs never overwrite each other."""
+    clip = Path(job["source_file_id"]).stem if "/" in job["source_file_id"] else job["source_file_id"]
+    return f"/files/video-editing/{clip}-{datetime.now().strftime('%Y%m%d-%H%M%S')}"
+
+
+async def land(out: Path, ledger: Path, names: list[str], folder: str) -> dict[str, str]:
     ids: dict[str, str] = {}
     for name in names:
-        landed = await run_stage(ledger, "land", call_tool("sandbox_download_file", path=str(out / name)), output=name, usd=0.0)
-        ids[name] = landed["file_id"]
+        await run_stage(ledger, "land", call_tool("files_copy_from_sandbox", sources=[str(out / name)], destination=f"{folder}/{name}"), output=name, usd=0.0)
+        ids[name] = f"{folder}/{name}"
     return ids
 
 
 def main(argv: list[str]) -> int:
     mode, job_path = argv[0], Path(argv[1])
     job = json.loads(job_path.read_text(encoding="utf-8"))
+    source = str(job.get("source_file_id") or "")
+    if not source or (source.startswith("/") and not source.startswith("/files/")):
+        print(
+            "source_file_id must be the attachment's file id or its /files path from files_list; "
+            f"never the sandbox copy (got {source!r})",
+            file=sys.stderr,
+        )
+        return 2
     if mode == "plan":
         print(render_plan(job, probe_clip(Path(job["source_path"]))))
         return 0
     if mode == "run":
-        result = asyncio.run(run(job, job_path.parent / "out"))
+        result = asyncio.run(run(job, (job_path.parent / "out").resolve()))
         print(json.dumps(result))
         return 0
     print(f"unknown mode {mode}", file=sys.stderr)

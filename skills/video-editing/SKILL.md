@@ -6,7 +6,7 @@ use_cases:
   - Add captions and translate them into another language
   - Caption a clip that already has on-screen text, placing captions above it
   - Dub a clip into another language in a voice that resembles the speaker, captions timed to the new voice
-  - Karaoke captions: each word lights up as it is spoken
+  - Karaoke captions, where each word lights up as it is spoken
 requires_toolkits:
   - video_generation_toolkit
   - sandbox
@@ -20,7 +20,8 @@ short_description: Caption, translate and dub an attached video through a plan t
 
 The user attaches a video and says what they want done to it. This skill fills one settings sheet,
 runs a script in the sandbox that prints the exact plan with its price, and only after the user says
-yes runs that same plan as a background job. Every output lands in the user's files with an id.
+yes runs that same plan as a background job. Every output lands in the user's files in a folder for that
+run, `/files/video-editing/<clip>-<time>/`, so a second run never overwrites the first.
 
 ## Routing
 
@@ -38,7 +39,7 @@ yes runs that same plan as a background job. Every output lands in the user's fi
 
 - **Hyper MCP installed.** [https://app.hyperfx.ai/mcp](https://app.hyperfx.ai/mcp)
 - **Video Generation toolkit enabled** at [https://app.hyperfx.ai/apps](https://app.hyperfx.ai/apps) — provides `audio_words_transcribe` (Whisper word timestamps), `voices_create` and `voices_speak` (Gemini TTS voices).
-- **Sandbox toolkit enabled** — the pipeline runs there (`sandbox_shell`, `sandbox_python_run`, `files_copy_to_sandbox`, `sandbox_download_file`), and translation goes through `ai_functions_run` from inside it.
+- **Sandbox toolkit enabled** — the pipeline runs there (`sandbox_shell`, `sandbox_python_run`, `files_copy_to_sandbox`, `files_copy_from_sandbox`), and translation goes through `ai_functions_run` from inside it.
 - **Background jobs enabled** for the workspace. The run is a background shell job; if `sandbox_shell(background=true)` is refused because background tools are off, tell the user that plainly and stop. Do not run the pipeline in the foreground.
 
 ### How to run the tools in this skill
@@ -69,7 +70,7 @@ The sheet is the job. Every field, its default and where it comes from is in
 
 | Field | Default | Filled from |
 | --- | --- | --- |
-| `source_file_id` | — | The attachment's file id |
+| `source_file_id` | — | The attachment's file id, or its `/files/...` path from `files_list` |
 | `source_path` | `/home/user/video-editing/source.mp4` | Where you copied the clip in the sandbox |
 | `spoken_language` | `auto` | Whisper detects it; the user's word wins if they name it |
 | `caption_language` | the spoken language | The user's request; ask if a translation is wanted and no language is named |
@@ -115,7 +116,7 @@ Neither answer means the run does not start.
 sandbox_python_run(code='''
 import json
 job = {
-    "source_file_id": "<attachment file id>",
+    "source_file_id": "<attachment file id, or its /files path>",
     "source_path": "/home/user/video-editing/source.mp4",
     "spoken_language": "auto",
     "caption_language": "es",
@@ -137,7 +138,9 @@ json.dump(job, open("/home/user/video-editing/job.json", "w"), indent=1)
 sandbox_shell(command="cd /home/user/video-editing && python pipeline.py plan job.json")
 ```
 
-Paste the printed lines verbatim, then ask: "Shall I run this?" Stop there.
+Paste the printed lines verbatim in your own message, then ask: "Shall I run this?" Stop there. The user
+cannot see tool output, so a reply that is only "Shall I run this?" with no plan lines above it shows
+them nothing to approve; it is wrong.
 
 ### 4. On yes, run it in the background
 
@@ -160,8 +163,8 @@ holds one line per stage.
 
 `pipeline.py run` inside the sandbox: `audio_words_transcribe` for the words, cues of at most 4 words or 26
 characters that break at pauses over 0.6 s, `ai_functions_run` for the translation when a second language is
-asked for, ffmpeg to burn each caption file and grab a check frame, and `sandbox_download_file` once per
-output so each lands in the user's files with an id. For a dub: `voices_create` when no voice is named, a
+asked for, ffmpeg to burn each caption file and grab a check frame, and `files_copy_from_sandbox` once per
+output so each lands in the user's files in the run's folder `/files/video-editing/<clip>-<time>/`. For a dub: `voices_create` when no voice is named, a
 translation of the whole transcript asked to fit the clip's spoken length, `voices_speak` in that voice, a
 tempo fit within 0.9 to 1.1 (one re-translation when the first take is outside it), the new audio swapped onto
 the picture, `audio_words_transcribe` again on the dubbed track, and captions timed to it. `karaoke` writes

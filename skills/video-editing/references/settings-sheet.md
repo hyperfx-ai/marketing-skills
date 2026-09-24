@@ -6,7 +6,7 @@ the attachment and asks only for the rest.
 
 | Field | Values | Default | Source | Priced |
 | --- | --- | --- | --- | --- |
-| `source_file_id` | a file id | — | The attachment. Required. | Whisper is billed on its audio length |
+| `source_file_id` | a file id or a `/files/...` path | — | The attachment as stored, never the sandbox copy under `/home/user`. Required. | Whisper is billed on its audio length |
 | `source_path` | a sandbox path | `/home/user/video-editing/source.mp4` | Where `files_copy_to_sandbox` put the clip | No |
 | `spoken_language` | `auto` or an ISO 639-1 code (`en`, `es`, `fr`, …) | `auto` | Whisper detects it. When the user names the spoken language, use their code; it overrides detection (a short clip with music can be misread). | No |
 | `caption_language` | an ISO 639-1 code | the spoken language | The user's request. When they ask for a translation and name no language, ask this one question. | Yes, when it differs from the spoken language |
@@ -26,7 +26,7 @@ One numbered line per call the run will make, then a total:
 2. `ai_functions_run` translating the cues into the caption language, priced from the estimated text length. Only when a translation is wanted.
 3. For a dub: `voices_create` when no voice is named, the translation of the transcript with its character budget, `voices_speak` priced from the text length at the vendor's token rate, and `audio_words_transcribe` again on the dubbed track.
 4. One ffmpeg burn per language, with its check frame, at no charge.
-5. `sandbox_download_file` for every output, at no charge.
+5. `files_copy_from_sandbox` for every output into the run's folder `/files/video-editing/<clip>-<time>/`, at no charge.
 
 The figures are computed by the script from the sheet and the clip. The agent shows them as printed.
 

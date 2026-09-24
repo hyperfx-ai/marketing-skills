@@ -32,14 +32,14 @@ class FakeBridge:
     async def __call__(self, tool_name, **kwargs):
         self.calls.append((tool_name, kwargs))
         if tool_name == "audio_words_transcribe":
-            if str(kwargs.get("file_id", "")).startswith("file_dubbed"):
+            if "dubbed" in str(kwargs.get("file_id", "")):
                 return {"file_id": kwargs.get("file_id"), "language": "spanish", "duration_s": 8.0, "words": WORDS_ES}
             return {"file_id": kwargs.get("file_id"), "language": "en", "duration_s": 8.0, "words": WORDS}
         if tool_name == "voices_create":
             return {"name": kwargs["name"], "voice_id": "voice_fake", "voice_type": "designed"}
         if tool_name == "voices_speak":
             seconds = self.speak_seconds.pop(0) if self.speak_seconds else 3.0
-            return {"file_id": "file_speech", "audio_url": f"fake://tone/{seconds}", "duration_s": seconds, "voice": kwargs["voice"]}
+            return {"file_id": f"file_speech_{seconds}", "audio_url": "", "duration_s": seconds, "voice": kwargs["voice"]}
         if tool_name == "ai_functions_run" and "transcript" in kwargs["input"]:
             return {"success": True, "results": [{"success": True, "output_json": {"transcript": TRANSCRIPT_ES}}]}
         if tool_name == "ai_functions_run":
@@ -49,8 +49,8 @@ class FakeBridge:
                 "success": True,
                 "results": [{"success": True, "output_json": {"cues": [{"i": item["i"], "text": text} for item, text in zip(items, texts)]}}],
             }
-        if tool_name == "sandbox_download_file":
-            return {"file_id": f"file_{Path(kwargs['path']).name}", "url": f"https://files.example/{Path(kwargs['path']).name}"}
+        if tool_name == "files_copy_from_sandbox":
+            return f"Copied {kwargs['sources'][0]} -> {kwargs['destination']}"
         raise AssertionError(f"unexpected tool {tool_name}")
 
 
@@ -105,8 +105,8 @@ def make_tone(path: Path, seconds: float) -> None:
     )
 
 
-def fake_fetch_audio(url: str, target: Path) -> None:
-    make_tone(target, float(url.rsplit("/", 1)[1]))
+async def fake_fetch_audio(file_id: str, target: Path) -> None:
+    make_tone(target, float(file_id.rsplit("_", 1)[1]))
 
 
 def media_duration(path: Path) -> float:
@@ -164,7 +164,7 @@ class PlanTests(unittest.TestCase):
 
 
 class RunTests(unittest.IsolatedAsyncioTestCase):
-    async def test_run_lands_every_output_in_files_with_an_id(self):
+    async def test_run_lands_every_output_at_a_files_path(self):
         bridge = FakeBridge()
         pipeline = load_pipeline(bridge)
         with tempfile.TemporaryDirectory() as tmp:
@@ -177,9 +177,9 @@ class RunTests(unittest.IsolatedAsyncioTestCase):
             expected = ["final.en.mp4", "final.es.mp4", "captions.en.srt", "captions.es.srt", "check.en.png", "check.es.png"]
             self.assertEqual(sorted(result), sorted(expected))
             for name in expected:
-                self.assertEqual(result[name], f"file_{name}")
+                self.assertRegex(result[name], rf"^/files/video-editing/file_source-\d{{8}}-\d{{6}}/{name}$")
                 self.assertTrue((out / name).exists(), name)
-            downloads = [kwargs["path"] for tool, kwargs in bridge.calls if tool == "sandbox_download_file"]
+            downloads = [kwargs["sources"][0] for tool, kwargs in bridge.calls if tool == "files_copy_from_sandbox"]
             self.assertEqual(sorted(Path(p).name for p in downloads), sorted(expected))
             self.assertTrue((out / "ledger.jsonl").exists())
 
