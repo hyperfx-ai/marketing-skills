@@ -18,6 +18,7 @@ import math
 import shutil
 import subprocess
 import sys
+import urllib.request
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -33,12 +34,14 @@ MARGIN_ABOVE_TEXT_RATIO = 0.19
 WHISPER_USD_PER_MINUTE = 0.006
 TRANSLATION_TIER = "fast"
 TRANSLATION_USD_PER_1K_CHARS = 0.0025
+TTS_MODEL = "gemini-3.8-flash-tts"
 TEMPO_MIN = 0.9
 TEMPO_MAX = 1.1
 TTS_USD_PER_M_INPUT_TOKENS = 0.5
 TTS_USD_PER_M_OUTPUT_TOKENS = 9.0
 VOICE_CREATE_USD = 0.01
 KARAOKE_HIGHLIGHT_COLOUR = "&H0000FFFF"
+TTS_OUTPUT_TOKENS_PER_SECOND = 32
 ESTIMATED_CHARS_PER_SECOND = 12
 
 LANGUAGE_CODES = {
@@ -211,36 +214,43 @@ def output_names(spoken: str, target: str | None, *, dub: str | None = None) -> 
     return names
 
 
+def tts_usd(duration_s: float, chars: int) -> float:
+    tokens_in = chars / 4
+    tokens_out = duration_s * TTS_OUTPUT_TOKENS_PER_SECOND
+    return (tokens_in * TTS_USD_PER_M_INPUT_TOKENS + tokens_out * TTS_USD_PER_M_OUTPUT_TOKENS) / 1_000_000
+
+
 def render_plan(job: dict, probe: Probe) -> str:
     """Render every call the run would make, one line each, with a total line. Sends nothing."""
     if not probe.has_audio:
         raise RuntimeError("the clip has no audio track, so there is nothing to caption")
     spoken = language_code(job.get("spoken_language") or "auto")
     spoken_name = "<spoken>" if spoken == "auto" else spoken
-    target = target_language(job)
+    dub = dub_language(job)
+    target = None if dub else target_language(job)
     lines = [
         f"audio_words_transcribe (whisper-1) on {probe.duration_s:.1f} s of audio, "
         f"billed per started minute: ${whisper_usd(probe.duration_s):.4f}"
     ]
     total = whisper_usd(probe.duration_s)
-    if target:
+    if dub:
+        dub_lines, dub_usd = dub_plan_lines(job, probe)
+        lines += dub_lines
+        total += dub_usd
+    elif target:
         chars = round(probe.duration_s * ESTIMATED_CHARS_PER_SECOND)
         lines.append(
             f"ai_functions_run ({TRANSLATION_TIER}) translating the cues to {target}, "
             f"priced from about {chars} characters of text: ${translation_usd(probe.duration_s):.4f}"
         )
         total += translation_usd(probe.duration_s)
-    for lang in [spoken_name, *([target] if target else [])]:
+    for lang in [dub] if dub else [spoken_name, *([target] if target else [])]:
         lines.append(
             f"ffmpeg burn of captions.{lang}.srt into final.{lang}.mp4 "
             f"({job.get('caption_style', 'plain')}, {job.get('caption_position', 'bottom')}) "
             f"and one check frame check.{lang}.png: $0"
         )
-    if dub_language(job):
-        dub_lines, dub_usd = dub_plan_lines(job, probe)
-        lines += dub_lines
-        total += dub_usd
-    lines.append(f"sandbox_download_file for {len(output_names(spoken_name, target, dub=dub_language(job)))} outputs into files: $0")
+    lines.append(f"sandbox_download_file for {len(output_names(spoken_name, target, dub=dub))} outputs into files: $0")
     numbered = [f"{n}. {line}" for n, line in enumerate(lines, start=1)]
     return "\n".join([*numbered, f"Total: ${total:.4f}"])
 
@@ -314,72 +324,184 @@ def dub_language(job: dict) -> str | None:
 
 def dub_plan_lines(job: dict, probe: Probe) -> tuple[list[str], float]:
     """The plan's lines for a dub: the voice to create when none is named, the translation with its budget, the speech, the second words pass."""
-    # TODO spec: hq/projects/hyper/workspace/specs/2026-09-24-video-editing-voice.md § Design (the plan)
-    # TODO tests: tests/test_video_editing_pipeline.py
-    raise NotImplementedError
+    target = dub_language(job)
+    chars = round(probe.duration_s * ESTIMATED_CHARS_PER_SECOND)
+    voice = job.get("voice") or "designed"
+    lines = []
+    usd = 0.0
+    if voice in ("designed", "replicated"):
+        lines.append(f"voices_create ({TTS_MODEL}) a {voice} voice from the clip's speaker, saved under /files/voices: ${VOICE_CREATE_USD:.4f}")
+        usd += VOICE_CREATE_USD
+    lines.append(
+        f"ai_functions_run ({TRANSLATION_TIER}) translating the transcript to {target} to be spoken in "
+        f"about {probe.duration_s:.1f} s, about {chars} characters: ${translation_usd(probe.duration_s):.4f}"
+    )
+    usd += translation_usd(probe.duration_s)
+    lines.append(f"voices_speak ({TTS_MODEL}) in voice {voice}, priced from about {chars} characters at the vendor's token rate: ${tts_usd(probe.duration_s, chars):.4f}")
+    usd += tts_usd(probe.duration_s, chars)
+    lines.append(f"audio_words_transcribe (whisper-1) on the dubbed {probe.duration_s:.1f} s, billed per started minute: ${whisper_usd(probe.duration_s):.4f}")
+    usd += whisper_usd(probe.duration_s)
+    return lines, usd
 
 
 async def ensure_voice(job: dict, ledger: Path) -> str:
     """Return the voice name to speak in, creating a designed voice from the clip when none is named."""
-    # TODO spec: hq/projects/hyper/workspace/specs/2026-09-24-video-editing-voice.md § Design (ensure_voice)
-    # TODO tests: tests/test_video_editing_pipeline.py
-    raise NotImplementedError
+    voice = job.get("voice") or "designed"
+    if voice not in ("designed", "replicated"):
+        return voice
+    name = job.get("voice_name") or f"{voice}-{job['source_file_id']}"
+    record = await run_stage(
+        ledger,
+        "voice",
+        call_tool(
+            "voices_create",
+            file_id=job["source_file_id"],
+            name=name,
+            voice_type=voice,
+            consent_file_id=job.get("consent_file_id"),
+        ),
+        usd=VOICE_CREATE_USD,
+    )
+    return record["name"]
 
 
 def target_spoken_length(words: list[dict], probe: Probe) -> tuple[float, int]:
     """Speech seconds of the source and the character budget for a translation spoken in that time."""
-    # TODO spec: hq/projects/hyper/workspace/specs/2026-09-24-video-editing-voice.md § Design (the run's dub stage, step 1)
-    # TODO tests: tests/test_video_editing_pipeline.py
-    raise NotImplementedError
+    speech_s = words[-1]["end"] - words[0]["start"] if words else probe.duration_s
+    if speech_s <= 0:
+        speech_s = probe.duration_s
+    text = " ".join(w["word"].strip() for w in words)
+    chars_per_second = len(text) / speech_s
+    return speech_s, round(speech_s * chars_per_second)
 
 
 async def translate_transcript(text: str, target_language: str, budget_chars: int) -> str:
     """One ai_functions_run call for a natural translation spoken in about budget_chars characters."""
-    # TODO spec: hq/projects/hyper/workspace/specs/2026-09-24-video-editing-voice.md § Design (the run's dub stage, step 2)
-    # TODO tests: tests/test_video_editing_pipeline.py
-    raise NotImplementedError
+    result = await call_tool(
+        "ai_functions_run",
+        instructions=(
+            f"Translate the transcript into {target_language} as natural spoken language, keeping the "
+            f"meaning and tone, in about {budget_chars} characters so that it is spoken in the same time "
+            "as the original."
+        ),
+        input={"transcript": text},
+        output_json_schema={"type": "object", "properties": {"transcript": {"type": "string"}}, "required": ["transcript"]},
+        performance=TRANSLATION_TIER,
+    )
+    return result["results"][0]["output_json"]["transcript"]
 
 
 def fetch_audio(url: str, target: Path) -> None:
     """Download the spoken audio into the sandbox; patched in tests."""
-    # TODO spec: hq/projects/hyper/workspace/specs/2026-09-24-video-editing-voice.md § Design (the run's dub stage, step 3)
-    # TODO tests: tests/test_video_editing_pipeline.py
-    raise NotImplementedError
+    urllib.request.urlretrieve(url, target)
 
 
 async def speak(transcript: str, voice: str, target: Path) -> Path:
     """voices_speak through the bridge, the audio fetched to target."""
-    # TODO spec: hq/projects/hyper/workspace/specs/2026-09-24-video-editing-voice.md § Design (the run's dub stage, step 3)
-    # TODO tests: tests/test_video_editing_pipeline.py
-    raise NotImplementedError
+    spoken = await call_tool("voices_speak", text=transcript, voice=voice)
+    fetch_audio(spoken["audio_url"], target)
+    return target
 
 
 def fit_audio(speech: Path, target_s: float, out: Path) -> tuple[Path, float]:
     """Tempo-fit the speech to target_s within the band; return the fitted file and the ratio applied."""
-    # TODO spec: hq/projects/hyper/workspace/specs/2026-09-24-video-editing-voice.md § Design (the run's dub stage, step 4)
-    # TODO tests: tests/test_video_editing_pipeline.py
-    raise NotImplementedError
+    ratio = probe_clip(speech).duration_s / target_s
+    filters = []
+    remaining = ratio
+    while remaining < 0.5:
+        filters.append("atempo=0.5")
+        remaining /= 0.5
+    while remaining > 2.0:
+        filters.append("atempo=2.0")
+        remaining /= 2.0
+    filters.append(f"atempo={remaining:.4f}")
+    ffmpeg("-i", str(speech), "-filter:a", ",".join(filters), "-c:a", "pcm_s16le", str(out))
+    return out, ratio
 
 
 def swap_audio(source: Path, fitted: Path, target: Path) -> None:
     """The source picture with the fitted speech as its only audio track."""
-    # TODO spec: hq/projects/hyper/workspace/specs/2026-09-24-video-editing-voice.md § Design (the run's dub stage, step 5)
-    # TODO tests: tests/test_video_editing_pipeline.py
-    raise NotImplementedError
+    ffmpeg("-i", str(source), "-i", str(fitted), "-map", "0:v:0", "-map", "1:a:0", "-c:v", "copy", "-c:a", "aac", "-shortest", str(target))
 
 
 def write_ass(cues: list[Cue], words: list[dict], path: Path, probe: Probe, position: str) -> None:
     """Karaoke subtitles: one dialogue line per cue, one highlight per word."""
-    # TODO spec: hq/projects/hyper/workspace/specs/2026-09-24-video-editing-voice.md § Design (karaoke)
-    # TODO tests: tests/test_video_editing_pipeline.py
-    raise NotImplementedError
+    font_size = max(12, round(probe.height / FONT_SIZE_DIVISOR))
+    ratio = MARGIN_ABOVE_TEXT_RATIO if position == "above_text" else MARGIN_BOTTOM_RATIO
+    margin_v = round(probe.height * ratio)
+    header = [
+        "[Script Info]",
+        "ScriptType: v4.00+",
+        f"PlayResX: {probe.width}",
+        f"PlayResY: {probe.height}",
+        "",
+        "[V4+ Styles]",
+        "Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding",
+        f"Style: Karaoke,DejaVu Sans,{font_size},{KARAOKE_HIGHLIGHT_COLOUR},&H00FFFFFF,&H00000000,&H00000000,1,0,0,0,100,100,0,0,1,2,0,2,20,20,{margin_v},1",
+        "",
+        "[Events]",
+        "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text",
+    ]
+    lines = []
+    position_in_words = 0
+    for cue in cues:
+        count = len(cue.text.split())
+        cue_words = words[position_in_words:position_in_words + count]
+        position_in_words += count
+        lines.append(f"Dialogue: 0,{ass_time(cue.start)},{ass_time(cue.end)},Karaoke,,0,0,0,,{karaoke_text(cue, cue_words)}")
+    path.write_text("\n".join(header + lines) + "\n", encoding="utf-8")
+
+
+def ass_time(seconds: float) -> str:
+    centis = int(round(max(seconds, 0) * 100))
+    h, rem = divmod(centis, 360_000)
+    m, rem = divmod(rem, 6_000)
+    s, cs = divmod(rem, 100)
+    return f"{h}:{m:02}:{s:02}.{cs:02}"
+
+
+def karaoke_text(cue: Cue, cue_words: list[dict]) -> str:
+    total = int(round((cue.end - cue.start) * 100))
+    parts = []
+    spent = 0
+    for index, word in enumerate(cue_words):
+        if index == len(cue_words) - 1:
+            centis = total - spent
+        else:
+            centis = int(round((cue_words[index + 1]["start"] - word["start"]) * 100))
+            centis = max(1, min(centis, total - spent - (len(cue_words) - index - 1)))
+        spent += centis
+        parts.append(f"{{\\k{centis}}}{word['word'].strip()}")
+    return " ".join(parts)
 
 
 async def dub(job: dict, out: Path, ledger: Path, probe: Probe, transcribed: dict) -> dict:
     """Translate, speak, fit, swap, then transcribe the dubbed track; returns the dub's language, words and path."""
-    # TODO spec: hq/projects/hyper/workspace/specs/2026-09-24-video-editing-voice.md § Design (the run's dub stage)
-    # TODO tests: tests/test_video_editing_pipeline.py
-    raise NotImplementedError
+    target = dub_language(job)
+    words = transcribed["words"]
+    voice = await ensure_voice(job, ledger)
+    text = " ".join(w["word"].strip() for w in words)
+    speech_s, budget = target_spoken_length(words, probe)
+    lead_in_s = words[0]["start"] if words else 0.0
+    transcript = await run_stage(ledger, "translate", translate_transcript(text, target, budget), usd=translation_usd(probe.duration_s))
+    speech = await run_stage(ledger, "speak", speak(transcript, voice, out / f"speech.{target}.wav"), usd=tts_usd(probe.duration_s, len(transcript)))
+    ratio = probe_clip(speech).duration_s / speech_s
+    if not TEMPO_MIN <= ratio <= TEMPO_MAX:
+        budget = round(budget / ratio)
+        transcript = await run_stage(ledger, "translate", translate_transcript(text, target, budget), usd=translation_usd(probe.duration_s), retry=True)
+        speech = await run_stage(ledger, "speak", speak(transcript, voice, out / f"speech.{target}.wav"), usd=tts_usd(probe.duration_s, len(transcript)), retry=True)
+        ratio = probe_clip(speech).duration_s / speech_s
+    (out / f"transcript.{target}.txt").write_text(transcript, encoding="utf-8")
+    fitted, applied = fit_audio(speech, speech_s, out / f"speech.{target}.fit.wav")
+    note(ledger, "fit", "done", ratio=round(applied, 4), in_band=TEMPO_MIN <= applied <= TEMPO_MAX, usd=0.0)
+    dubbed = out / f"dubbed.{target}.mp4"
+    delayed = out / f"speech.{target}.delayed.wav"
+    ffmpeg("-i", str(fitted), "-af", f"adelay={int(lead_in_s * 1000)}:all=1", "-c:a", "pcm_s16le", str(delayed))
+    swap_audio(picture_path(job), delayed, dubbed)
+    landed = await run_stage(ledger, "land", call_tool("sandbox_download_file", path=str(dubbed)), output=dubbed.name, usd=0.0)
+    second = await run_stage(ledger, "words", call_tool("audio_words_transcribe", file_id=landed["file_id"], language=target), usd=whisper_usd(probe.duration_s))
+    (out / f"words.{target}.json").write_text(json.dumps(second["words"], ensure_ascii=False, indent=1), encoding="utf-8")
+    return {"language": target, "words": second["words"], "path": str(dubbed)}
 
 
 async def transcribe(job: dict, out: Path, ledger: Path, probe: Probe) -> dict:
