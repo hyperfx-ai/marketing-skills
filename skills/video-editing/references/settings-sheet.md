@@ -29,6 +29,9 @@ the attachment and asks only for the rest.
 | `previous_interaction_id` | the ids from the last completion | empty | When the user refines the edit they just got. One id per piece, in order; the clip is not uploaded again. | Yes: one Omni call per piece |
 | `captions` | `yes`, `no` | `yes` | `no` when the user wants only the edit and no captions. | No: `no` skips Whisper |
 
+The defaults in this table are the `Job` defaults in `scripts/pipeline.py`: the script reads the sheet once
+into that record, and an absent or empty field takes the default from there.
+
 ## What the plan prints
 
 One numbered line per call the run will make, then a total:

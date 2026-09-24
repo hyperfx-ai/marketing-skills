@@ -7,7 +7,8 @@ Runs inside the user's sandbox. Provider calls go through the sandbox tool bridg
     python pipeline.py run job.json       # run it; every output is landed in /files with an id
 
 The job is the settings sheet the skill fills in. `plan` and `run` read the same file, so what
-the user approved is what executes.
+the user approved is what executes: one priced call list is built from the sheet, `plan` prints it
+and `run` takes every ledger price from it.
 """
 
 from __future__ import annotations
@@ -19,7 +20,7 @@ import re
 import shutil
 import subprocess
 import sys
-from dataclasses import dataclass
+from dataclasses import dataclass, field, fields as dataclass_fields
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from zoneinfo import ZoneInfo
@@ -91,12 +92,95 @@ TRANSLATION_SCHEMA = {
 }
 
 
+def language_code(name: str) -> str:
+    """Whisper names languages ("english"); outputs are named by ISO code ("en")."""
+    return LANGUAGE_CODES.get(name.strip().lower(), name.strip().lower())
+
+
+@dataclass(frozen=True)
+class Job:
+    """The settings sheet, read once, with every default in one place. The run never writes to it."""
+
+    source_file_id: str
+    source_path: str = "/home/user/video-editing/source.mp4"
+    spoken_language: str = "auto"
+    caption_language: str = ""
+    caption_style: str = "plain"
+    caption_position: str = "bottom"
+    outputs: str = "captions_only"
+    dub: str = "none"
+    voice: str = "designed"
+    voice_name: str = ""
+    consent_file_id: str = ""
+    delivery: str = "chat"
+    tiktok_caption: str = ""
+    tiktok_times: list[str] = field(default_factory=list)
+    tiktok_timezone: str = "UTC"
+    tiktok_account: str = ""
+    edit_instruction: str = ""
+    strip_text: str = "no"
+    edit_part: str = "whole"
+    edit_resolution: str = "auto"
+    extend_seconds: int = 0
+    previous_interaction_id: list[str] = field(default_factory=list)
+    captions: str = "yes"
+
+    @property
+    def has_edit(self) -> bool:
+        """An edit or an extension is asked for."""
+        return bool(self.edit_instruction) or self.is_extension
+
+    @property
+    def is_extension(self) -> bool:
+        return self.extend_seconds > 0
+
+    @property
+    def captions_wanted(self) -> bool:
+        return self.captions != "no"
+
+    @property
+    def tiktok_wanted(self) -> bool:
+        return self.delivery == "tiktok"
+
+    @property
+    def dub_language(self) -> str | None:
+        return None if self.dub == "none" else language_code(self.dub)
+
+    def target_language(self, spoken: str | None = None) -> str | None:
+        """The second caption language, or None when the job wants captions in the spoken one."""
+        wanted = language_code(self.caption_language)
+        if self.outputs != "both" or not wanted or wanted == (spoken or language_code(self.spoken_language)):
+            return None
+        return wanted
+
+    @property
+    def ai_label(self) -> bool:
+        """TikTok's AI-generated label: on when this pipeline edited, extended or dubbed the picture or the voice."""
+        return self.has_edit or bool(self.dub_language)
+
+
+def parse_job(sheet: dict) -> Job:
+    """The sheet as a Job: an absent, empty or null field takes the Job's default."""
+    values = {}
+    for item in dataclass_fields(Job):
+        value = sheet.get(item.name)
+        if value is None or value == "":
+            continue
+        if item.name == "extend_seconds":
+            value = int(value)
+        if item.name == "previous_interaction_id":
+            value = [value] if isinstance(value, str) else list(value)
+        values[item.name] = value
+    return Job(**values)
+
+
 @dataclass
 class Probe:
     duration_s: float
     width: int
     height: int
     has_audio: bool
+    fps: float = 24.0
 
 
 @dataclass
@@ -107,18 +191,41 @@ class Cue:
     text: str
 
 
-def language_code(name: str) -> str:
-    """Whisper names languages ("english"); outputs are named by ISO code ("en")."""
-    return LANGUAGE_CODES.get(name.strip().lower(), name.strip().lower())
+@dataclass(frozen=True)
+class Call:
+    """One line of the plan: the stage the run records it under, the line as printed, its price."""
+
+    stage: str
+    line: str
+    usd: float = 0.0
 
 
-def target_language(job: dict) -> str | None:
-    """The second caption language, or None when the job wants captions in the spoken one."""
-    wanted = language_code(job.get("caption_language") or "")
-    spoken = language_code(job.get("spoken_language") or "auto")
-    if job.get("outputs") != "both" or not wanted or wanted == spoken:
-        return None
-    return wanted
+@dataclass(frozen=True)
+class Plan:
+    """The priced calls the run will make, in order. The only place a price is computed."""
+
+    calls: list[Call]
+
+    def usd(self, stage: str, n: int = 1) -> float:
+        """The price of the n-th planned call of a stage; a retry takes the same price again."""
+        prices = [call.usd for call in self.calls if call.stage == stage]
+        return prices[min(n, len(prices)) - 1] if prices else 0.0
+
+    def render(self) -> str:
+        numbered = [f"{n}. {call.line}" for n, call in enumerate(self.calls, start=1)]
+        return "\n".join([*numbered, f"Total: ${sum(call.usd for call in self.calls):.4f}"])
+
+
+@dataclass(frozen=True)
+class Run:
+    """Everything a run's stages share: the job, the sandbox folder, the ledger, the clip's probe, the landing folder and the plan."""
+
+    job: Job
+    out: Path
+    ledger: Path
+    probe: Probe
+    folder: str
+    plan: Plan
 
 
 def split_into_groups(words: list[dict], max_words: int, max_chars: int, gap_s: float) -> list[list[dict]]:
@@ -210,23 +317,26 @@ def ffmpeg(*args: str) -> None:
 
 
 def probe_clip(path: Path) -> Probe:
-    """Read duration, size and audio presence with ffmpeg."""
+    """Read duration, size, audio presence and frame rate with ffmpeg."""
     text = subprocess.run([ffmpeg_exe(), "-i", str(path)], capture_output=True, text=True).stderr
-    duration, width, height, has_audio = 0.0, 0, 0, False
+    duration, width, height, has_audio, fps = 0.0, 0, 0, False, 24.0
     for line in text.splitlines():
         line = line.strip()
         if line.startswith("Duration:"):
             h, m, s = line.split()[1].rstrip(",").split(":")
             duration = int(h) * 3600 + int(m) * 60 + float(s)
         if "Video:" in line:
-            for token in line.replace(",", " ").split():
+            tokens = line.replace(",", " ").split()
+            for token, following in zip(tokens, [*tokens[1:], ""]):
                 if "x" in token and token.replace("x", "").isdigit():
                     width, height = (int(part) for part in token.split("x"))
+                if following == "fps":
+                    fps = float(token)
         if "Audio:" in line:
             has_audio = True
     if duration <= 0:
         raise RuntimeError(f"ffmpeg found no duration for {path}")
-    return Probe(duration, width, height, has_audio)
+    return Probe(duration, width, height, has_audio, fps)
 
 
 def whisper_usd(duration_s: float) -> float:
@@ -237,37 +347,32 @@ def translation_usd(duration_s: float) -> float:
     return duration_s * ESTIMATED_CHARS_PER_SECOND / 1000 * TRANSLATION_USD_PER_1K_CHARS
 
 
-def has_edit(job: dict) -> bool:
-    """An edit or an extension is asked for."""
-    return bool(job.get("edit_instruction")) or int(job.get("extend_seconds") or 0) > 0
+def tts_usd(duration_s: float, chars: int) -> float:
+    tokens_in = chars / 4
+    tokens_out = duration_s * TTS_OUTPUT_TOKENS_PER_SECOND
+    return (tokens_in * TTS_USD_PER_M_INPUT_TOKENS + tokens_out * TTS_USD_PER_M_OUTPUT_TOKENS) / 1_000_000
 
 
-def is_extension(job: dict) -> bool:
-    return int(job.get("extend_seconds") or 0) > 0
+def omni_usd(seconds: float, resolution: str) -> float:
+    """Estimated dollars for one Omni call of that many output seconds."""
+    output = seconds * OMNI_OUTPUT_TOKENS_PER_SECOND[resolution] * OMNI_USD_PER_M_VIDEO_OUTPUT_TOKENS
+    inputs = seconds * OMNI_INPUT_TOKENS_PER_SECOND * OMNI_USD_PER_M_INPUT_TOKENS
+    return (output + inputs) / 1_000_000
 
 
-def captions_wanted(job: dict) -> bool:
-    return job.get("captions", "yes") != "no"
-
-
-def with_edited(edited: dict | None, ids: dict[str, str]) -> dict[str, str]:
-    return {edited["name"]: edited["file_id"], **ids} if edited else ids
-
-
-def edit_span(job: dict, probe: Probe) -> tuple[float, float]:
+def edit_span(job: Job, probe: Probe) -> tuple[float, float]:
     """The seconds to edit: the whole clip, or the user's part."""
-    part = str(job.get("edit_part") or "whole")
-    if part == "whole":
+    if job.edit_part == "whole":
         return (0.0, probe.duration_s)
-    start, end = (float(value) for value in part.split("-", 1))
+    start, end = (float(value) for value in job.edit_part.split("-", 1))
     if start < 0 or end <= start or end > probe.duration_s + 0.05:
-        raise RuntimeError(f"edit_part {part} is outside the clip, which is {probe.duration_s:.1f} s long")
+        raise RuntimeError(f"edit_part {job.edit_part} is outside the clip, which is {probe.duration_s:.1f} s long")
     return (start, min(end, probe.duration_s))
 
 
-def edit_pieces(job: dict, probe: Probe) -> list[tuple[float, float]]:
+def edit_pieces(job: Job, probe: Probe) -> list[tuple[float, float]]:
     """The spans Omni edits, each at most 10 s: the whole clip or the user's part, cut into the fewest equal pieces."""
-    if is_extension(job):
+    if job.is_extension:
         return [(max(0.0, probe.duration_s - OMNI_MAX_PIECE_SECONDS), probe.duration_s)]
     start, end = edit_span(job, probe)
     count = max(1, math.ceil((end - start) / OMNI_MAX_PIECE_SECONDS - 1e-9))
@@ -275,11 +380,10 @@ def edit_pieces(job: dict, probe: Probe) -> list[tuple[float, float]]:
     return [(round(start + i * length, 3), round(start + (i + 1) * length, 3)) for i in range(count)]
 
 
-def edit_resolution(job: dict, probe: Probe) -> str:
+def edit_resolution(job: Job, probe: Probe) -> str:
     """360p or 720p: the sheet's value, or auto from the clip's short side."""
-    wanted = job.get("edit_resolution") or "auto"
-    if wanted != "auto":
-        return wanted
+    if job.edit_resolution != "auto":
+        return job.edit_resolution
     return "720p" if min(probe.width, probe.height) >= 720 else "360p"
 
 
@@ -290,178 +394,56 @@ def aspect_ratio(probe: Probe) -> str:
     return "9:16" if probe.height > probe.width else "16:9"
 
 
-def edit_instruction(job: dict) -> str:
+def edit_instruction(job: Job) -> str:
     """The text sent to Omni: the strip sentence or the extend prefix, then the user's words."""
-    words = (job.get("edit_instruction") or "").strip()
-    if is_extension(job):
-        return f"Continue the scene for {int(job['extend_seconds'])} seconds. {words}".strip()
-    if job.get("strip_text") == "yes":
+    words = job.edit_instruction.strip()
+    if job.is_extension:
+        return f"Continue the scene for {job.extend_seconds} seconds. {words}".strip()
+    if job.strip_text == "yes":
         return f"{words} {STRIP_TEXT_SENTENCE}".strip()
     return words
 
 
-def omni_usd(seconds: float, resolution: str) -> float:
-    """Estimated dollars for one Omni call of that many output seconds."""
-    output = seconds * OMNI_OUTPUT_TOKENS_PER_SECOND[resolution] * OMNI_USD_PER_M_VIDEO_OUTPUT_TOKENS
-    inputs = seconds * OMNI_INPUT_TOKENS_PER_SECOND * OMNI_USD_PER_M_INPUT_TOKENS
-    return (output + inputs) / 1_000_000
-
-
-def edit_plan_lines(job: dict, probe: Probe) -> tuple[list[str], float]:
-    """One plan line per Omni call and their total; sends nothing."""
+def edit_calls(job: Job, probe: Probe) -> list[Call]:
+    """One call per Omni piece, priced on its seconds."""
     pieces = edit_pieces(job, probe)
     resolution = edit_resolution(job, probe)
     ratio = aspect_ratio(probe)
     text = edit_instruction(job)
-    lines: list[str] = []
-    total = 0.0
+    calls = []
     for n, (start, end) in enumerate(pieces, start=1):
-        seconds = int(job["extend_seconds"]) if is_extension(job) else end - start
+        seconds = job.extend_seconds if job.is_extension else end - start
         usd = omni_usd(seconds, resolution)
-        what = f"extend by {seconds} s from the last {end - start:.1f} s" if is_extension(job) else f"edit piece {n} of {len(pieces)}, {end - start:.1f} s"
-        lines.append(f"videos_edit ({OMNI_MODEL}) {what} at {resolution} {ratio}, about ${usd:.4f}, instruction: {text}")
-        total += usd
-    return lines, total
+        what = f"extend by {seconds} s from the last {end - start:.1f} s" if job.is_extension else f"edit piece {n} of {len(pieces)}, {end - start:.1f} s"
+        calls.append(Call("edit", f"videos_edit ({OMNI_MODEL}) {what} at {resolution} {ratio}, about ${usd:.4f}, instruction: {text}", usd))
+    return calls
 
 
-def probe_fps(path: Path) -> float:
-    text = subprocess.run([ffmpeg_exe(), "-i", str(path)], capture_output=True, text=True).stderr
-    for line in text.splitlines():
-        if "Video:" in line:
-            tokens = line.replace(",", " ").split()
-            for token, following in zip(tokens, tokens[1:]):
-                if following == "fps":
-                    return float(token)
-    return 24.0
+def dub_calls(job: Job, probe: Probe) -> list[Call]:
+    """The plan's calls for a dub: the voice to create when none is named, the translation with its budget, the speech, the second words pass."""
+    target = job.dub_language
+    chars = round(probe.duration_s * ESTIMATED_CHARS_PER_SECOND)
+    calls = []
+    if job.voice in ("designed", "replicated"):
+        calls.append(Call("voice", f"voices_create ({TTS_MODEL}) a {job.voice} voice from the clip's speaker, saved under /files/voices: ${VOICE_CREATE_USD:.4f}", VOICE_CREATE_USD))
+    calls.append(Call(
+        "translate",
+        f"ai_functions_run ({TRANSLATION_TIER}) translating the transcript to {target} to be spoken in "
+        f"about {probe.duration_s:.1f} s, about {chars} characters: ${translation_usd(probe.duration_s):.4f}",
+        translation_usd(probe.duration_s),
+    ))
+    calls.append(Call("speak", f"voices_speak ({TTS_MODEL}) in voice {job.voice}, priced from about {chars} characters at the vendor's token rate: ${tts_usd(probe.duration_s, chars):.4f}", tts_usd(probe.duration_s, chars)))
+    calls.append(Call("words", f"audio_words_transcribe (whisper-1) on the dubbed {probe.duration_s:.1f} s, billed per started minute: ${whisper_usd(probe.duration_s):.4f}", whisper_usd(probe.duration_s)))
+    return calls
 
 
-def cut_piece(source: Path, span: tuple[float, float], target: Path) -> None:
-    """Cut one span out of the source with a re-encode, frame-accurate."""
-    ffmpeg("-i", str(source), "-ss", f"{span[0]:.3f}", "-to", f"{span[1]:.3f}", "-c:v", "libx264", "-pix_fmt", "yuv420p", "-c:a", "aac", str(target))
-
-
-def fitted(index: int, probe: Probe, fps: float, label: str) -> str:
-    return f"[{index}:v]scale={probe.width}:{probe.height},fps={fps:g},setsar=1,setpts=PTS-STARTPTS[{label}]"
-
-
-def assemble(source: Path, pieces: list[tuple[tuple[float, float], Path]], probe: Probe, target: Path) -> None:
-    """Replace each span of the source with its edited piece at the source's size; the source's audio throughout."""
-    fps = probe_fps(source)
-    filters: list[str] = []
-    labels: list[str] = []
-    cursor = 0.0
-    for n, ((start, end), _path) in enumerate(pieces, start=1):
-        if start - cursor > 0.01:
-            filters.append(f"[0:v]trim=start={cursor:.3f}:end={start:.3f},setpts=PTS-STARTPTS[s{n}]")
-            labels.append(f"[s{n}]")
-        filters.append(fitted(n, probe, fps, f"p{n}"))
-        labels.append(f"[p{n}]")
-        cursor = end
-    if probe.duration_s - cursor > 0.01:
-        filters.append(f"[0:v]trim=start={cursor:.3f},setpts=PTS-STARTPTS[tail]")
-        labels.append("[tail]")
-    filters.append(f"{''.join(labels)}concat=n={len(labels)}:v=1:a=0[v]")
-    inputs: list[str] = ["-i", str(source)]
-    for _span, path in pieces:
-        inputs += ["-i", str(path)]
-    ffmpeg(*inputs, "-filter_complex", ";".join(filters), "-map", "[v]", "-map", "0:a", "-c:v", "libx264", "-pix_fmt", "yuv420p", "-c:a", "aac", "-shortest", str(target))
-
-
-def append(source: Path, continuation: Path, probe: Probe, target: Path) -> None:
-    """Append the continuation after the whole source at the source's size."""
-    fps = probe_fps(source)
-    filters = [
-        "[0:v]setpts=PTS-STARTPTS[v0]",
-        fitted(1, probe, fps, "v1"),
-        "[v0][v1]concat=n=2:v=1:a=0[v]",
-        "[0:a][1:a]concat=n=2:v=0:a=1[a]",
-    ]
-    ffmpeg("-i", str(source), "-i", str(continuation), "-filter_complex", ";".join(filters), "-map", "[v]", "-map", "[a]", "-c:v", "libx264", "-pix_fmt", "yuv420p", "-c:a", "aac", str(target))
-
-
-def previous_ids(job: dict) -> list[str]:
-    ids = job.get("previous_interaction_id") or []
-    return [ids] if isinstance(ids, str) else list(ids)
-
-
-async def land_piece(job: dict, out: Path, ledger: Path, n: int, span: tuple[float, float], whole: bool) -> str:
-    """What Omni edits for piece n: the source itself, or the piece cut out and landed at a /files path."""
-    if whole:
-        return job["source_file_id"]
-    piece = out / f"piece.{n}.mp4"
-    await asyncio.to_thread(cut_piece, Path(job["source_path"]), span, piece)
-    landed = await land(out, ledger, [piece.name], landing_folder(job))
-    return landed[piece.name]
-
-
-async def land_anchor(job: dict, out: Path, ledger: Path, edited_piece: Path, n: int) -> str:
-    """Land the last frame of an edited piece so the next piece can be held to its scene."""
-    anchor = out / f"anchor.{n}.png"
-    duration = probe_clip(edited_piece).duration_s
-    ffmpeg("-ss", f"{max(0.0, duration - 0.4):.2f}", "-i", str(edited_piece), "-frames:v", "1", str(anchor))
-    landed = await land(out, ledger, [anchor.name], landing_folder(job))
-    return landed[anchor.name]
-
-
-async def edit(job: dict, out: Path, ledger: Path, probe: Probe) -> dict:
-    """Run the edit or extension branch; return the edited clip's name, path, file id and interaction ids."""
-    pieces = edit_pieces(job, probe)
-    resolution = edit_resolution(job, probe)
-    ratio = aspect_ratio(probe)
-    text = edit_instruction(job)
-    previous = previous_ids(job)
-    if previous and len(previous) != len(pieces):
-        raise RuntimeError(f"{len(previous)} previous interaction ids for {len(pieces)} pieces")
-    whole = not is_extension(job) and pieces == [(0.0, probe.duration_s)]
-    call_args = {"instruction": text, "resolution": resolution, "aspect_ratio": ratio}
-    if previous:
-        calls = [{**call_args, "previous_interaction_id": previous[n]} for n in range(len(pieces))]
-    else:
-        ids = await asyncio.gather(*(land_piece(job, out, ledger, n, span, whole) for n, span in enumerate(pieces, start=1)))
-        calls = [{**call_args, "file_id": file_id} for file_id in ids]
-    seconds = int(job["extend_seconds"]) if is_extension(job) else None
-    results: list[dict] = []
-    paths: list[Path] = []
-    anchor_id: str | None = None
-    for n, (span, args) in enumerate(zip(pieces, calls), start=1):
-        if anchor_id:
-            args = {**args, "instruction": f"{text} {ANCHOR_SENTENCE}", "reference_image_file_id": anchor_id}
-        result = await run_stage(ledger, "edit", call_tool("videos_edit", **args), output=f"omni.{n}.mp4", usd=omni_usd(seconds or (span[1] - span[0]), resolution))
-        path = out / f"omni.{n}.mp4"
-        await run_stage(ledger, "fetch", call_tool("files_copy_to_sandbox", sources=[result["file_id"]], destination=str(path)), output=path.name, usd=0.0)
-        results.append(result)
-        paths.append(path)
-        if n < len(pieces):
-            anchor_id = await land_anchor(job, out, ledger, path, n)
-    name = "extended.mp4" if is_extension(job) else "edited.mp4"
-    if is_extension(job):
-        await asyncio.to_thread(append, Path(job["source_path"]), paths[0], probe, out / name)
-    else:
-        await asyncio.to_thread(assemble, Path(job["source_path"]), list(zip(pieces, paths)), probe, out / name)
-    first = pieces[0]
-    check_frame(out / name, Cue(0, first[0], first[1], ""), out / "check.edit.png")
-    landed = await land(out, ledger, [name], landing_folder(job))
-    return {"name": name, "path": str(out / name), "file_id": landed[name], "interaction_ids": [result["interaction_id"] for result in results]}
-
-
-def output_names(spoken: str, target: str | None, *, dub: str | None = None) -> list[str]:
-    names = []
-    for lang in [dub] if dub else [spoken, *([target] if target else [])]:
-        names += [f"final.{lang}.mp4", f"captions.{lang}.srt", f"check.{lang}.png"]
-    return names
-
-
-def tiktok_wanted(job: dict) -> bool:
-    return job.get("delivery") == "tiktok"
-
-
-def tiktok_slots(job: dict) -> list[tuple[str, str]]:
+def tiktok_slots(job: Job) -> list[tuple[str, str]]:
     """UTC run times with the local time as typed, one per slot in time order; raises on a past time."""
-    zone = ZoneInfo(job.get("tiktok_timezone") or "UTC")
+    zone = ZoneInfo(job.tiktok_timezone)
     now = datetime.now(timezone.utc)
     per_minute: dict[datetime, int] = {}
     slots = []
-    for local in job.get("tiktok_times") or []:
+    for local in job.tiktok_times:
         when = datetime.strptime(local, "%Y-%m-%d %H:%M").replace(tzinfo=zone)
         earlier = per_minute.get(when, 0)
         per_minute[when] = earlier + 1
@@ -472,12 +454,7 @@ def tiktok_slots(job: dict) -> list[tuple[str, str]]:
     return sorted(slots)
 
 
-def ai_label(job: dict) -> bool:
-    """TikTok's AI-generated label: on when this pipeline edited, extended or dubbed the picture or the voice."""
-    return has_edit(job) or bool(dub_language(job))
-
-
-def post_file(job: dict, names: list[str]) -> str:
+def post_file(names: list[str]) -> str:
     """The one output to post: the captioned video, else the edited or extended clip, else the source."""
     for name in names:
         if name.startswith("final.") and name.endswith(".mp4"):
@@ -488,97 +465,81 @@ def post_file(job: dict, names: list[str]) -> str:
     return "source"
 
 
-def tiktok_plan_lines(job: dict, probe: Probe) -> list[str]:
+def tiktok_calls(job: Job, probe: Probe) -> list[Call]:
     """One line per post as it will be sent, then the policy line; refuses in one sentence and sends nothing."""
-    account = job.get("tiktok_account")
-    if not account:
+    if not job.tiktok_account:
         raise RuntimeError("no TikTok connection in this workspace: connect TikTok in Set up")
-    caption = job.get("tiktok_caption") or ""
-    if len(caption) > TIKTOK_CAPTION_MAX_CHARS:
-        raise RuntimeError(f"the TikTok caption is {len(caption)} characters; TikTok allows {TIKTOK_CAPTION_MAX_CHARS}")
+    if len(job.tiktok_caption) > TIKTOK_CAPTION_MAX_CHARS:
+        raise RuntimeError(f"the TikTok caption is {len(job.tiktok_caption)} characters; TikTok allows {TIKTOK_CAPTION_MAX_CHARS}")
     if probe.duration_s < TIKTOK_MIN_SECONDS:
         raise RuntimeError(f"the clip is {probe.duration_s:.1f} s; TikTok wants at least {TIKTOK_MIN_SECONDS:.0f} s")
-    lines = []
+    calls = []
     if min(probe.width, probe.height) < TIKTOK_MIN_SHORT_SIDE:
-        lines.append(f"warning: the output is {probe.width}x{probe.height} and TikTok wants 720p and up; TikTok may refuse it")
-    zone = job.get("tiktok_timezone") or "UTC"
-    label = "yes" if ai_label(job) else "no"
+        calls.append(Call("note", f"warning: the output is {probe.width}x{probe.height} and TikTok wants 720p and up; TikTok may refuse it"))
+    label = "yes" if job.ai_label else "no"
     tail = f"private until the app is audited · AI label: {label} · $0"
     slots = tiktok_slots(job)
     if not slots:
-        lines.append(f'TikTok post to @{account}, post now: "{caption}" · {tail}')
+        calls.append(Call("tiktok", f'TikTok post to @{job.tiktok_account}, post now: "{job.tiktok_caption}" · {tail}'))
     for _, local in slots:
-        lines.append(f'TikTok post to @{account}: "{caption}" at {local} {zone} · {tail}')
-    lines.append(f"Saying yes confirms TikTok's Music Usage Confirmation: {TIKTOK_MUSIC_POLICY_URL}")
-    return lines
+        calls.append(Call("tiktok", f'TikTok post to @{job.tiktok_account}: "{job.tiktok_caption}" at {local} {job.tiktok_timezone} · {tail}'))
+    calls.append(Call("note", f"Saying yes confirms TikTok's Music Usage Confirmation: {TIKTOK_MUSIC_POLICY_URL}"))
+    return calls
 
 
-async def deliver(job: dict, ledger: Path, ids: dict[str, str]) -> list:
-    """Post the one output now, or once per slot at its time; the publish result, or one trigger id per slot."""
-    file = ids.get(post_file(job, list(ids)), job["source_file_id"])
-    post = {"file": file, "caption": job["tiktok_caption"], "is_aigc": ai_label(job)}
-    slots = tiktok_slots(job)
-    if not slots:
-        posted = await run_stage(ledger, "tiktok", call_tool("tiktok_posts_publish", **post), usd=0.0)
-        return [{"publish_id": posted["publish_id"], "status": posted["status"], "fail_reason": posted.get("fail_reason")}]
-    triggers = []
-    for run_at, local in slots:
-        deferred = await run_stage(ledger, "tiktok", call_tool("tiktok_posts_publish", **post, scheduled_at=run_at), slot=local, usd=0.0)
-        triggers.append(deferred["trigger_id"])
-    return triggers
+def output_names(spoken: str, target: str | None, *, dub: str | None = None) -> list[str]:
+    names = []
+    for lang in [dub] if dub else [spoken, *([target] if target else [])]:
+        names += [f"final.{lang}.mp4", f"captions.{lang}.srt", f"check.{lang}.png"]
+    return names
 
 
-def tts_usd(duration_s: float, chars: int) -> float:
-    tokens_in = chars / 4
-    tokens_out = duration_s * TTS_OUTPUT_TOKENS_PER_SECOND
-    return (tokens_in * TTS_USD_PER_M_INPUT_TOKENS + tokens_out * TTS_USD_PER_M_OUTPUT_TOKENS) / 1_000_000
-
-
-def render_plan(job: dict, probe: Probe) -> str:
-    """Render every call the run would make, one line each, with a total line. Sends nothing."""
+def planned_calls(job: Job, probe: Probe) -> Plan:
+    """Every call the run makes, in order, with its price; refuses in one sentence when the job cannot run."""
     if not probe.has_audio:
         raise RuntimeError("the clip has no audio track, so there is nothing to caption")
-    spoken = language_code(job.get("spoken_language") or "auto")
+    spoken = language_code(job.spoken_language)
     spoken_name = "<spoken>" if spoken == "auto" else spoken
-    dub = dub_language(job)
-    target = None if dub else target_language(job)
-    lines: list[str] = []
-    total = 0.0
-    if has_edit(job):
-        lines, total = edit_plan_lines(job, probe)
-    if not captions_wanted(job):
-        lines.append("files_copy_from_sandbox for 2 outputs into files: $0")
-        if tiktok_wanted(job):
-            lines += tiktok_plan_lines(job, probe)
-        numbered = [f"{n}. {line}" for n, line in enumerate(lines, start=1)]
-        return "\n".join([*numbered, f"Total: ${total:.4f}"])
-    lines.append(
+    dub = job.dub_language
+    target = None if dub else job.target_language()
+    calls = edit_calls(job, probe) if job.has_edit else []
+    if not job.captions_wanted:
+        calls.append(Call("land", "files_copy_from_sandbox for 2 outputs into files: $0"))
+        if job.tiktok_wanted:
+            calls += tiktok_calls(job, probe)
+        return Plan(calls)
+    calls.append(Call(
+        "words",
         f"audio_words_transcribe (whisper-1) on {probe.duration_s:.1f} s of audio, "
-        f"billed per started minute: ${whisper_usd(probe.duration_s):.4f}"
-    )
-    total += whisper_usd(probe.duration_s)
+        f"billed per started minute: ${whisper_usd(probe.duration_s):.4f}",
+        whisper_usd(probe.duration_s),
+    ))
     if dub:
-        dub_lines, dub_usd = dub_plan_lines(job, probe)
-        lines += dub_lines
-        total += dub_usd
+        calls += dub_calls(job, probe)
     elif target:
         chars = round(probe.duration_s * ESTIMATED_CHARS_PER_SECOND)
-        lines.append(
+        calls.append(Call(
+            "translate",
             f"ai_functions_run ({TRANSLATION_TIER}) translating the cues to {target}, "
-            f"priced from about {chars} characters of text: ${translation_usd(probe.duration_s):.4f}"
-        )
-        total += translation_usd(probe.duration_s)
+            f"priced from about {chars} characters of text: ${translation_usd(probe.duration_s):.4f}",
+            translation_usd(probe.duration_s),
+        ))
     for lang in [dub] if dub else [spoken_name, *([target] if target else [])]:
-        lines.append(
+        calls.append(Call(
+            "burn",
             f"ffmpeg burn of captions.{lang}.srt into final.{lang}.mp4 "
-            f"({job.get('caption_style', 'plain')}, {job.get('caption_position', 'bottom')}) "
-            f"and one check frame check.{lang}.png: $0"
-        )
-    lines.append(f"files_copy_from_sandbox for {len(output_names(spoken_name, target, dub=dub)) + int(has_edit(job))} outputs into files: $0")
-    if tiktok_wanted(job):
-        lines += tiktok_plan_lines(job, probe)
-    numbered = [f"{n}. {line}" for n, line in enumerate(lines, start=1)]
-    return "\n".join([*numbered, f"Total: ${total:.4f}"])
+            f"({job.caption_style}, {job.caption_position}) "
+            f"and one check frame check.{lang}.png: $0",
+        ))
+    calls.append(Call("land", f"files_copy_from_sandbox for {len(output_names(spoken_name, target, dub=dub)) + int(job.has_edit)} outputs into files: $0"))
+    if job.tiktok_wanted:
+        calls += tiktok_calls(job, probe)
+    return Plan(calls)
+
+
+def render_plan(sheet: dict, probe: Probe) -> str:
+    """Render every call the run would make, one line each, with a total line. Sends nothing."""
+    return planned_calls(parse_job(sheet), probe).render()
 
 
 def srt_time(seconds: float) -> str:
@@ -630,68 +591,146 @@ async def run_stage(ledger: Path, stage: str, work, **fields):
     return result
 
 
-def picture_path(job: dict) -> Path:
-    return Path(job.get("dubbed_path") or job.get("edited_path") or job["source_path"])
+def caption_language_sync(run: Run, lang: str, cues: list[Cue], picture: Path, words: list[dict] | None = None) -> None:
+    write_srt(cues, run.out / f"captions.{lang}.srt")
+    subs = run.out / f"captions.{lang}.srt"
+    if run.job.caption_style == "karaoke":
+        subs = run.out / f"captions.{lang}.ass"
+        write_ass(cues, words or [], subs, run.probe, run.job.caption_position)
+    burn(picture, subs, run.out / f"final.{lang}.mp4", run.probe, run.job.caption_position)
+    check_frame(run.out / f"final.{lang}.mp4", cues[0], run.out / f"check.{lang}.png")
 
 
-def caption_language_sync(job: dict, out: Path, lang: str, cues: list[Cue], probe: Probe, words: list[dict] | None = None) -> None:
-    write_srt(cues, out / f"captions.{lang}.srt")
-    subs = out / f"captions.{lang}.srt"
-    if job.get("caption_style") == "karaoke":
-        subs = out / f"captions.{lang}.ass"
-        write_ass(cues, words or [], subs, probe, job.get("caption_position", "bottom"))
-    burn(picture_path(job), subs, out / f"final.{lang}.mp4", probe, job.get("caption_position", "bottom"))
-    check_frame(out / f"final.{lang}.mp4", cues[0], out / f"check.{lang}.png")
+async def caption_language(run: Run, lang: str, cues: list[Cue], picture: Path, words: list[dict] | None = None) -> None:
+    await run_stage(run.ledger, "burn", asyncio.to_thread(caption_language_sync, run, lang, cues, picture, words), output=f"final.{lang}.mp4", usd=0.0)
 
 
-async def caption_language(job: dict, out: Path, ledger: Path, lang: str, cues: list[Cue], probe: Probe, words: list[dict] | None = None) -> None:
-    await run_stage(ledger, "burn", asyncio.to_thread(caption_language_sync, job, out, lang, cues, probe, words), output=f"final.{lang}.mp4", usd=0.0)
+def cut_piece(source: Path, span: tuple[float, float], target: Path) -> None:
+    """Cut one span out of the source with a re-encode, frame-accurate."""
+    ffmpeg("-i", str(source), "-ss", f"{span[0]:.3f}", "-to", f"{span[1]:.3f}", "-c:v", "libx264", "-pix_fmt", "yuv420p", "-c:a", "aac", str(target))
 
 
-def dub_language(job: dict) -> str | None:
-    wanted = job.get("dub")
-    return None if not wanted or wanted == "none" else language_code(wanted)
+def fitted(index: int, probe: Probe, label: str) -> str:
+    return f"[{index}:v]scale={probe.width}:{probe.height},fps={probe.fps:g},setsar=1,setpts=PTS-STARTPTS[{label}]"
 
 
-def dub_plan_lines(job: dict, probe: Probe) -> tuple[list[str], float]:
-    """The plan's lines for a dub: the voice to create when none is named, the translation with its budget, the speech, the second words pass."""
-    target = dub_language(job)
-    chars = round(probe.duration_s * ESTIMATED_CHARS_PER_SECOND)
-    voice = job.get("voice") or "designed"
-    lines = []
-    usd = 0.0
-    if voice in ("designed", "replicated"):
-        lines.append(f"voices_create ({TTS_MODEL}) a {voice} voice from the clip's speaker, saved under /files/voices: ${VOICE_CREATE_USD:.4f}")
-        usd += VOICE_CREATE_USD
-    lines.append(
-        f"ai_functions_run ({TRANSLATION_TIER}) translating the transcript to {target} to be spoken in "
-        f"about {probe.duration_s:.1f} s, about {chars} characters: ${translation_usd(probe.duration_s):.4f}"
-    )
-    usd += translation_usd(probe.duration_s)
-    lines.append(f"voices_speak ({TTS_MODEL}) in voice {voice}, priced from about {chars} characters at the vendor's token rate: ${tts_usd(probe.duration_s, chars):.4f}")
-    usd += tts_usd(probe.duration_s, chars)
-    lines.append(f"audio_words_transcribe (whisper-1) on the dubbed {probe.duration_s:.1f} s, billed per started minute: ${whisper_usd(probe.duration_s):.4f}")
-    usd += whisper_usd(probe.duration_s)
-    return lines, usd
+def assemble(source: Path, pieces: list[tuple[tuple[float, float], Path]], probe: Probe, target: Path) -> None:
+    """Replace each span of the source with its edited piece at the source's size; the source's audio throughout."""
+    filters: list[str] = []
+    labels: list[str] = []
+    cursor = 0.0
+    for n, ((start, end), _path) in enumerate(pieces, start=1):
+        if start - cursor > 0.01:
+            filters.append(f"[0:v]trim=start={cursor:.3f}:end={start:.3f},setpts=PTS-STARTPTS[s{n}]")
+            labels.append(f"[s{n}]")
+        filters.append(fitted(n, probe, f"p{n}"))
+        labels.append(f"[p{n}]")
+        cursor = end
+    if probe.duration_s - cursor > 0.01:
+        filters.append(f"[0:v]trim=start={cursor:.3f},setpts=PTS-STARTPTS[tail]")
+        labels.append("[tail]")
+    filters.append(f"{''.join(labels)}concat=n={len(labels)}:v=1:a=0[v]")
+    inputs: list[str] = ["-i", str(source)]
+    for _span, path in pieces:
+        inputs += ["-i", str(path)]
+    ffmpeg(*inputs, "-filter_complex", ";".join(filters), "-map", "[v]", "-map", "0:a", "-c:v", "libx264", "-pix_fmt", "yuv420p", "-c:a", "aac", "-shortest", str(target))
 
 
-async def ensure_voice(job: dict, ledger: Path) -> str:
+def append(source: Path, continuation: Path, probe: Probe, target: Path) -> None:
+    """Append the continuation after the whole source at the source's size."""
+    filters = [
+        "[0:v]setpts=PTS-STARTPTS[v0]",
+        fitted(1, probe, "v1"),
+        "[v0][v1]concat=n=2:v=1:a=0[v]",
+        "[0:a][1:a]concat=n=2:v=0:a=1[a]",
+    ]
+    ffmpeg("-i", str(source), "-i", str(continuation), "-filter_complex", ";".join(filters), "-map", "[v]", "-map", "[a]", "-c:v", "libx264", "-pix_fmt", "yuv420p", "-c:a", "aac", str(target))
+
+
+async def land(run: Run, names: list[str]) -> dict[str, str]:
+    ids: dict[str, str] = {}
+    for name in names:
+        await run_stage(run.ledger, "land", call_tool("files_copy_from_sandbox", sources=[str(run.out / name)], destination=f"{run.folder}/{name}"), output=name, usd=0.0)
+        ids[name] = f"{run.folder}/{name}"
+    return ids
+
+
+async def land_piece(run: Run, n: int, span: tuple[float, float], whole: bool) -> str:
+    """What Omni edits for piece n: the source itself, or the piece cut out and landed at a /files path."""
+    if whole:
+        return run.job.source_file_id
+    piece = run.out / f"piece.{n}.mp4"
+    await asyncio.to_thread(cut_piece, Path(run.job.source_path), span, piece)
+    landed = await land(run, [piece.name])
+    return landed[piece.name]
+
+
+async def land_anchor(run: Run, edited_piece: Path, n: int) -> str:
+    """Land the last frame of an edited piece so the next piece can be held to its scene."""
+    anchor = run.out / f"anchor.{n}.png"
+    duration = probe_clip(edited_piece).duration_s
+    ffmpeg("-ss", f"{max(0.0, duration - 0.4):.2f}", "-i", str(edited_piece), "-frames:v", "1", str(anchor))
+    landed = await land(run, [anchor.name])
+    return landed[anchor.name]
+
+
+async def edit(run: Run) -> dict:
+    """Run the edit or extension branch; return the edited clip's name, path, file id and interaction ids."""
+    job, out, probe = run.job, run.out, run.probe
+    pieces = edit_pieces(job, probe)
+    resolution = edit_resolution(job, probe)
+    text = edit_instruction(job)
+    previous = job.previous_interaction_id
+    if previous and len(previous) != len(pieces):
+        raise RuntimeError(f"{len(previous)} previous interaction ids for {len(pieces)} pieces")
+    whole = not job.is_extension and pieces == [(0.0, probe.duration_s)]
+    call_args = {"instruction": text, "resolution": resolution, "aspect_ratio": aspect_ratio(probe)}
+    if previous:
+        calls = [{**call_args, "previous_interaction_id": previous[n]} for n in range(len(pieces))]
+    else:
+        ids = await asyncio.gather(*(land_piece(run, n, span, whole) for n, span in enumerate(pieces, start=1)))
+        calls = [{**call_args, "file_id": file_id} for file_id in ids]
+    results: list[dict] = []
+    paths: list[Path] = []
+    anchor_id: str | None = None
+    for n, args in enumerate(calls, start=1):
+        if anchor_id:
+            args = {**args, "instruction": f"{text} {ANCHOR_SENTENCE}", "reference_image_file_id": anchor_id}
+        result = await run_stage(run.ledger, "edit", call_tool("videos_edit", **args), output=f"omni.{n}.mp4", usd=run.plan.usd("edit", n))
+        path = out / f"omni.{n}.mp4"
+        await run_stage(run.ledger, "fetch", call_tool("files_copy_to_sandbox", sources=[result["file_id"]], destination=str(path)), output=path.name, usd=0.0)
+        results.append(result)
+        paths.append(path)
+        if n < len(pieces):
+            anchor_id = await land_anchor(run, path, n)
+    name = "extended.mp4" if job.is_extension else "edited.mp4"
+    if job.is_extension:
+        await asyncio.to_thread(append, Path(job.source_path), paths[0], probe, out / name)
+    else:
+        await asyncio.to_thread(assemble, Path(job.source_path), list(zip(pieces, paths)), probe, out / name)
+    first = pieces[0]
+    check_frame(out / name, Cue(0, first[0], first[1], ""), out / "check.edit.png")
+    landed = await land(run, [name])
+    return {"name": name, "path": str(out / name), "file_id": landed[name], "interaction_ids": [result["interaction_id"] for result in results]}
+
+
+async def ensure_voice(run: Run) -> str:
     """Return the voice name to speak in, creating a designed voice from the clip when none is named."""
-    voice = job.get("voice") or "designed"
-    if voice not in ("designed", "replicated"):
-        return voice
-    name = job.get("voice_name") or f"{voice}-{Path(job['source_file_id']).stem}"
+    job = run.job
+    if job.voice not in ("designed", "replicated"):
+        return job.voice
+    name = job.voice_name or f"{job.voice}-{Path(job.source_file_id).stem}"
     record = await run_stage(
-        ledger,
+        run.ledger,
         "voice",
         call_tool(
             "voices_create",
-            file_id=job["source_file_id"],
+            file_id=job.source_file_id,
             name=name,
-            voice_type=voice,
-            consent_file_id=job.get("consent_file_id"),
+            voice_type=job.voice,
+            consent_file_id=job.consent_file_id or None,
         ),
-        usd=VOICE_CREATE_USD,
+        usd=run.plan.usd("voice"),
     )
     return record["name"]
 
@@ -806,21 +845,22 @@ def karaoke_text(cue: Cue, cue_words: list[dict]) -> str:
     return " ".join(parts)
 
 
-async def dub(job: dict, out: Path, ledger: Path, probe: Probe, transcribed: dict) -> dict:
-    """Translate, speak, fit, swap, then transcribe the dubbed track; returns the dub's language, words and path."""
-    target = dub_language(job)
+async def dub(run: Run, transcribed: dict, picture: Path) -> dict:
+    """Translate, speak, fit, swap the picture's audio, then transcribe the dubbed track; returns the dub's language, words and path."""
+    out, ledger, probe, plan = run.out, run.ledger, run.probe, run.plan
+    target = run.job.dub_language
     words = transcribed["words"]
-    voice = await ensure_voice(job, ledger)
+    voice = await ensure_voice(run)
     text = " ".join(w["word"].strip() for w in words)
     speech_s, budget = target_spoken_length(words, probe)
     lead_in_s = words[0]["start"] if words else 0.0
-    transcript = await run_stage(ledger, "translate", translate_transcript(text, target, budget), usd=translation_usd(probe.duration_s))
-    speech = await run_stage(ledger, "speak", speak(transcript, voice, out / f"speech.{target}.wav"), usd=tts_usd(probe.duration_s, len(transcript)))
+    transcript = await run_stage(ledger, "translate", translate_transcript(text, target, budget), usd=plan.usd("translate"))
+    speech = await run_stage(ledger, "speak", speak(transcript, voice, out / f"speech.{target}.wav"), usd=plan.usd("speak"))
     ratio = probe_clip(speech).duration_s / speech_s
     if not TEMPO_MIN <= ratio <= TEMPO_MAX:
         budget = round(budget / ratio)
-        transcript = await run_stage(ledger, "translate", translate_transcript(text, target, budget), usd=translation_usd(probe.duration_s), retry=True)
-        speech = await run_stage(ledger, "speak", speak(transcript, voice, out / f"speech.{target}.wav"), usd=tts_usd(probe.duration_s, len(transcript)), retry=True)
+        transcript = await run_stage(ledger, "translate", translate_transcript(text, target, budget), usd=plan.usd("translate"), retry=True)
+        speech = await run_stage(ledger, "speak", speak(transcript, voice, out / f"speech.{target}.wav"), usd=plan.usd("speak"), retry=True)
         ratio = probe_clip(speech).duration_s / speech_s
     (out / f"transcript.{target}.txt").write_text(transcript, encoding="utf-8")
     fitted, applied = fit_audio(speech, speech_s, out / f"speech.{target}.fit.wav")
@@ -828,98 +868,110 @@ async def dub(job: dict, out: Path, ledger: Path, probe: Probe, transcribed: dic
     dubbed = out / f"dubbed.{target}.mp4"
     delayed = out / f"speech.{target}.delayed.wav"
     ffmpeg("-i", str(fitted), "-af", f"adelay={int(lead_in_s * 1000)}:all=1,apad=whole_dur={probe.duration_s}", "-c:a", "pcm_s16le", str(delayed))
-    swap_audio(picture_path(job), delayed, dubbed)
-    landed = await land(out, ledger, [dubbed.name], landing_folder(job))
-    second = await run_stage(ledger, "words", call_tool("audio_words_transcribe", file_id=landed[dubbed.name], language=target), usd=whisper_usd(probe.duration_s))
+    swap_audio(picture, delayed, dubbed)
+    landed = await land(run, [dubbed.name])
+    second = await run_stage(ledger, "words", call_tool("audio_words_transcribe", file_id=landed[dubbed.name], language=target), usd=plan.usd("words", 2))
     (out / f"words.{target}.json").write_text(json.dumps(second["words"], ensure_ascii=False, indent=1), encoding="utf-8")
     return {"language": target, "words": second["words"], "path": str(dubbed)}
 
 
-async def transcribe(job: dict, out: Path, ledger: Path, probe: Probe) -> dict:
-    spoken = job.get("spoken_language") or "auto"
+async def transcribe(run: Run, file_id: str) -> dict:
+    """Whisper on the stored file; returns the spoken language and the timed words."""
+    spoken = run.job.spoken_language or "auto"
     words = await run_stage(
-        ledger,
+        run.ledger,
         "words",
-        call_tool("audio_words_transcribe", file_id=job.get("words_file_id") or job["source_file_id"], language=None if spoken == "auto" else spoken),
-        usd=whisper_usd(probe.duration_s),
+        call_tool("audio_words_transcribe", file_id=file_id, language=None if spoken == "auto" else spoken),
+        usd=run.plan.usd("words"),
     )
     lang = language_code(words["language"]) if spoken == "auto" else language_code(spoken)
-    (out / f"words.{lang}.json").write_text(json.dumps(words["words"], ensure_ascii=False, indent=1), encoding="utf-8")
+    (run.out / f"words.{lang}.json").write_text(json.dumps(words["words"], ensure_ascii=False, indent=1), encoding="utf-8")
     return {"language": lang, "words": words["words"]}
 
 
-async def run(job: dict, out: Path) -> dict:
-    """Run the job; output names mapped to their /files paths, one folder per run, plus the TikTok posts when asked."""
-    ids = await produce(job, out)
-    if tiktok_wanted(job):
-        ids["tiktok"] = await deliver(job, out / "ledger.jsonl", ids)
-    return ids
+def result_of(edited: dict | None, ids: dict[str, str]) -> dict:
+    """The completion: every landed output by name, and the interaction ids when an edit ran."""
+    if not edited:
+        return ids
+    return {edited["name"]: edited["file_id"], **ids, "interaction_ids": edited["interaction_ids"]}
 
 
-async def produce(job: dict, out: Path) -> dict[str, str]:
-    """Make and land every output; return output names mapped to their /files paths."""
+def run_folder(job: Job) -> str:
+    """Where this run's outputs land: /files/video-editing/<clip>-<time>, so runs never overwrite each other."""
+    clip = Path(job.source_file_id).stem if "/" in job.source_file_id else job.source_file_id
+    return f"/files/video-editing/{clip}-{datetime.now().strftime('%Y%m%d-%H%M%S')}"
+
+
+def prepare(sheet: dict, out: Path) -> Run:
+    """Read the sheet, probe the clip and price the plan once; the run's stages share the result."""
     out.mkdir(parents=True, exist_ok=True)
-    ledger = out / "ledger.jsonl"
     ensure_ffmpeg()
-    probe = probe_clip(Path(job["source_path"]))
-    if not probe.has_audio:
-        raise RuntimeError("the clip has no audio track, so there is nothing to caption")
-    edited: dict | None = None
-    edit_task = asyncio.create_task(edit(job, out, ledger, probe)) if has_edit(job) else None
-    if edit_task and (is_extension(job) or not captions_wanted(job)):
-        edited = await edit_task
-        job["edited_path"], job["interaction_ids"] = edited["path"], edited["interaction_ids"]
-        if not captions_wanted(job):
-            return with_edited(edited, await land(out, ledger, ["check.edit.png"], landing_folder(job)))
-        job["words_file_id"] = edited["file_id"]
-    transcribed = await transcribe(job, out, ledger, probe)
+    job = parse_job(sheet)
+    probe = probe_clip(Path(job.source_path))
+    return Run(job, out, out / "ledger.jsonl", probe, run_folder(job), planned_calls(job, probe))
+
+
+async def produce(run: Run) -> dict:
+    """Make and land every output; return output names mapped to their /files paths."""
+    job = run.job
+    edit_task = asyncio.create_task(edit(run)) if job.has_edit else None
+    words_need_edit = edit_task is not None and (job.is_extension or not job.captions_wanted)
+    edited = await edit_task if words_need_edit else None
+    if edited and not job.captions_wanted:
+        return result_of(edited, await land(run, ["check.edit.png"]))
+    transcribed = await transcribe(run, edited["file_id"] if edited else job.source_file_id)
     if edit_task and edited is None:
         edited = await edit_task
-        job["edited_path"], job["interaction_ids"] = edited["path"], edited["interaction_ids"]
-    if dub_language(job):
-        dubbed = await dub(job, out, ledger, probe, transcribed)
-        job["dubbed_path"] = dubbed["path"]
+    picture = Path(edited["path"]) if edited else Path(job.source_path)
+    if job.dub_language:
+        dubbed = await dub(run, transcribed, picture)
         cues = group_words_into_cues(dubbed["words"])
-        await caption_language(job, out, ledger, dubbed["language"], cues, probe, dubbed["words"])
-        return with_edited(edited, await land(out, ledger, output_names(dubbed["language"], None, dub=dubbed["language"]), landing_folder(job)))
+        await caption_language(run, dubbed["language"], cues, Path(dubbed["path"]), dubbed["words"])
+        return result_of(edited, await land(run, output_names(dubbed["language"], None, dub=dubbed["language"])))
     spoken = transcribed["language"]
     cues = group_words_into_cues(transcribed["words"])
     if not cues:
         raise RuntimeError("Whisper found no words in the clip")
-    target = target_language({**job, "spoken_language": spoken})
-    source_captions = caption_language(job, out, ledger, spoken, cues, probe, transcribed["words"])
+    target = job.target_language(spoken)
+    source_captions = caption_language(run, spoken, cues, picture, transcribed["words"])
     if target:
-        translation = run_stage(ledger, "translate", translate_cues(cues, target), usd=translation_usd(probe.duration_s))
+        translation = run_stage(run.ledger, "translate", translate_cues(cues, target), usd=run.plan.usd("translate"))
         translated, _ = await asyncio.gather(translation, source_captions)
-        await caption_language(job, out, ledger, target, translated, probe, transcribed["words"])
+        await caption_language(run, target, translated, picture, transcribed["words"])
     else:
         await source_captions
-    return with_edited(edited, await land(out, ledger, output_names(spoken, target), landing_folder(job)))
+    return result_of(edited, await land(run, output_names(spoken, target)))
 
 
-def landing_folder(job: dict) -> str:
-    """The run's folder, chosen once per job."""
-    return job.setdefault("run_folder", run_folder(job))
+async def deliver(run: Run, ids: dict[str, str]) -> list:
+    """Post the one output now, or once per slot at its time; the publish result, or one trigger id per slot."""
+    job = run.job
+    file = ids.get(post_file(list(ids)), job.source_file_id)
+    post = {"file": file, "caption": job.tiktok_caption, "is_aigc": job.ai_label}
+    slots = tiktok_slots(job)
+    if not slots:
+        posted = await run_stage(run.ledger, "tiktok", call_tool("tiktok_posts_publish", **post), usd=0.0)
+        return [{"publish_id": posted["publish_id"], "status": posted["status"], "fail_reason": posted.get("fail_reason")}]
+    triggers = []
+    for run_at, local in slots:
+        deferred = await run_stage(run.ledger, "tiktok", call_tool("tiktok_posts_publish", **post, scheduled_at=run_at), slot=local, usd=0.0)
+        triggers.append(deferred["trigger_id"])
+    return triggers
 
 
-def run_folder(job: dict) -> str:
-    """Where this run's outputs land: /files/video-editing/<clip>-<time>, so runs never overwrite each other."""
-    clip = Path(job["source_file_id"]).stem if "/" in job["source_file_id"] else job["source_file_id"]
-    return f"/files/video-editing/{clip}-{datetime.now().strftime('%Y%m%d-%H%M%S')}"
-
-
-async def land(out: Path, ledger: Path, names: list[str], folder: str) -> dict[str, str]:
-    ids: dict[str, str] = {}
-    for name in names:
-        await run_stage(ledger, "land", call_tool("files_copy_from_sandbox", sources=[str(out / name)], destination=f"{folder}/{name}"), output=name, usd=0.0)
-        ids[name] = f"{folder}/{name}"
-    return ids
+async def run(sheet: dict, out: Path) -> dict:
+    """Run the job; output names mapped to their /files paths, one folder per run, plus the TikTok posts when asked."""
+    this = prepare(sheet, out)
+    result = await produce(this)
+    if this.job.tiktok_wanted:
+        result["tiktok"] = await deliver(this, result)
+    return result
 
 
 def main(argv: list[str]) -> int:
     mode, job_path = argv[0], Path(argv[1])
-    job = json.loads(job_path.read_text(encoding="utf-8"))
-    source = str(job.get("source_file_id") or "")
+    sheet = json.loads(job_path.read_text(encoding="utf-8"))
+    source = str(sheet.get("source_file_id") or "")
     if not source or (source.startswith("/") and not source.startswith("/files/")):
         print(
             "source_file_id must be the attachment's file id or its /files path from files_list; "
@@ -928,10 +980,10 @@ def main(argv: list[str]) -> int:
         )
         return 2
     if mode == "plan":
-        print(render_plan(job, probe_clip(Path(job["source_path"]))))
+        print(render_plan(sheet, probe_clip(Path(sheet["source_path"]))))
         return 0
     if mode == "run":
-        result = asyncio.run(run(job, (job_path.parent / "out").resolve()))
+        result = asyncio.run(run(sheet, (job_path.parent / "out").resolve()))
         print(json.dumps(result))
         return 0
     print(f"unknown mode {mode}", file=sys.stderr)
