@@ -56,7 +56,7 @@ The figures are computed by the script from the sheet and the clip. The agent sh
 | `words.<lang>.json` | language | Whisper's words with their times, for the source and for the dubbed track (stays in the sandbox) |
 | `transcript.<lang>.txt`, `speech.<lang>.wav`, `dubbed.<lang>.mp4` | dub | The translated transcript, the spoken audio, and the picture with the new audio before captions (stay in the sandbox) |
 | `captions.<lang>.ass` | karaoke | The karaoke subtitle the burn used (stays in the sandbox) |
-| `tiktok` (in the completion) | TikTok delivery | One trigger id per scheduled post, each a row on the Scheduled tasks screen, or the publish id and status of a post made now |
+| `tiktok` (in the completion) | TikTok delivery | One scheduled-task id per scheduled post (the platform's deferred call, a row on the Scheduled tasks screen), or the publish id and status of a post made now |
 | `ledger.jsonl` | run | One line per stage: started, done or failed, with its price (stays in the sandbox) |
 
 ## Voice records

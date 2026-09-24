@@ -514,18 +514,17 @@ def tiktok_plan_lines(job: dict, probe: Probe) -> list[str]:
 
 
 async def deliver(job: dict, ledger: Path, ids: dict[str, str]) -> list:
-    """Post the one output now, or schedule it once per slot; the publish result, or one trigger id per slot."""
+    """Post the one output now, or once per slot at its time; the publish result, or one trigger id per slot."""
     file = ids.get(post_file(job, list(ids)), job["source_file_id"])
-    caption, label = job["tiktok_caption"], ai_label(job)
+    post = {"file": file, "caption": job["tiktok_caption"], "is_aigc": ai_label(job)}
     slots = tiktok_slots(job)
     if not slots:
-        posted = await run_stage(ledger, "tiktok", call_tool("tiktok_posts_publish", file=file, caption=caption, is_aigc=label), usd=0.0)
+        posted = await run_stage(ledger, "tiktok", call_tool("tiktok_posts_publish", **post), usd=0.0)
         return [{"publish_id": posted["publish_id"], "status": posted["status"], "fail_reason": posted.get("fail_reason")}]
     triggers = []
     for run_at, local in slots:
-        work = call_tool("tiktok_posts_schedule", file=file, caption=caption, is_aigc=label, run_at=run_at, timezone=job.get("tiktok_timezone") or "UTC")
-        scheduled = await run_stage(ledger, "tiktok", work, slot=local, usd=0.0)
-        triggers.append(scheduled["trigger_id"])
+        deferred = await run_stage(ledger, "tiktok", call_tool("tiktok_posts_publish", **post, scheduled_at=run_at), slot=local, usd=0.0)
+        triggers.append(deferred["trigger_id"])
     return triggers
 
 

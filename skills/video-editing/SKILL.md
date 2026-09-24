@@ -44,7 +44,7 @@ run, `/files/video-editing/<clip>-<time>/`, so a second run never overwrites the
 - **Hyper MCP installed.** [https://app.hyperfx.ai/mcp](https://app.hyperfx.ai/mcp)
 - **Video Generation toolkit enabled** at [https://app.hyperfx.ai/apps](https://app.hyperfx.ai/apps) — provides `audio_words_transcribe` (Whisper word timestamps), `voices_create` and `voices_speak` (Gemini TTS voices), and `videos_edit` (Gemini Omni scene edits).
 - **Sandbox toolkit enabled** — the pipeline runs there (`sandbox_shell`, `sandbox_python_run`, `files_copy_to_sandbox`, `files_copy_from_sandbox`), and translation goes through `ai_functions_run` from inside it.
-- **TikTok connected** (Set up, Connect apps) when the result goes to TikTok — provides `tiktok_posts_publish` and `tiktok_posts_schedule`. Without it the plan refuses in one sentence; tell the user to connect TikTok in Set up.
+- **TikTok connected** (Set up, Connect apps) when the result goes to TikTok — provides `tiktok_posts_publish`, which also takes a `scheduled_at` time. Without it the plan refuses in one sentence; tell the user to connect TikTok in Set up.
 - **Background jobs enabled** for the workspace. The run is a background shell job; if `sandbox_shell(background=true)` is refused because background tools are off, tell the user that plainly and stop. Do not run the pipeline in the foreground.
 
 ### How to run the tools in this skill
@@ -209,7 +209,7 @@ output so each lands in the user's files in the run's folder `/files/video-editi
 translation of the whole transcript asked to fit the clip's spoken length, `voices_speak` in that voice, a
 tempo fit within 0.9 to 1.1 (one re-translation when the first take is outside it), the new audio swapped onto
 the picture, `audio_words_transcribe` again on the dubbed track, and captions timed to it. `karaoke` writes
-an ASS subtitle with one highlight per word instead of the plain SRT for the burn. With `delivery: tiktok`, after the outputs land: `tiktok_posts_schedule` once per time, in time order, with the captioned video (else the edited or extended clip, else the source), the caption, the AI label and the UTC time, or `tiktok_posts_publish` once when there are no times.
+an ASS subtitle with one highlight per word instead of the plain SRT for the burn. With `delivery: tiktok`, after the outputs land: `tiktok_posts_publish` once per time, in time order, with the captioned video (else the edited or extended clip, else the source), the caption, the AI label and the UTC time as `scheduled_at` (the platform defers the call to a scheduled task), or once with no time to post now.
 
 ## Example: a dub
 
