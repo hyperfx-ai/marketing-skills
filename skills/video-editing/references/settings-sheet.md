@@ -6,7 +6,7 @@ the attachment and asks only for the rest.
 
 | Field | Values | Default | Source | Priced |
 | --- | --- | --- | --- | --- |
-| `source_file_id` | a file id or a `/files/...` path | — | The attachment as stored, never the sandbox copy under `/home/user`. Required. | Whisper is billed on its audio length |
+| `source_file_id` | a `/files/...` path from `files_list` | — | The attachment as stored, found by `files_list`; never its signed link, never the sandbox copy under `/home/user`. Required. | Whisper is billed on its audio length |
 | `source_path` | a sandbox path | `/home/user/video-editing/source.mp4` | Where `files_copy_to_sandbox` put the clip | No |
 | `spoken_language` | `auto` or an ISO 639-1 code (`en`, `es`, `fr`, …) | `auto` | Whisper detects it. When the user names the spoken language, use their code; it overrides detection (a short clip with music can be misread). | No |
 | `caption_language` | an ISO 639-1 code | the spoken language | The user's request. When they ask for a translation and name no language, ask this one question. | Yes, when it differs from the spoken language |

@@ -79,7 +79,7 @@ The sheet is the job. Every field, its default and where it comes from is in
 
 | Field | Default | Filled from |
 | --- | --- | --- |
-| `source_file_id` | — | The attachment's file id, or its `/files/...` path from `files_list` |
+| `source_file_id` | — | The attachment's `/files/...` path from `files_list` (step 1); never its link |
 | `source_path` | `/home/user/video-editing/source.mp4` | Where you copied the clip in the sandbox |
 | `spoken_language` | `auto` | Whisper detects it; the user's word wins if they name it |
 | `caption_language` | the spoken language | The user's request; ask if a translation is wanted and no language is named |
@@ -104,13 +104,20 @@ The sheet is the job. Every field, its default and where it comes from is in
 
 ## Flow
 
-### 1. Set up the sandbox
+### 1. Find the attachment, then set up the sandbox
 
-Copy the clip and the script in, and make sure ffmpeg is available. The script is `scripts/pipeline.py`
-beside this file; `files_list` shows its exact path under `/skills/` if you are unsure.
+The attachment message carries a signed link and a number, not the file id. A link is never a
+source: `files_copy_to_sandbox`, `curl` and Python all fail on it. First run
+`files_list(path="/files")` and take the newest file whose name matches the attachment; its
+`/files/...` path is `source_file_id` everywhere below.
+
+Then copy the clip and the script in, and make sure ffmpeg is available. The script is
+`scripts/pipeline.py` beside this file; `files_list` shows its exact path under `/skills/` if you
+are unsure.
 
 ```python
-files_copy_to_sandbox(sources=["<attachment file id>"], destination="/home/user/video-editing/source.mp4")
+files_list(path="/files")
+files_copy_to_sandbox(sources=["/files/<the attachment's name>"], destination="/home/user/video-editing/source.mp4")
 files_copy_to_sandbox(sources=["<path of this skill>/scripts/pipeline.py"], destination="/home/user/video-editing/pipeline.py")
 sandbox_shell(command="python -m pip install -q imageio-ffmpeg")
 ```
@@ -136,7 +143,7 @@ Neither answer means the run does not start.
 sandbox_python_run(code='''
 import json
 job = {
-    "source_file_id": "<attachment file id, or its /files path>",
+    "source_file_id": "/files/<the attachment's name>",
     "source_path": "/home/user/video-editing/source.mp4",
     "spoken_language": "auto",
     "caption_language": "es",
