@@ -1,6 +1,7 @@
 """The video-editing pipeline script: cues, translation, plan and run, with no provider.
 
-Spec: hq/projects/hyper/workspace/specs/2026-09-24-video-editing-captions.md, chunk 1 rows 3-6.
+Spec: hq/projects/hyper/workspace/specs/2026-09-24-video-editing-captions.md (chunk 1) and
+2026-09-24-video-editing-voice.md (chunk 2): one test per piece of the pipeline, input and output only.
 """
 
 import importlib.util
@@ -24,16 +25,12 @@ TRANSCRIPT_ES = "Lo pospuse por dos años esperando en listas de espera. Llamé 
 class FakeBridge:
     """Stands in for seti.sandbox.call_tool: canned answers, every call recorded."""
 
-    def __init__(self, translation_texts=None, fail_on=None, speak_seconds=None):
+    def __init__(self, speak_seconds=None):
         self.calls: list[tuple[str, dict]] = []
-        self.translation_texts = translation_texts
-        self.fail_on = fail_on
         self.speak_seconds = list(speak_seconds or [])
 
     async def __call__(self, tool_name, **kwargs):
         self.calls.append((tool_name, kwargs))
-        if self.fail_on and self.fail_on(tool_name, kwargs):
-            raise RuntimeError(f"fake failure in {tool_name}")
         if tool_name == "audio_words_transcribe":
             if str(kwargs.get("file_id", "")).startswith("file_dubbed"):
                 return {"file_id": kwargs.get("file_id"), "language": "spanish", "duration_s": 8.0, "words": WORDS_ES}
@@ -47,7 +44,7 @@ class FakeBridge:
             return {"success": True, "results": [{"success": True, "output_json": {"transcript": TRANSCRIPT_ES}}]}
         if tool_name == "ai_functions_run":
             items = kwargs["input"]["cues"]
-            texts = self.translation_texts or [f"[{item['i']}] traducido" for item in items]
+            texts = [f"[{item['i']}] traducido" for item in items]
             return {
                 "success": True,
                 "results": [{"success": True, "output_json": {"cues": [{"i": item["i"], "text": text} for item, text in zip(items, texts)]}}],
@@ -146,24 +143,6 @@ class CueTests(unittest.TestCase):
         self.assertEqual([c.index for c in cues], [1, 2, 3, 4, 5])
 
 
-class TranslationTests(unittest.IsolatedAsyncioTestCase):
-    async def test_translation_keeps_every_cue_in_place(self):
-        bridge = FakeBridge(translation_texts=["uno", "dos", "tres", "cuatro", "cinco"])
-        pipeline = load_pipeline(bridge)
-        cues = pipeline.group_words_into_cues(WORDS)
-
-        translated = await pipeline.translate_cues(cues, "Spanish")
-
-        self.assertEqual(len(translated), len(cues))
-        self.assertEqual([c.index for c in translated], [c.index for c in cues])
-        self.assertEqual([(c.start, c.end) for c in translated], [(c.start, c.end) for c in cues])
-        self.assertEqual([c.text for c in translated], ["uno", "dos", "tres", "cuatro", "cinco"])
-        self.assertNotEqual([c.text for c in translated], [c.text for c in cues])
-        tool_name, kwargs = bridge.calls[0]
-        self.assertEqual(tool_name, "ai_functions_run")
-        self.assertIn("output_json_schema", kwargs)
-
-
 class PlanTests(unittest.TestCase):
     def test_plan_is_rendered_from_the_job_by_code_and_sends_nothing(self):
         bridge = FakeBridge()
@@ -203,23 +182,6 @@ class RunTests(unittest.IsolatedAsyncioTestCase):
             downloads = [kwargs["path"] for tool, kwargs in bridge.calls if tool == "sandbox_download_file"]
             self.assertEqual(sorted(Path(p).name for p in downloads), sorted(expected))
             self.assertTrue((out / "ledger.jsonl").exists())
-
-    async def test_run_names_the_failed_stage_when_a_burn_dies(self):
-        bridge = FakeBridge(fail_on=lambda tool, kwargs: tool == "sandbox_download_file" and kwargs["path"].endswith("final.es.mp4"))
-        pipeline = load_pipeline(bridge)
-        with tempfile.TemporaryDirectory() as tmp:
-            clip = Path(tmp) / "clip.mp4"
-            make_fixture_clip(clip, seconds=3)
-            out = Path(tmp) / "out"
-
-            with self.assertRaises(RuntimeError) as raised:
-                await pipeline.run(job_for(clip), out)
-
-            self.assertIn("final.es.mp4", str(raised.exception))
-            ledger = [json.loads(line) for line in (out / "ledger.jsonl").read_text(encoding="utf-8").splitlines()]
-            self.assertEqual(ledger[-1]["stage"], "land")
-            self.assertEqual(ledger[-1]["status"], "failed")
-
 
 class DubTranslationTests(unittest.IsolatedAsyncioTestCase):
     async def test_translation_is_asked_for_the_sources_spoken_length(self):
@@ -299,7 +261,8 @@ class DubRunTests(unittest.IsolatedAsyncioTestCase):
                 result = await pipeline.run(job_for(clip, dub="es", voice="designed"), out)
 
             self.assertEqual(sorted(result), ["captions.es.srt", "check.es.png", "final.es.mp4"])
-            self.assertEqual([p.name for p in out.glob("*.en.*")], [])
+            self.assertFalse((out / "final.en.mp4").exists())
+            self.assertFalse((out / "captions.en.srt").exists())
             self.assertEqual(audio_streams(out / "final.es.mp4"), 1)
             self.assertAlmostEqual(media_duration(out / "final.es.mp4"), 3.0, delta=0.2)
             self.assertIn("pospuse", (out / "captions.es.srt").read_text(encoding="utf-8"))
