@@ -31,13 +31,13 @@ class FakeBridge:
 
     async def __call__(self, tool_name, **kwargs):
         self.calls.append((tool_name, kwargs))
-        if tool_name == "audio_words_transcribe":
+        if tool_name == "speech_transcribe":
             if "dubbed" in str(kwargs.get("file_id", "")):
                 return {"file_id": kwargs.get("file_id"), "language": "spanish", "duration_s": 8.0, "words": WORDS_ES}
             return {"file_id": kwargs.get("file_id"), "language": "en", "duration_s": 8.0, "words": WORDS}
-        if tool_name == "voices_create":
+        if tool_name == "speech_voice_analyze":
             return {"name": kwargs["name"], "voice_id": "voice_fake", "voice_type": "designed"}
-        if tool_name == "voices_speak":
+        if tool_name == "speech_create":
             seconds = self.speak_seconds.pop(0) if self.speak_seconds else 3.0
             return {"file_id": f"file_speech_{seconds}", "audio_url": "", "duration_s": seconds, "voice": kwargs["voice"]}
         if tool_name == "ai_functions_run" and "transcript" in kwargs["input"]:
@@ -156,7 +156,7 @@ class PlanTests(unittest.TestCase):
 
         lines = [line for line in plan.splitlines() if line.strip()]
         self.assertEqual(len(bridge.calls), 0)
-        self.assertRegex(lines[0], r"^1\. .*audio_words_transcribe.*3\.0 s")
+        self.assertRegex(lines[0], r"^1\. .*speech_transcribe.*3\.0 s")
         self.assertRegex(lines[1], r"^2\. .*ai_functions_run.*translat")
         self.assertRegex(lines[2], r"^3\. .*burn.*en")
         self.assertRegex(lines[3], r"^4\. .*burn.*es")
@@ -228,7 +228,7 @@ class DubFitTests(unittest.IsolatedAsyncioTestCase):
                 dubbed = await pipeline.dub(run, transcribed, clip)
 
             translations = [k for t, k in bridge.calls if t == "ai_functions_run" and "transcript" in k["input"]]
-            speaks = [k for t, k in bridge.calls if t == "voices_speak"]
+            speaks = [k for t, k in bridge.calls if t == "speech_create"]
             self.assertEqual(len(translations), 2)
             self.assertEqual(len(speaks), 2)
             self.assertEqual(dubbed["language"], "es")
@@ -248,12 +248,12 @@ class DubRunTests(unittest.IsolatedAsyncioTestCase):
             plan = pipeline.render_plan(job_for(clip, dub="es", voice="designed"), probe)
 
             self.assertEqual(len(bridge.calls), 0)
-            order = [plan.index(key) for key in ("audio_words_transcribe", "voices_create", "translat", "voices_speak", "burn", "Total")]
+            order = [plan.index(key) for key in ("speech_transcribe", "speech_voice_analyze", "translat", "speech_create", "burn", "Total")]
             self.assertEqual(order, sorted(order))
-            self.assertEqual(plan.count("audio_words_transcribe"), 2)
+            self.assertEqual(plan.count("speech_transcribe"), 2)
             self.assertRegex(plan, r"translat\w*[^\n]*\d+ characters")
             named = pipeline.render_plan(job_for(clip, dub="es", voice="dental-presenter"), probe)
-            self.assertNotIn("voices_create", named)
+            self.assertNotIn("speech_voice_analyze", named)
 
             out = Path(tmp) / "out"
             with patch.object(pipeline, "fetch_audio", new=fake_fetch_audio):

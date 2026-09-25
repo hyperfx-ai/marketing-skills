@@ -37,9 +37,9 @@ into that record, and an absent or empty field takes the default from there.
 One numbered line per call the run will make, then a total:
 
 1. `videos_edit` once per piece, naming the model, edit or extend, the piece's seconds, the resolution, the aspect ratio, the full instruction as it will be sent, and the estimated price: seconds × Omni's output tokens per second (5,792 at 720p, 1,931 at 360p) × $17.50 per million, plus the input estimate. Only when an edit is asked for. The run bills the actual usage Omni reports.
-2. `audio_words_transcribe` on the clip's audio length, billed per started minute. Skipped when `captions` is `no`.
+2. `speech_transcribe` on the clip's audio length, billed per started minute. Skipped when `captions` is `no`.
 3. `ai_functions_run` translating the cues into the caption language, priced from the estimated text length. Only when a translation is wanted.
-4. For a dub: `voices_create` when no voice is named, the translation of the transcript with its character budget, `voices_speak` priced from the text length at the vendor's token rate, and `audio_words_transcribe` again on the dubbed track.
+4. For a dub: `speech_voice_analyze` when no voice is named, the translation of the transcript with its character budget, `speech_create` priced from the text length at the vendor's token rate, and `speech_transcribe` again on the dubbed track.
 5. One ffmpeg burn per language, with its check frame, at no charge.
 6. `files_copy_from_sandbox` for every output into the run's folder `/files/video-editing/<clip>-<time>/`, at no charge.
 7. With `delivery: tiktok`: one `TikTok post` line per time, or one `post now` line, each with the account, the caption as it will be sent, the local time and zone, `private until the app is audited`, `AI label: yes` or `no` (yes when the job edits, extends or dubs; code decides), and `$0`; then one line naming TikTok's Music Usage Confirmation, which the user's yes confirms. A time in the past, a caption over 2200 characters, a clip under 3 seconds or no connected account is a one-sentence refusal; an output under 720 px on its short side gets a warning line.
@@ -65,7 +65,7 @@ The figures are computed by the script from the sheet and the clip. The agent sh
 ## Voice records
 
 A created voice is saved as `/files/voices/<name>.json` with its Gemini voice id, type, language, the brief
-it was made from, and the clip it came from. `voices_speak` only accepts a name that has a record, so a
+it was made from, and the clip it came from. `speech_create` only accepts a name that has a record, so a
 voice is never referred to by id. Delete the file to forget the voice.
 
 ## The dub's length

@@ -79,7 +79,7 @@ class PlanTests(unittest.TestCase):
             for expected in ("1. videos_edit", pipeline.OMNI_MODEL, "720p", "9:16", "8.0 s", CLINIC):
                 self.assertIn(expected, first)
             self.assertTrue(first.rstrip().endswith(pipeline.STRIP_TEXT_SENTENCE))
-            self.assertIn("audio_words_transcribe", lines[1])
+            self.assertIn("speech_transcribe", lines[1])
             self.assertTrue(lines[-1].startswith("Total: $"))
 
             small_lines = pipeline.render_plan(edit_job(small), pipeline.probe_clip(small)).splitlines()
@@ -130,7 +130,7 @@ class RunTests(unittest.IsolatedAsyncioTestCase):
             self.assertEqual({kw["aspect_ratio"] for kw in edits}, {"9:16"})
             copies = [kw for name, kw in bridge.calls if name == "files_copy_to_sandbox"]
             self.assertEqual([kw["sources"] for kw in copies], [["file_omni_1"], ["file_omni_2"]])
-            words = [kw for name, kw in bridge.calls if name == "audio_words_transcribe"]
+            words = [kw for name, kw in bridge.calls if name == "speech_transcribe"]
             self.assertEqual([kw["file_id"] for kw in words], ["file_source"])
             self.assertLess(max(i for i, n in enumerate(sent) if n == "files_copy_from_sandbox" and "piece." in bridge.calls[i][1]["sources"][0]), sent.index("videos_edit"))
             first_edit, first_copy = sent.index("videos_edit"), sent.index("files_copy_to_sandbox")
@@ -148,7 +148,7 @@ class RunTests(unittest.IsolatedAsyncioTestCase):
             clip = Path(tmp) / "short.mp4"
             make_clip(clip, 8)
             result = await pipeline.run(edit_job(clip, captions="no"), Path(tmp) / "out")
-            self.assertNotIn("audio_words_transcribe", names(bridge.calls))
+            self.assertNotIn("speech_transcribe", names(bridge.calls))
             self.assertNotIn("ai_functions_run", names(bridge.calls))
             self.assertEqual(sorted(result), ["check.edit.png", "edited.mp4", "interaction_ids"])
 
@@ -185,8 +185,8 @@ class RunTests(unittest.IsolatedAsyncioTestCase):
             self.assertTrue(edits[0]["instruction"].startswith("Continue the scene for 4 seconds."))
             sent = names(bridge.calls)
             extended_download = next(i for i, (n, kw) in enumerate(bridge.calls) if n == "files_copy_from_sandbox" and Path(kw["sources"][0]).name == "extended.mp4")
-            self.assertLess(extended_download, sent.index("audio_words_transcribe"))
-            words = [kw for name, kw in bridge.calls if name == "audio_words_transcribe"]
+            self.assertLess(extended_download, sent.index("speech_transcribe"))
+            words = [kw for name, kw in bridge.calls if name == "speech_transcribe"]
             self.assertEqual(Path(words[0]["file_id"]).name, "extended.mp4")
             self.assertEqual(sorted(result), ["captions.en.srt", "check.en.png", "extended.mp4", "final.en.mp4", "interaction_ids"])
 

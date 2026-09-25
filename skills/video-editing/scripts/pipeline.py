@@ -425,15 +425,15 @@ def dub_calls(job: Job, probe: Probe) -> list[Call]:
     chars = round(probe.duration_s * ESTIMATED_CHARS_PER_SECOND)
     calls = []
     if job.voice in ("designed", "replicated"):
-        calls.append(Call("voice", f"voices_create ({TTS_MODEL}) a {job.voice} voice from the clip's speaker, saved under /files/voices: ${VOICE_CREATE_USD:.4f}", VOICE_CREATE_USD))
+        calls.append(Call("voice", f"speech_voice_analyze ({TTS_MODEL}) a {job.voice} voice from the clip's speaker, saved under /files/voices: ${VOICE_CREATE_USD:.4f}", VOICE_CREATE_USD))
     calls.append(Call(
         "translate",
         f"ai_functions_run ({TRANSLATION_TIER}) translating the transcript to {target} to be spoken in "
         f"about {probe.duration_s:.1f} s, about {chars} characters: ${translation_usd(probe.duration_s):.4f}",
         translation_usd(probe.duration_s),
     ))
-    calls.append(Call("speak", f"voices_speak ({TTS_MODEL}) in voice {job.voice}, priced from about {chars} characters at the vendor's token rate: ${tts_usd(probe.duration_s, chars):.4f}", tts_usd(probe.duration_s, chars)))
-    calls.append(Call("words", f"audio_words_transcribe (whisper-1) on the dubbed {probe.duration_s:.1f} s, billed per started minute: ${whisper_usd(probe.duration_s):.4f}", whisper_usd(probe.duration_s)))
+    calls.append(Call("speak", f"speech_create ({TTS_MODEL}) in voice {job.voice}, priced from about {chars} characters at the vendor's token rate: ${tts_usd(probe.duration_s, chars):.4f}", tts_usd(probe.duration_s, chars)))
+    calls.append(Call("words", f"speech_transcribe (whisper-1) on the dubbed {probe.duration_s:.1f} s, billed per started minute: ${whisper_usd(probe.duration_s):.4f}", whisper_usd(probe.duration_s)))
     return calls
 
 
@@ -510,7 +510,7 @@ def planned_calls(job: Job, probe: Probe) -> Plan:
         return Plan(calls)
     calls.append(Call(
         "words",
-        f"audio_words_transcribe (whisper-1) on {probe.duration_s:.1f} s of audio, "
+        f"speech_transcribe (whisper-1) on {probe.duration_s:.1f} s of audio, "
         f"billed per started minute: ${whisper_usd(probe.duration_s):.4f}",
         whisper_usd(probe.duration_s),
     ))
@@ -724,7 +724,7 @@ async def ensure_voice(run: Run) -> str:
         run.ledger,
         "voice",
         call_tool(
-            "voices_create",
+            "speech_voice_analyze",
             file_id=job.source_file_id,
             name=name,
             voice_type=job.voice,
@@ -767,8 +767,8 @@ async def fetch_audio(file_id: str, target: Path) -> None:
 
 
 async def speak(transcript: str, voice: str, target: Path) -> Path:
-    """voices_speak through the bridge, the audio fetched to target."""
-    spoken = await call_tool("voices_speak", text=transcript, voice=voice)
+    """speech_create through the bridge, the audio fetched to target."""
+    spoken = await call_tool("speech_create", text=transcript, voice=voice)
     await fetch_audio(spoken["file_id"], target)
     return target
 
@@ -870,7 +870,7 @@ async def dub(run: Run, transcribed: dict, picture: Path) -> dict:
     ffmpeg("-i", str(fitted), "-af", f"adelay={int(lead_in_s * 1000)}:all=1,apad=whole_dur={probe.duration_s}", "-c:a", "pcm_s16le", str(delayed))
     swap_audio(picture, delayed, dubbed)
     landed = await land(run, [dubbed.name])
-    second = await run_stage(ledger, "words", call_tool("audio_words_transcribe", file_id=landed[dubbed.name], language=target), usd=plan.usd("words", 2))
+    second = await run_stage(ledger, "words", call_tool("speech_transcribe", file_id=landed[dubbed.name], language=target), usd=plan.usd("words", 2))
     (out / f"words.{target}.json").write_text(json.dumps(second["words"], ensure_ascii=False, indent=1), encoding="utf-8")
     return {"language": target, "words": second["words"], "path": str(dubbed)}
 
@@ -881,7 +881,7 @@ async def transcribe(run: Run, file_id: str) -> dict:
     words = await run_stage(
         run.ledger,
         "words",
-        call_tool("audio_words_transcribe", file_id=file_id, language=None if spoken == "auto" else spoken),
+        call_tool("speech_transcribe", file_id=file_id, language=None if spoken == "auto" else spoken),
         usd=run.plan.usd("words"),
     )
     lang = language_code(words["language"]) if spoken == "auto" else language_code(spoken)

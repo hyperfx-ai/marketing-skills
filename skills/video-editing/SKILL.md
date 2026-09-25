@@ -42,7 +42,7 @@ run, `/files/video-editing/<clip>-<time>/`, so a second run never overwrites the
 ## Requirements
 
 - **Hyper MCP installed.** [https://app.hyperfx.ai/mcp](https://app.hyperfx.ai/mcp)
-- **Video Generation toolkit enabled** at [https://app.hyperfx.ai/apps](https://app.hyperfx.ai/apps) — provides `audio_words_transcribe` (Whisper word timestamps), `voices_create` and `voices_speak` (Gemini TTS voices), and `videos_edit` (Gemini Omni scene edits).
+- **Speech and Video Generation toolkits enabled** at [https://app.hyperfx.ai/apps](https://app.hyperfx.ai/apps) — Speech provides `speech_transcribe` (Whisper word timestamps), `speech_voice_analyze` and `speech_create` (Gemini TTS voices); Video Generation provides `videos_edit` (Gemini Omni scene edits).
 - **Sandbox toolkit enabled** — the pipeline runs there (`sandbox_shell`, `sandbox_python_run`, `files_copy_to_sandbox`, `files_copy_from_sandbox`), and translation goes through `ai_functions_run` from inside it.
 - **TikTok connected** (Set up, Connect apps) when the result goes to TikTok — provides `tiktok_posts_publish`, which also takes a `scheduled_at` time. Without it the plan refuses in one sentence; tell the user to connect TikTok in Set up.
 - **Background jobs enabled** for the workspace. The run is a background shell job; if `sandbox_shell(background=true)` is refused because background tools are off, tell the user that plainly and stop. Do not run the pipeline in the foreground.
@@ -209,13 +209,13 @@ go back to step 3: `plan`, a yes, `run`. Nothing is uploaded again; Omni continu
 `pipeline.py run` inside the sandbox: when an edit is asked for, ffmpeg cuts the clip into pieces of at most 10 s,
 `files_copy_from_sandbox` lands each, `videos_edit` edits each with the same instruction (or extends the clip), `files_copy_to_sandbox`
 brings the results back, and ffmpeg scales and stitches them into `edited.mp4` (or `extended.mp4`) with the clip's own audio.
-Then, unless `captions` is `no`: `audio_words_transcribe` for the words, cues of at most 4 words or 26
+Then, unless `captions` is `no`: `speech_transcribe` for the words, cues of at most 4 words or 26
 characters that break at pauses over 0.6 s, `ai_functions_run` for the translation when a second language is
 asked for, ffmpeg to burn each caption file and grab a check frame, and `files_copy_from_sandbox` once per
-output so each lands in the user's files in the run's folder `/files/video-editing/<clip>-<time>/`. For a dub: `voices_create` when no voice is named, a
-translation of the whole transcript asked to fit the clip's spoken length, `voices_speak` in that voice, a
+output so each lands in the user's files in the run's folder `/files/video-editing/<clip>-<time>/`. For a dub: `speech_voice_analyze` when no voice is named, a
+translation of the whole transcript asked to fit the clip's spoken length, `speech_create` in that voice, a
 tempo fit within 0.9 to 1.1 (one re-translation when the first take is outside it), the new audio swapped onto
-the picture, `audio_words_transcribe` again on the dubbed track, and captions timed to it. `karaoke` writes
+the picture, `speech_transcribe` again on the dubbed track, and captions timed to it. `karaoke` writes
 an ASS subtitle with one highlight per word instead of the plain SRT for the burn. With `delivery: tiktok`, after the outputs land: `tiktok_posts_publish` once per time, in time order, with the captioned video (else the edited or extended clip, else the source), the caption, the AI label and the UTC time as `scheduled_at` (the platform defers the call to a scheduled task), or once with no time to post now.
 
 ## Example: a dub
