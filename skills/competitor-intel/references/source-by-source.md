@@ -96,7 +96,7 @@ The Apify-backed scrapers each handle one platform. Use the right one for each p
 
 **Useful for:** company-page positioning shifts, exec hires (a new VP of Marketing usually signals strategy change), thought-leadership content from execs. Pulled per-URL, so for a competitor org grab the company URL plus 2–3 key exec URLs.
 
-**Important:** this tool is only present in the agent's tool list when the LinkedIn-scraper integration is enabled in the workspace. If you don't see `scrape_linkedin_profiles` in the tool inventory, skip the LinkedIn slice entirely — don't fail the whole brief.
+**Important:** `search` only finds this tool when the LinkedIn-scraper integration is enabled in the workspace. If `search("scrape_linkedin_profiles")` does not find it, skip the LinkedIn slice entirely — don't fail the whole brief.
 
 **Pitfalls:** LinkedIn aggressively detects + blocks scraping. Even with the integration enabled, expect occasional empty results. Don't pull more than a handful at a time.
 

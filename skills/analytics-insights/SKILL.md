@@ -31,7 +31,7 @@ GSC and HyperSEO overlap on search-performance data. Rule of thumb: use GSC here
   - **Google Search Console** — search-performance data, sitemaps, URL inspection.
   - **BigQuery** — SQL queries against the GA4 export (or any other dataset).
 
-If `google_analytics_ga4_reports_run`, `google_tag_manager_tags_manage`, `google_search_console_performance_get`, and `bigquery_execute_query` are all missing from the agent's tool list, stop and tell the user to enable the Hyper MCP and connect at least one of these integrations.
+If `google_analytics_ga4_reports_run`, `google_tag_manager_tags_manage`, `google_search_console_performance_get`, and `bigquery_execute_query` are all missing from `search` results, stop and tell the user to enable the Hyper MCP and connect at least one of these integrations.
 
 ### How to run the tools in this skill
 
@@ -39,7 +39,7 @@ Every tool in this skill is named by its canonical tool name. Run it with the ca
 
 | Surface | Find a tool | Run it |
 | --- | --- | --- |
-| MCP client (Claude, Cursor, Codex, ChatGPT) | `search("<what you want to do>")`, then `describe("<name>")` | `call("<name>", {...})` |
+| MCP client (Claude, Cursor, Codex, ChatGPT) | `search("<what you want to do>")`, then `describe("<name>")` | the call tool named in the result's `call_with`: `call_read("<name>", {...})` for a read tool, `call_write` for a write tool, `call_destructive` for a delete or money-moving tool |
 | Hyper CLI | `hyperai search "<what you want to do>"`, then `hyperai describe <name>` | `hyperai call <name> --json '{...}'` |
 
 If a tool is not found, its integration is not connected or not enabled for the workspace: stop and tell the user which integration to connect.

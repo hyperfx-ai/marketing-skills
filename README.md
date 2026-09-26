@@ -35,10 +35,10 @@ Every tool in a skill is named by its canonical tool name, and that one name wor
 
 | Surface | Find a tool | Run it |
 | --- | --- | --- |
-| MCP client | `search("<what you want to do>")`, `describe("<name>")` | `call("<name>", {...})` |
+| MCP client | `search("<what you want to do>")`, `describe("<name>")` | `call_read`, `call_write`, or `call_destructive("<name>", {...})`, as named in the result's `call_with` |
 | Hyper CLI | `hyperai search "..."`, `hyperai describe <name>` | `hyperai call <name> --json '{...}'` |
 
-The Hyper MCP lists six tools (`search`, `describe`, `call`, `connections_list`, `connections_use`, `info`); every other tool runs through `call`. A client that sends a tool name directly still works.
+The Hyper MCP lists a small set of tools: `search`, `describe`, `call_read`, `call_write`, `call_destructive`, `connections_list`, `connections_use`, `info`, and the skills tools. Every other tool runs through the call tool of its access class; each `search` and `describe` result names it in `call_with`. A read tool runs with no confirmation; Claude asks before a write or destructive call. A client that sends a tool name directly still works.
 
 ## Install
 
