@@ -15,7 +15,7 @@ Generate ad creatives — both visuals and copy — that match a brand's identit
 
 ## Requirements
 
-This skill assumes the [Hyper MCP](https://app.hyperfx.ai/mcp) is connected to your agent so the tools below are available. Brand extraction also requires Firecrawl to be configured under your Hyper integrations.
+This skill assumes the [Hyper MCP](https://app.hyperfx.ai/mcp) is connected to your agent so the tools below are available. Brand extraction also requires Firecrawl to be configured under your Hyper integrations. Connect through the endpoint on your MCP page, not the Hyper listing in the Claude connectors directory: the directory listing excludes AI image, video, and audio generation.
 
 ### How to run the tools in this skill
 

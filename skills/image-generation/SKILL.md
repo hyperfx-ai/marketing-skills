@@ -19,7 +19,7 @@ image-to-image (pass `reference_images`), and multi-image composition. By defaul
 
 This skill assumes the [Hyper MCP](https://app.hyperfx.ai/mcp) is connected to your
 agent so the `images_generate` tool is available. For brand-consistent ad creative
-work, Firecrawl must also be configured under your Hyper integrations.
+work, Firecrawl must also be configured under your Hyper integrations. Connect through the endpoint on your MCP page, not the Hyper listing in the Claude connectors directory: the directory listing excludes AI image, video, and audio generation.
 
 ### How to run the tools in this skill
 

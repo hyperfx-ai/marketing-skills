@@ -40,6 +40,17 @@ Every tool in a skill is named by its canonical tool name, and that one name wor
 
 The Hyper MCP lists a small set of tools: `search`, `describe`, `call_read`, `call_write`, `call_destructive`, `connections_list`, `connections_use`, `info`, and the skills tools. Every other tool runs through the call tool of its access class; each `search` and `describe` result names it in `call_with`. A read tool runs with no confirmation; Claude asks before a write or destructive call. A client that sends a tool name directly still works.
 
+### Which endpoint
+
+Hyper has two MCP endpoints. Both serve the same tools through the same call tools, with one difference:
+
+| Endpoint | Where it comes from | What it serves |
+| --- | --- | --- |
+| The endpoint on your [MCP page](https://app.hyperfx.ai/mcp) (`https://backend.hyperfx.ai/mcp/`) | The plugin's `.mcp.json`, Claude Code, Cursor, Codex | Every tool you enable |
+| `https://mcp.hyperfx.ai/mcp/` | The Hyper listing in the Claude connectors directory | Every tool except AI image, video, and audio generation, raw request tools, and tools that move money |
+
+Every skill works on both. `image-generation`, `video-generation`, and `ad-creative-generation` need the endpoint from your MCP page, because the directory endpoint excludes the generation tools they run. A skill that lists `images_generate` as optional (`competitor-intel`, `youtube` thumbnails) skips that step on the directory endpoint.
+
 ## Install
 
 ```bash

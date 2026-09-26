@@ -13,7 +13,7 @@ Guide for generating, editing, analyzing, and post-processing videos using AI mo
 
 ## Requirements
 
-This skill assumes the [Hyper MCP](https://app.hyperfx.ai/mcp) is connected to your agent so the tools below are available. The underlying providers (Google Veo, ByteDance Seedance, OpenAI TTS, transcription, etc.) are configured under your Hyper integrations.
+This skill assumes the [Hyper MCP](https://app.hyperfx.ai/mcp) is connected to your agent so the tools below are available. The underlying providers (Google Veo, ByteDance Seedance, OpenAI TTS, transcription, etc.) are configured under your Hyper integrations. Connect through the endpoint on your MCP page, not the Hyper listing in the Claude connectors directory: the directory listing excludes AI image, video, and audio generation.
 
 ### How to run the tools in this skill
 
