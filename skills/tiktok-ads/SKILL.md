@@ -18,7 +18,7 @@ This skill is for **paid TikTok ads** (the TikTok Marketing API surface).
 - **Hyper MCP installed and connected.** [https://app.hyperfx.ai/mcp](https://app.hyperfx.ai/mcp)
 - **TikTok Marketing integration connected** (TikTok Ads Manager / Business Center) at [https://app.hyperfx.ai/apps](https://app.hyperfx.ai/apps).
 
-If `search("tiktok_ads_advertiser_accounts_list")` does not find `tiktok_ads_advertiser_accounts_list`, stop and tell the user to enable Hyper MCP and connect TikTok Marketing.
+If `tiktok_ads_advertiser_accounts_list` is not available to you (not in your tool list, and `search("tiktok_ads_advertiser_accounts_list")` does not find it on an MCP client), stop and tell the user to enable Hyper MCP and connect TikTok Marketing.
 
 ### How to run the tools in this skill
 

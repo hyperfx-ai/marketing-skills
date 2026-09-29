@@ -51,7 +51,7 @@ Fetch the full transcript of any YouTube video and turn it into whatever the use
 - **YouTube toolkit enabled** at [https://app.hyperfx.ai/apps](https://app.hyperfx.ai/apps) — provides `youtube_video_transcripts_fetch` and `youtube_videos_read`.
 - Thumbnail workflows additionally need the image generation and sandbox toolkits.
 
-If `search("youtube_video_transcripts_fetch")` does not find `youtube_video_transcripts_fetch`, stop and tell the user to enable the YouTube toolkit in Hyper.
+If `youtube_video_transcripts_fetch` is not available to you (not in your tool list, and `search("youtube_video_transcripts_fetch")` does not find it on an MCP client), stop and tell the user to enable the YouTube toolkit in Hyper.
 
 ### How to run the tools in this skill
 

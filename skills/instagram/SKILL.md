@@ -26,7 +26,7 @@ Complete skill for managing Instagram professional accounts through the Instagra
 - **Instagram integration connected** at [https://app.hyperfx.ai/apps](https://app.hyperfx.ai/apps) — this skill uses the **Instagram API with Instagram Login** (NOT the older Instagram Graph API via Facebook Login).
 - For organization posts to a company page, the connected account must have permission to post for that organization.
 
-If `search("instagram_current_user_get")` does not find `instagram_current_user_get`, stop and tell the user to enable Hyper MCP and connect Instagram.
+If `instagram_current_user_get` is not available to you (not in your tool list, and `search("instagram_current_user_get")` does not find it on an MCP client), stop and tell the user to enable Hyper MCP and connect Instagram.
 
 ### How to run the tools in this skill
 

@@ -26,7 +26,7 @@ Data-driven SEO research and analysis. Every recommendation must be backed by re
 - **Hyper MCP installed and connected.** [https://app.hyperfx.ai/mcp](https://app.hyperfx.ai/mcp)
 - **HyperSEO toolkit enabled** at [https://app.hyperfx.ai/apps](https://app.hyperfx.ai/apps) — provides the `hyperseo_*` tool surface that wraps DataForSEO and AI search query data.
 
-If `search("hyperseo_search_volume_get")` does not find `hyperseo_search_volume_get`, stop and tell the user to enable the Hyper MCP and turn on the HyperSEO toolkit.
+If `hyperseo_search_volume_get` is not available to you (not in your tool list, and `search("hyperseo_search_volume_get")` does not find it on an MCP client), stop and tell the user to enable the Hyper MCP and turn on the HyperSEO toolkit.
 
 ### How to run the tools in this skill
 

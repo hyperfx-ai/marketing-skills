@@ -23,9 +23,9 @@ The skill's job is to turn raw scraped ads into useful summaries: top advertiser
 ## Requirements
 
 - **Hyper MCP installed and connected.** [https://app.hyperfx.ai/mcp](https://app.hyperfx.ai/mcp)
-- **Apify integration connected** at [https://app.hyperfx.ai/apps](https://app.hyperfx.ai/apps) — the Meta Ads Library tools run via Apify under the hood.
+- **No connection needed.** The Meta Ads Library tools are built in.
 
-If `search("meta_ad_library_ads_search")` does not find `meta_ad_library_ads_search`, stop and tell the user to enable Hyper MCP and connect Apify.
+If `meta_ad_library_ads_search` is not available to you (not in your tool list, and `search("meta_ad_library_ads_search")` does not find it on an MCP client), stop and tell the user to enable the Hyper MCP.
 
 ### How to run the tools in this skill
 
