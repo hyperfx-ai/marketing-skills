@@ -34,7 +34,7 @@ End-to-end competitor research and monitoring. Define the set, pull from every p
   - **Apify scrapers** — Instagram, TikTok, LinkedIn, Twitter, Reddit, Google search, Google Trends
   - **Image generation** *(optional — only if the brief feeds a comparison-page or battle-card asset downstream)*
 
-If `search` finds none of those tool prefixes (`firecrawl_*`, `hyperseo_*`, `instagram_scrape*`, `scrape_tiktok*`, `x_tweets_search`, `reddit_scrape*`, `google_search_results_search`, `google_trends_scrape`, `web_pages_scrape`), stop and tell the user to enable the Hyper MCP and connect at least Firecrawl + one social scraper. The LinkedIn scraper (`scrape_linkedin_profiles`) is only present when that specific integration is enabled — gracefully skip the LinkedIn slice if it's missing rather than failing the whole brief.
+If none of those tool prefixes is available to you, in your tool list or through `search` on an MCP client (`firecrawl_*`, `hyperseo_*`, `instagram_scrape*`, `scrape_tiktok*`, `x_tweets_search`, `reddit_scrape*`, `google_search_results_search`, `google_trends_scrape`, `web_pages_scrape`), stop and tell the user to enable the Hyper MCP and connect at least Firecrawl + one social scraper. The LinkedIn scraper (`scrape_linkedin_profiles`) is only present when that specific integration is enabled — gracefully skip the LinkedIn slice if it's missing rather than failing the whole brief.
 
 ### How to run the tools in this skill
 
@@ -42,6 +42,7 @@ Every tool in this skill is named by its canonical tool name. Run it with the ca
 
 | Surface | Find a tool | Run it |
 | --- | --- | --- |
+| Hyper chat and Hyper agents | The tool is in your tool list | Call the tool by its name |
 | MCP client (Claude, Cursor, Codex, ChatGPT) | `search("<what you want to do>")`, then `describe("<name>")` | the call tool named in the result's `call_with`: `call_read("<name>", {...})` for a read tool, `call_write` for a write tool, `call_destructive` for a delete or money-moving tool |
 | Hyper CLI | `hyperai search "<what you want to do>"`, then `hyperai describe <name>` | `hyperai call <name> --json '{...}'` |
 

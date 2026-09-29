@@ -29,7 +29,7 @@ End-to-end lifecycle email — pick the right provider for the job, build the au
   - **Beehiiv** — newsletters, paid-tier subscriptions, content-driven lists
   - **Gmail** — small / personal lists, founder-mode broadcasts, ops emails
 
-If none of those tool prefixes (`klaviyo_*`, `resend_*`, `beehiiv_*`, `gmail_*`) are found by `search`, stop and tell the user to enable the Hyper MCP and connect the provider they intend to use.
+If none of those tool prefixes (`klaviyo_*`, `resend_*`, `beehiiv_*`, `gmail_*`) is available to you (in your tool list, or found by `search` on an MCP client), stop and tell the user to enable the Hyper MCP and connect the provider they intend to use.
 
 ### How to run the tools in this skill
 
@@ -37,6 +37,7 @@ Every tool in this skill is named by its canonical tool name. Run it with the ca
 
 | Surface | Find a tool | Run it |
 | --- | --- | --- |
+| Hyper chat and Hyper agents | The tool is in your tool list | Call the tool by its name |
 | MCP client (Claude, Cursor, Codex, ChatGPT) | `search("<what you want to do>")`, then `describe("<name>")` | the call tool named in the result's `call_with`: `call_read("<name>", {...})` for a read tool, `call_write` for a write tool, `call_destructive` for a delete or money-moving tool |
 | Hyper CLI | `hyperai search "<what you want to do>"`, then `hyperai describe <name>` | `hyperai call <name> --json '{...}'` |
 

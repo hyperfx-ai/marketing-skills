@@ -35,6 +35,7 @@ Every tool in a skill is named by its canonical tool name, and that one name wor
 
 | Surface | Find a tool | Run it |
 | --- | --- | --- |
+| Hyper chat and Hyper agents | The tool is in your tool list | Call the tool by its name |
 | MCP client | `search("<what you want to do>")`, `describe("<name>")` | `call_read`, `call_write`, or `call_destructive("<name>", {...})`, as named in the result's `call_with` |
 | Hyper CLI | `hyperai search "..."`, `hyperai describe <name>` | `hyperai call <name> --json '{...}'` |
 
