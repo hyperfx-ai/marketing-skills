@@ -27,7 +27,7 @@ Strategic guide for creating and managing Meta advertising campaigns, analyzing 
 - **Meta Business integration connected** (Facebook + Instagram, with at least one ad account and one Page) at [https://app.hyperfx.ai/apps](https://app.hyperfx.ai/apps).
 - **Firecrawl integration connected** for site research and screenshot grounding (discovery phase).
 
-If `search("meta_ads_adaccount_list")` does not find `meta_ads_adaccount_list`, stop and tell the user to enable Hyper MCP and connect Meta Business.
+If `meta_ads_adaccount_list` is not available to you (not in your tool list, and `search("meta_ads_adaccount_list")` does not find it on an MCP client), stop and tell the user to enable Hyper MCP and connect Meta Business.
 
 If you suspect a connection issue (missing ad accounts, page publishing failures, or permission errors), call `meta_ads_health_check()` and report the diagnostics before proceeding.
 
@@ -37,14 +37,15 @@ Every tool in this skill is named by its canonical tool name. Run it with the ca
 
 | Surface | Find a tool | Run it |
 | --- | --- | --- |
-| MCP client (Claude, Cursor, Codex, ChatGPT) | `search("<what you want to do>")`, then `describe("<name>")` | `call("<name>", {...})` |
+| Hyper chat and Hyper agents | The tool is in your tool list | Call the tool by its name |
+| MCP client (Claude, Cursor, Codex, ChatGPT) | `search("<what you want to do>")`, then `describe("<name>")` | the call tool named in the result's `call_with`: `call_read("<name>", {...})` for a read tool, `call_write` for a write tool, `call_destructive` for a delete or money-moving tool |
 | Hyper CLI | `hyperai search "<what you want to do>"`, then `hyperai describe <name>` | `hyperai call <name> --json '{...}'` |
 
 If a tool is not found, its integration is not connected or not enabled for the workspace: stop and tell the user which integration to connect.
 
 ## Tool names
 
-Use the **exact tool name from your connected tool list**. Canonical names are `meta_ads_*` (listed below). On Hyper platform chat, legacy `meta_business_*` names (e.g. `meta_ads_adaccount_list`) and the retired plural names (e.g. `meta_ads_campaign_create`) resolve to the same tools via aliases — if a call fails with "tool not found", search the live catalog for the canonical name.
+Use the **exact tool name from your tool list, or from `search` on an MCP client**. Canonical names are `meta_ads_*` (listed below). On Hyper platform chat, legacy `meta_business_*` names (e.g. `meta_ads_adaccount_list`) and the retired plural names (e.g. `meta_ads_campaign_create`) resolve to the same tools via aliases — if a call fails with "tool not found", search the live catalog for the canonical name.
 
 | Group | Tools |
 | --- | --- |

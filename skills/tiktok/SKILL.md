@@ -24,7 +24,7 @@ End-to-end skill for publishing organic content to TikTok through the **TikTok C
 - **Hyper MCP installed and connected.** [https://app.hyperfx.ai/mcp](https://app.hyperfx.ai/mcp)
 - **TikTok integration connected** at [https://app.hyperfx.ai/apps](https://app.hyperfx.ai/apps) — this skill uses the TikTok Login Kit / Content Posting API (NOT the TikTok Marketing API).
 
-If `search("tiktok_post_form_open")` does not find `tiktok_post_form_open`, stop and tell the user to enable Hyper MCP and connect TikTok.
+If `tiktok_post_form_open` is not available to you (not in your tool list, and `search("tiktok_post_form_open")` does not find it on an MCP client), stop and tell the user to enable Hyper MCP and connect TikTok.
 
 ### How to run the tools in this skill
 
@@ -32,7 +32,8 @@ Every tool in this skill is named by its canonical tool name. Run it with the ca
 
 | Surface | Find a tool | Run it |
 | --- | --- | --- |
-| MCP client (Claude, Cursor, Codex, ChatGPT) | `search("<what you want to do>")`, then `describe("<name>")` | `call("<name>", {...})` |
+| Hyper chat and Hyper agents | The tool is in your tool list | Call the tool by its name |
+| MCP client (Claude, Cursor, Codex, ChatGPT) | `search("<what you want to do>")`, then `describe("<name>")` | the call tool named in the result's `call_with`: `call_read("<name>", {...})` for a read tool, `call_write` for a write tool, `call_destructive` for a delete or money-moving tool |
 | Hyper CLI | `hyperai search "<what you want to do>"`, then `hyperai describe <name>` | `hyperai call <name> --json '{...}'` |
 
 If a tool is not found, its integration is not connected or not enabled for the workspace: stop and tell the user which integration to connect.

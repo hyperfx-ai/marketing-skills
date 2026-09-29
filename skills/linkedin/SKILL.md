@@ -28,7 +28,7 @@ Skill for publishing to LinkedIn through the LinkedIn integration exposed by the
 - **LinkedIn integration connected** at [https://app.hyperfx.ai/apps](https://app.hyperfx.ai/apps).
 - For company-page posts, the connected member account must have permission to post for that organization.
 
-If `search("linkedin_text_posts_create")` does not find `linkedin_text_posts_create`, stop and tell the user to enable Hyper MCP and connect LinkedIn.
+If `linkedin_text_posts_create` is not available to you (not in your tool list, and `search("linkedin_text_posts_create")` does not find it on an MCP client), stop and tell the user to enable Hyper MCP and connect LinkedIn.
 
 ### How to run the tools in this skill
 
@@ -36,7 +36,8 @@ Every tool in this skill is named by its canonical tool name. Run it with the ca
 
 | Surface | Find a tool | Run it |
 | --- | --- | --- |
-| MCP client (Claude, Cursor, Codex, ChatGPT) | `search("<what you want to do>")`, then `describe("<name>")` | `call("<name>", {...})` |
+| Hyper chat and Hyper agents | The tool is in your tool list | Call the tool by its name |
+| MCP client (Claude, Cursor, Codex, ChatGPT) | `search("<what you want to do>")`, then `describe("<name>")` | the call tool named in the result's `call_with`: `call_read("<name>", {...})` for a read tool, `call_write` for a write tool, `call_destructive` for a delete or money-moving tool |
 | Hyper CLI | `hyperai search "<what you want to do>"`, then `hyperai describe <name>` | `hyperai call <name> --json '{...}'` |
 
 If a tool is not found, its integration is not connected or not enabled for the workspace: stop and tell the user which integration to connect.
