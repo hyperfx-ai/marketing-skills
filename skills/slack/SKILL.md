@@ -1,6 +1,6 @@
 ---
 name: slack
-description: Slack messaging, file sharing, Block Kit formatting, and channel management. Use when the user wants to send Slack messages, post rich Block Kit layouts, share files, react, or manage channels and members.
+description: Slack messaging, file sharing, Block Kit formatting, canvases, and channel management. Use when the user wants to send Slack messages, post rich Block Kit layouts, share files, read or edit Slack canvases, react, or manage channels and members.
 use_cases:
   - Send messages in Slack channels
   - Upload and share files in Slack
@@ -8,12 +8,14 @@ use_cases:
   - Format messages with Block Kit
   - Manage Slack channels and threads
   - Search Slack messages
+  - Read and edit Slack canvases
 triggers:
   - slack
   - channel
   - message
   - upload file
   - block kit
+  - slack canvas
 requires_toolkits:
   - slack_toolkit
 suggested_toolkits: []
@@ -190,6 +192,24 @@ Available styles: `bold`, `italic`, `strike`, `code`
 | Add a reaction | `slack_reactions_add` |
 | Pin a message | `slack_messages_pin` |
 | Search messages | `slack_messages_search` |
+
+## Slack Canvases
+
+A Slack canvas is a document inside Slack. Its ID starts with `F`.
+
+1. Read a canvas as Markdown with `slack_canvases_content_get`.
+2. To change one part, find its section ID with `slack_canvases_sections_list`. Filter by heading type (`any_header`, `h1`, `h2`, `h3`), by other section types such as `list` or `table`, or by text.
+3. Change the canvas with `slack_canvases_update`, one operation per call: `insert_at_start`, `insert_at_end`, `insert_before`, `insert_after`, `replace` (one section), `delete` (one section), or `rename`.
+4. Create a canvas from Markdown with `slack_canvases_create`. Inside a Slack conversation it opens as a tab there. Set `channel_canvas` to make the channel's own canvas.
+
+If a canvas tool says the canvas scopes are missing, ask the user to reconnect Slack at [https://app.hyperfx.ai/apps](https://app.hyperfx.ai/apps). If it says the app cannot see the canvas, ask the user to share the canvas with the channel or with the Hyper app.
+
+| Action | Tool |
+|--------|------|
+| Read a canvas | `slack_canvases_content_get` |
+| Find section IDs | `slack_canvases_sections_list` |
+| Create a canvas | `slack_canvases_create` |
+| Edit a canvas | `slack_canvases_update` |
 
 ## Channel Management Quick Reference
 
