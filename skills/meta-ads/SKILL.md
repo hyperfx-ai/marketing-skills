@@ -1,6 +1,6 @@
 ---
 name: meta-ads
-description: Plan and create Meta (Facebook + Instagram) advertising campaigns end-to-end via the Hyper MCP, defaulting to Advantage+ automation. Use when the user wants to launch Meta ads, Facebook ads, Instagram ads, Advantage+ campaigns, carousel ads, dynamic creative ads, set up Meta conversion tracking, analyze performance, audit a Meta ads account, or build Meta performance dashboards. Also triggers on phrases like meta campaign, facebook campaign, advantage+, or meta account audit.
+description: Plan and manage Meta (Facebook and Instagram) advertising through Hyper MCP. Use when the user wants to launch campaigns, boost the brand's own Instagram post, set up conversion tracking, analyze performance, audit an ad account, or build dashboards. Default to Advantage+ for new campaigns.
 requires_toolkits:
   - meta_ads
   - meta_business
@@ -49,6 +49,7 @@ Use the **exact tool name from your connected tool list**. Canonical names are `
 | Group | Tools |
 | --- | --- |
 | Discovery | `meta_ads_adaccount_list`, `meta_ads_owned_pages_list`, `meta_ads_pages_search`, `meta_accounts_list`, `meta_ads_instagram_accounts_list` |
+| Own Instagram posts (conditional) | `meta_ads_instagram_media_list`, `meta_ads_instagram_post_boost` |
 | Health & sync | `meta_ads_health_check`, `meta_ads_health_get` |
 | Tracking assets | `meta_ads_ad_pixels_list`, `meta_ads_ad_pixels_get`, `meta_ads_custom_audiences_list`, `meta_ads_lookalike_audiences_list`, `meta_ads_targeting_search` |
 | Step-by-step creation (preferred) | `meta_ads_campaign_create`, `meta_ads_adset_create`, `meta_ads_ad_create`, `meta_ads_ad_images_upload`, `meta_ads_creative_create` |
@@ -57,6 +58,8 @@ Use the **exact tool name from your connected tool list**. Canonical names are `
 | Launch & edits | `meta_ads_campaigns_activate`, `meta_ads_campaign_update`, `meta_ads_adset_update`, `meta_ads_ad_update` |
 | Automated rules | `meta_ads_adrule_create`, `meta_ads_adrule_list`, `meta_ads_adrule_get`, `meta_ads_adrule_update`, `meta_ads_adrule_delete`, `meta_ads_adrule_history_list` |
 | Site research | `firecrawl_branding_extract`, `firecrawl_screenshots_create` |
+
+The two own-post tools are conditional. Read their live MCP descriptors before use. If either is absent, explain that the own-post workflow is unavailable in this environment; do not substitute an unrestricted Graph request.
 
 CLI users: translate tool names with the `hyper-cli` skill (`hyperai search "<tool name>"`).
 
@@ -113,6 +116,7 @@ Every task follows this sequence. Do not skip steps.
 | Create an awareness or engagement campaign | [references/discovery.md](references/discovery.md) → [references/campaigns/awareness-engagement.md](references/campaigns/awareness-engagement.md) |
 | Create an app promotion campaign | [references/discovery.md](references/discovery.md) → [references/campaigns/app-promotion.md](references/campaigns/app-promotion.md) |
 | Create a campaign (any objective) | [references/discovery.md](references/discovery.md) → the matching `references/campaigns/*.md` above, then build step by step |
+| List the brand's Instagram posts or boost one into an existing ad set | [references/instagram-post-boost.md](references/instagram-post-boost.md) |
 | Analyze performance / query insights | [references/analytics.md](references/analytics.md) |
 | Audit an account / find optimization opportunities | [references/account-audit.md](references/account-audit.md) |
 | Set up automated rules (auto-pause, budget guards, alerts) | [references/automated-rules.md](references/automated-rules.md) |
