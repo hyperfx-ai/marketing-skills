@@ -16,7 +16,7 @@ Strategic guide for managing Snapchat advertising via the Snapchat Marketing API
 - **Hyper MCP installed and connected.** [https://app.hyperfx.ai/mcp](https://app.hyperfx.ai/mcp)
 - **Snapchat Ads integration connected** (a Snap Business account with ad account access) at [https://app.hyperfx.ai/apps](https://app.hyperfx.ai/apps).
 
-If `search("snapchat_ads_list_organizations")` does not find `snapchat_ads_list_organizations`, stop and tell the user to enable Hyper MCP and connect Snapchat Ads. Creating ad squads or serving ads also requires an **active funding source** on the ad account — campaigns, media, and creatives can be created without one.
+If `snapchat_ads_list_organizations` is not available to you (not in your tool list, and `search("snapchat_ads_list_organizations")` does not find it on an MCP client), stop and tell the user to enable Hyper MCP and connect Snapchat Ads. Creating ad squads or serving ads also requires an **active funding source** on the ad account — campaigns, media, and creatives can be created without one.
 
 ### How to run the tools in this skill
 
@@ -24,7 +24,8 @@ Every tool in this skill is named by its canonical tool name. Run it with the ca
 
 | Surface | Find a tool | Run it |
 | --- | --- | --- |
-| MCP client (Claude, Cursor, Codex, ChatGPT) | `search("<what you want to do>")`, then `describe("<name>")` | `call("<name>", {...})` |
+| Hyper chat and Hyper agents | The tool is in your tool list | Call the tool by its name |
+| MCP client (Claude, Cursor, Codex, ChatGPT) | `search("<what you want to do>")`, then `describe("<name>")` | the call tool named in the result's `call_with`: `call_read("<name>", {...})` for a read tool, `call_write` for a write tool, `call_destructive` for a delete or money-moving tool |
 | Hyper CLI | `hyperai search "<what you want to do>"`, then `hyperai describe <name>` | `hyperai call <name> --json '{...}'` |
 
 If a tool is not found, its integration is not connected or not enabled for the workspace: stop and tell the user which integration to connect.
