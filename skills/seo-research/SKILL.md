@@ -26,7 +26,7 @@ Data-driven SEO research and analysis. Every recommendation must be backed by re
 - **Hyper MCP installed and connected.** [https://app.hyperfx.ai/mcp](https://app.hyperfx.ai/mcp)
 - **HyperSEO toolkit enabled** at [https://app.hyperfx.ai/apps](https://app.hyperfx.ai/apps) — provides the `hyperseo_*` tool surface that wraps DataForSEO and AI search query data.
 
-If `search("hyperseo_search_volume_get")` does not find `hyperseo_search_volume_get`, stop and tell the user to enable the Hyper MCP and turn on the HyperSEO toolkit.
+If `hyperseo_search_volume_get` is not found, the integration to connect is HyperSEO.
 
 ### How to run the tools in this skill
 
@@ -34,10 +34,11 @@ Every tool in this skill is named by its canonical tool name. Run it with the ca
 
 | Surface | Find a tool | Run it |
 | --- | --- | --- |
-| MCP client (Claude, Cursor, Codex, ChatGPT) | `search("<what you want to do>")`, then `describe("<name>")` | `call("<name>", {...})` |
+| Hyper chat | Call the tool by its name; `search_tools(queries=["<provider> <action>"])` shows its parameters | `<name>(...)` |
+| MCP client (Claude, Cursor, Codex, ChatGPT) | `search("<what you want to do>")`, then `describe("<name>")` | `call_read("<name>", {...})`, `call_write` or `call_destructive`: the one that `describe` names in `call_with` |
 | Hyper CLI | `hyperai search "<what you want to do>"`, then `hyperai describe <name>` | `hyperai call <name> --json '{...}'` |
 
-If a tool is not found, its integration is not connected or not enabled for the workspace: stop and tell the user which integration to connect.
+If a tool is not found: in Hyper chat, find its integration with `discover_toolkits` and connect it with `enable_toolkit`. On an MCP client or the CLI, tell the user which integration to connect in Hyper.
 
 ## Tool surface
 

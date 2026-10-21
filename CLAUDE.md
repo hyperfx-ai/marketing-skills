@@ -102,7 +102,7 @@ See [`CONTRIBUTING.md`](./CONTRIBUTING.md) for details.
 ## How an agent should use these skills
 
 1. Read the matching `SKILL.md` from `skills/<name>/SKILL.md`.
-2. Confirm the Hyper MCP is connected — every skill defines a "stop and tell the user" check at the top.
+2. When a tool is not found, follow the skill's not-found line: in Hyper chat, `discover_toolkits` then `enable_toolkit`; on an MCP client or the CLI, tell the user which integration to connect.
 3. Follow the workflow defined in the skill's body.
 4. Cross-reference sibling skills via the "Out of scope" table when relevant.
 5. When a tool call fails with an arg-validation error, re-read the MCP tool descriptor before retrying — don't blindly retry with the same args.

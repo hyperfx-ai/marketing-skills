@@ -16,7 +16,7 @@ Strategic guide for building new Google Ads campaigns and reporting on existing 
 - **Hyper MCP installed and connected.** [https://app.hyperfx.ai/mcp](https://app.hyperfx.ai/mcp)
 - **Google Ads integration connected** at [https://app.hyperfx.ai/apps](https://app.hyperfx.ai/apps).
 
-If `search("google_ads_accounts_list")` does not find `google_ads_accounts_list`, stop and tell the user to enable Hyper MCP and connect Google Ads.
+If `google_ads_accounts_list` is not found, the integration to connect is Google Ads.
 
 ### How to run the tools in this skill
 
@@ -24,10 +24,11 @@ Every tool in this skill is named by its canonical tool name. Run it with the ca
 
 | Surface | Find a tool | Run it |
 | --- | --- | --- |
-| MCP client (Claude, Cursor, Codex, ChatGPT) | `search("<what you want to do>")`, then `describe("<name>")` | `call("<name>", {...})` |
+| Hyper chat | Call the tool by its name; `search_tools(queries=["<provider> <action>"])` shows its parameters | `<name>(...)` |
+| MCP client (Claude, Cursor, Codex, ChatGPT) | `search("<what you want to do>")`, then `describe("<name>")` | `call_read("<name>", {...})`, `call_write` or `call_destructive`: the one that `describe` names in `call_with` |
 | Hyper CLI | `hyperai search "<what you want to do>"`, then `hyperai describe <name>` | `hyperai call <name> --json '{...}'` |
 
-If a tool is not found, its integration is not connected or not enabled for the workspace: stop and tell the user which integration to connect.
+If a tool is not found: in Hyper chat, find its integration with `discover_toolkits` and connect it with `enable_toolkit`. On an MCP client or the CLI, tell the user which integration to connect in Hyper.
 
 ## Out of scope
 

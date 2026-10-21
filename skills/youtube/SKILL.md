@@ -51,7 +51,7 @@ Fetch the full transcript of any YouTube video and turn it into whatever the use
 - **YouTube toolkit enabled** at [https://app.hyperfx.ai/apps](https://app.hyperfx.ai/apps) — provides `youtube_video_transcripts_fetch` and `youtube_videos_read`.
 - Thumbnail workflows additionally need the image generation and sandbox toolkits.
 
-If `search("youtube_video_transcripts_fetch")` does not find `youtube_video_transcripts_fetch`, stop and tell the user to enable the YouTube toolkit in Hyper.
+If `youtube_video_transcripts_fetch` is not found, the integration to connect is YouTube.
 
 ### How to run the tools in this skill
 
@@ -59,10 +59,11 @@ Every tool in this skill is named by its canonical tool name. Run it with the ca
 
 | Surface | Find a tool | Run it |
 | --- | --- | --- |
-| MCP client (Claude, Cursor, Codex, ChatGPT) | `search("<what you want to do>")`, then `describe("<name>")` | `call("<name>", {...})` |
+| Hyper chat | Call the tool by its name; `search_tools(queries=["<provider> <action>"])` shows its parameters | `<name>(...)` |
+| MCP client (Claude, Cursor, Codex, ChatGPT) | `search("<what you want to do>")`, then `describe("<name>")` | `call_read("<name>", {...})`, `call_write` or `call_destructive`: the one that `describe` names in `call_with` |
 | Hyper CLI | `hyperai search "<what you want to do>"`, then `hyperai describe <name>` | `hyperai call <name> --json '{...}'` |
 
-If a tool is not found, its integration is not connected or not enabled for the workspace: stop and tell the user which integration to connect.
+If a tool is not found: in Hyper chat, find its integration with `discover_toolkits` and connect it with `enable_toolkit`. On an MCP client or the CLI, tell the user which integration to connect in Hyper.
 
 ## Two tools — pick the right one
 

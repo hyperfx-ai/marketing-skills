@@ -98,7 +98,7 @@ See [`CONTRIBUTING.md`](./CONTRIBUTING.md) for details.
 
 ## Repo conventions
 
-- **One canonical tool name, every surface.** A skill names a tool once, by its canonical name, for example `gmail_messages_send`. That name runs on MCP with `call("<name>", {...})` and on the CLI with `hyperai call <name> --json '{...}'`. Never write a legacy name and never write a CLI alias path such as `gmail messages send`: the live catalog (`search`, `describe`) is the only source of truth, and it wins over codebase function names, prior skill content, or memory.
+- **One canonical tool name, every surface.** A skill names a tool once, by its canonical name, for example `gmail_messages_send`. That name runs in Hyper chat as a direct call, on MCP with `call_read("<name>", {...})`, `call_write` or `call_destructive` (the one that `describe` names in `call_with`), and on the CLI with `hyperai call <name> --json '{...}'`. Never write a legacy name and never write a CLI alias path such as `gmail messages send`: the live catalog (`search`, `describe`) is the only source of truth, and it wins over codebase function names, prior skill content, or memory.
 - **Allowed Hyper URLs in skill bodies:** only `app.hyperfx.ai/mcp` and `app.hyperfx.ai/apps`. No other Hyper URLs.
 - **No internal infra references.** No `hyper_cache_*` table names in skills, and no instructions to discover one at runtime — those tables and the `*_insights_query` / `*_sync_*` tools that fed them are being removed. For live data, call the provider's own API tool. For a workspace's own warehouse tables, use the `database` toolkit — it is the single database path in Hyper: `database_tables_list` to discover, `database_tables_describe` for real columns, then `database_query`. Never hardcode or guess a table name. Also no internal filesystem paths and no template ids that aren't part of the public MCP surface.
 - **Conditional integrations.** Some tools only appear when the underlying integration is enabled in the user's Hyper workspace (LinkedIn scraper is the canonical example). Skills citing such tools must mark them conditional and gracefully skip the affected step rather than failing the whole workflow.
@@ -108,7 +108,7 @@ See [`CONTRIBUTING.md`](./CONTRIBUTING.md) for details.
 ## How an agent should use these skills
 
 1. Read the matching `SKILL.md` from `skills/<name>/SKILL.md`.
-2. Confirm the Hyper MCP is connected — every skill defines a "stop and tell the user" check at the top.
+2. When a tool is not found, follow the skill's not-found line: in Hyper chat, `discover_toolkits` then `enable_toolkit`; on an MCP client or the CLI, tell the user which integration to connect.
 3. Follow the workflow defined in the skill's body.
 4. Cross-reference sibling skills via the "Out of scope" table when relevant.
 5. When a tool call fails with an arg-validation error, re-read the MCP tool descriptor before retrying — don't blindly retry with the same args.
