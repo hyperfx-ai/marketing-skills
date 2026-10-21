@@ -67,7 +67,7 @@ result = data_apps_build(
                     "WHERE conversion_action.status != 'REMOVED'"
                 ),
             },
-            "cache_table": "gads_conv_actions",
+            "cache_table": "gads_conv_actions_1234567890",
             "mode": "replace",
             "rows_path": "results",
         },
@@ -79,7 +79,7 @@ result = data_apps_build(
                 "SELECT conversion_action_category AS category, "
                 "COUNT(*) AS total_actions, "
                 "SUM(CASE WHEN conversion_action_primary_for_goal THEN 1 ELSE 0 END) AS primary_actions "
-                "FROM gads_conv_actions GROUP BY 1 ORDER BY 1"
+                "FROM gads_conv_actions_1234567890 GROUP BY 1 ORDER BY 1"
             ),
         },
         "actions": {
@@ -89,13 +89,13 @@ result = data_apps_build(
                 "conversion_action_category AS category, "
                 "conversion_action_status AS status, "
                 "CASE WHEN conversion_action_primary_for_goal THEN 'Yes' ELSE 'No' END AS is_primary "
-                "FROM gads_conv_actions ORDER BY name"
+                "FROM gads_conv_actions_1234567890 ORDER BY name"
             ),
         },
         "primary_total": {
             "shape": "scalar",
             "sql": (
-                "SELECT COUNT(*) FROM gads_conv_actions "
+                "SELECT COUNT(*) FROM gads_conv_actions_1234567890 "
                 "WHERE conversion_action_primary_for_goal"
             ),
         },

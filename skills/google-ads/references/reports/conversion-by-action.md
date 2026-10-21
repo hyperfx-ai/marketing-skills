@@ -90,9 +90,7 @@ campaigns, query the `conversion_action` resource directly — see
 
 The data app runs the GAQL through `tool_data_sources`, re-aggregates the
 cached rows with `sql_data_sources`, and binds those variables in its
-template. Cache table convention: `gads_<report>_<scope>`. Google returns
-the int64 metrics (`cost_micros`, `clicks`, `impressions`) as strings, so
-every metric is cast with `::numeric` in SQL.
+template. Cache table convention: `gads_<report>_<scope>`.
 
 ```python
 result = data_apps_build(
@@ -108,11 +106,11 @@ result = data_apps_build(
                     "segments.conversion_action_category, metrics.conversions, "
                     "metrics.all_conversions, metrics.conversions_value "
                     "FROM campaign "
-                    "WHERE segments.date BETWEEN '2026-03-01' AND '2026-05-12' "
+                    "WHERE segments.date DURING LAST_30_DAYS "
                     "AND campaign.status != 'REMOVED'"
                 ),
             },
-            "cache_table": "gads_conv_by_action",
+            "cache_table": "gads_conv_by_action_1234567890",
             "mode": "replace",
             "rows_path": "results",
         },
@@ -124,11 +122,11 @@ result = data_apps_build(
                     "SELECT segments.date, campaign.id, campaign.name, "
                     "metrics.cost_micros, metrics.clicks, metrics.impressions "
                     "FROM campaign "
-                    "WHERE segments.date BETWEEN '2026-03-01' AND '2026-05-12' "
+                    "WHERE segments.date DURING LAST_30_DAYS "
                     "AND campaign.status != 'REMOVED'"
                 ),
             },
-            "cache_table": "gads_campaign_cost",
+            "cache_table": "gads_campaign_cost_1234567890",
             "mode": "replace",
             "rows_path": "results",
         },
@@ -139,15 +137,15 @@ result = data_apps_build(
             "sql": (
                 "SELECT segments_conversion_action_name AS action, "
                 "SUM(metrics_conversions::numeric) AS conversions "
-                "FROM gads_conv_by_action "
+                "FROM gads_conv_by_action_1234567890 "
                 "GROUP BY 1 ORDER BY conversions DESC"
             ),
         },
         "kpis": {
             "shape": "rows",
             "sql": (
-                "SELECT 'Conversions' AS label, to_char(COALESCE(SUM(metrics_conversions::numeric), 0), 'FM999,999,990.0') AS value FROM gads_conv_by_action "
-                "UNION ALL SELECT 'Cost', '$' || to_char(COALESCE(SUM(metrics_cost_micros::numeric), 0) / 1e6, 'FM999,999,990.00') FROM gads_campaign_cost"
+                "SELECT 'Conversions' AS label, to_char(COALESCE(SUM(metrics_conversions::numeric), 0), 'FM999,999,990.0') AS value FROM gads_conv_by_action_1234567890 "
+                "UNION ALL SELECT 'Cost', '$' || to_char(COALESCE(SUM(metrics_cost_micros::numeric), 0) / 1e6, 'FM999,999,990.00') FROM gads_campaign_cost_1234567890"
             ),
         },
         "trend": {
@@ -155,7 +153,7 @@ result = data_apps_build(
             "sql": (
                 "SELECT segments_date AS date, "
                 "SUM(metrics_conversions::numeric) AS conversions "
-                "FROM gads_conv_by_action GROUP BY 1 ORDER BY 1"
+                "FROM gads_conv_by_action_1234567890 GROUP BY 1 ORDER BY 1"
             ),
         },
     },
@@ -208,7 +206,7 @@ document.addEventListener("DOMContentLoaded", () => {
 ```
 
 `data_apps_refresh(data_app_id=...)` runs both GAQL queries again and
-re-renders the app.
+re-renders the app; the window stays the last 30 days.
 
 ## Variants
 

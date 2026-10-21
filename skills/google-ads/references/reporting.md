@@ -86,9 +86,10 @@ Before authoring a custom dashboard:
 
 The implementation pattern is:
 
-1. `tool_data_sources` — the report's GAQL runs live through `google_ads_gaql_query`, and the rows under `results` are saved to a cache table (convention: `gads_<report>_<scope>`). Always pass `"rows_path": "results"`; without it the cache holds one row of the whole reply.
+1. `tool_data_sources` — the report's GAQL runs live through `google_ads_gaql_query`, and the rows under `results` are saved to a cache table named for the report and the customer (`gads_<report>_<customer id>`), so two accounts never share one table. Pass `"rows_path": "results"`, the key that holds the rows. Run the GAQL once with `google_ads_gaql_query` before the build: when it returns no rows, tell the user and build nothing, because a first build with no rows makes a cache table with no columns and fails.
 2. `sql_data_sources` — re-aggregate the cache table into named variables (KPIs, time series, top lists). Google returns the int64 metrics (`cost_micros`, `clicks`, `impressions`) as strings, so cast every metric with `::numeric`.
 3. The template — `template_name="ads_overview"` for an account view of KPIs, a spend and clicks trend, top campaigns and top ads; else `template_html`, a body with cards, KPIs, charts and tables that binds only the SQL variables.
+   The recipes write amounts with `$`. Select `customer.currency_code` first, and for an account in another currency use its symbol and say the currency in the subtitle.
 4. Refresh is manual: `data_apps_refresh(data_app_id=...)` runs the GAQL again and re-renders the app with no agent run.
 
 ```python
@@ -104,7 +105,7 @@ data_apps_build(
                     "FROM customer WHERE segments.date DURING LAST_30_DAYS"
                 ),
             },
-            "cache_table": "gads_report_raw",
+            "cache_table": "gads_report_raw_1234567890",
             "mode": "replace",
             "rows_path": "results",
         }
@@ -116,7 +117,7 @@ data_apps_build(
                 "SELECT segments_date AS date, "
                 "ROUND(SUM(metrics_cost_micros::numeric) / 1e6, 2) AS spend, "
                 "SUM(metrics_clicks::numeric) AS clicks "
-                "FROM gads_report_raw GROUP BY 1 ORDER BY 1"
+                "FROM gads_report_raw_1234567890 GROUP BY 1 ORDER BY 1"
             ),
         },
     },

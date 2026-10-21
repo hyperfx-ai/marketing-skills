@@ -50,9 +50,6 @@ WHERE segments.date BETWEEN '{start}' AND '{end}'
 
 ## Building a dashboard from this report
 
-Google returns the int64 metrics (`cost_micros`, `clicks`, `impressions`)
-as strings, so every metric is cast with `::numeric` in SQL.
-
 ```python
 result = data_apps_build(
     name="Campaign Structure",
@@ -73,7 +70,7 @@ result = data_apps_build(
                     "AND ad_group.status != 'REMOVED'"
                 ),
             },
-            "cache_table": "gads_structure",
+            "cache_table": "gads_structure_1234567890",
             "mode": "replace",
             "rows_path": "results",
         },
@@ -85,7 +82,7 @@ result = data_apps_build(
                 "SELECT campaign_name AS campaign, "
                 "COUNT(DISTINCT ad_group_id) AS ad_groups, "
                 "ROUND(SUM(metrics_cost_micros::numeric) / 1e6, 2) AS spend "
-                "FROM gads_structure GROUP BY 1 ORDER BY spend DESC LIMIT 25"
+                "FROM gads_structure_1234567890 GROUP BY 1 ORDER BY spend DESC LIMIT 25"
             ),
         },
         "ad_group_efficiency": {
@@ -94,29 +91,46 @@ result = data_apps_build(
                 "SELECT campaign_name AS campaign, ad_group_name AS ad_group, "
                 "SUM(metrics_cost_micros::numeric) / 1e6 AS spend, "
                 "SUM(metrics_conversions::numeric) AS conversions "
-                "FROM gads_structure GROUP BY 1, 2 "
+                "FROM gads_structure_1234567890 GROUP BY 1, 2 "
                 "ORDER BY spend DESC LIMIT 50"
             ),
         },
         "ad_group_total": {
             "shape": "scalar",
-            "sql": "SELECT COUNT(DISTINCT ad_group_id) FROM gads_structure",
+            "sql": "SELECT COUNT(DISTINCT ad_group_id) FROM gads_structure_1234567890",
+        },
+        "campaign_total": {
+            "shape": "scalar",
+            "sql": "SELECT COUNT(DISTINCT campaign_id) FROM gads_structure_1234567890",
         },
     },
     template_html="""
 <div class="grid gap-3" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr));">
   <div class="card" data-size="sm"><section>
-    <p class="text-xs text-muted-foreground">Campaigns</p>
-    <p class="text-2xl font-semibold tabular-nums">{{ ad_groups_per_campaign | length }}</p>
+    <p class="text-xs text-muted-foreground">Campaigns with activity</p>
+    <p class="text-2xl font-semibold tabular-nums">{{ campaign_total }}</p>
   </section></div>
   <div class="card" data-size="sm"><section>
-    <p class="text-xs text-muted-foreground">Ad groups</p>
+    <p class="text-xs text-muted-foreground">Ad groups with activity</p>
     <p class="text-2xl font-semibold tabular-nums">{{ ad_group_total }}</p>
   </section></div>
 </div>
 <div class="card mt-4">
-  <header><h2>Ad groups and spend</h2><p>By campaign, last 30 days</p></header>
-  <section><div class="chart h-64"><canvas id="structure" aria-label="Ad groups and spend by campaign"></canvas></div></section>
+  <header><h2>Spend by campaign</h2><p>Last 30 days</p></header>
+  <section><div class="chart h-64"><canvas id="structure" aria-label="Spend by campaign"></canvas></div></section>
+</div>
+<div class="card mt-4">
+  <header><h2>Campaigns</h2><p>Ad groups with activity and spend, last 30 days</p></header>
+  <section><div class="table-container"><table class="table">
+    <thead><tr><th>Campaign</th><th>Ad groups</th><th>Spend</th></tr></thead>
+    <tbody>
+    {% for row in ad_groups_per_campaign %}
+      <tr><td class="break-words">{{ row.campaign }}</td>
+        <td class="tabular-nums">{{ row.ad_groups }}</td>
+        <td class="tabular-nums">${{ "%.2f"|format(row.spend) }}</td></tr>
+    {% endfor %}
+    </tbody>
+  </table></div></section>
 </div>
 <div class="card mt-4">
   <header><h2>Ad group efficiency</h2><p>By spend, last 30 days</p></header>
@@ -134,12 +148,9 @@ result = data_apps_build(
 <script>
 document.addEventListener("DOMContentLoaded", () => {
   window.basecoat.chart("#structure", {
-    type: "bar", labelKey: "campaign", legend: true,
+    type: "bar", labelKey: "campaign", options: { indexAxis: "y" },
     data: {{ ad_groups_per_campaign | tojson }},
-    series: {
-      ad_groups: { label: "Ad groups", color: "var(--chart-1)" },
-      spend: { label: "Spend", color: "var(--chart-2)" }
-    }
+    series: { spend: { label: "Spend", color: "var(--chart-1)" } }
   });
 });
 </script>

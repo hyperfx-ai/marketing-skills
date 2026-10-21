@@ -52,9 +52,6 @@ WHERE segments.date BETWEEN '{start}' AND '{end}'
 
 ## Building a dashboard from this report
 
-Google returns the int64 metrics (`cost_micros`, `clicks`, `impressions`)
-as strings, so every metric is cast with `::numeric` in SQL.
-
 ```python
 result = data_apps_build(
     name="Campaign Performance",
@@ -73,7 +70,7 @@ result = data_apps_build(
                     "AND campaign.status != 'REMOVED'"
                 ),
             },
-            "cache_table": "gads_campaign_performance",
+            "cache_table": "gads_campaign_performance_1234567890",
             "mode": "replace",
             "rows_path": "results",
         },
@@ -82,10 +79,10 @@ result = data_apps_build(
         "kpis": {
             "shape": "rows",
             "sql": (
-                "SELECT 'Spend' AS label, '$' || to_char(COALESCE(SUM(metrics_cost_micros::numeric), 0) / 1e6, 'FM999,999,990.00') AS value FROM gads_campaign_performance "
-                "UNION ALL SELECT 'Conversions', to_char(COALESCE(SUM(metrics_conversions::numeric), 0), 'FM999,999,990.0') FROM gads_campaign_performance "
-                "UNION ALL SELECT 'Revenue', '$' || to_char(COALESCE(SUM(metrics_conversions_value::numeric), 0), 'FM999,999,990.00') FROM gads_campaign_performance "
-                "UNION ALL SELECT 'ROAS', COALESCE(to_char(SUM(metrics_conversions_value::numeric) / NULLIF(SUM(metrics_cost_micros::numeric) / 1e6, 0), 'FM990.00') || 'x', '–') FROM gads_campaign_performance"
+                "SELECT 'Spend' AS label, '$' || to_char(COALESCE(SUM(metrics_cost_micros::numeric), 0) / 1e6, 'FM999,999,990.00') AS value FROM gads_campaign_performance_1234567890 "
+                "UNION ALL SELECT 'Conversions', to_char(COALESCE(SUM(metrics_conversions::numeric), 0), 'FM999,999,990.0') FROM gads_campaign_performance_1234567890 "
+                "UNION ALL SELECT 'Revenue', '$' || to_char(COALESCE(SUM(metrics_conversions_value::numeric), 0), 'FM999,999,990.00') FROM gads_campaign_performance_1234567890 "
+                "UNION ALL SELECT 'ROAS', COALESCE(to_char(SUM(metrics_conversions_value::numeric) / NULLIF(SUM(metrics_cost_micros::numeric) / 1e6, 0), 'FM990.00') || 'x', '–') FROM gads_campaign_performance_1234567890"
             ),
         },
         "daily_totals": {
@@ -95,7 +92,7 @@ result = data_apps_build(
                 "ROUND(SUM(metrics_cost_micros::numeric) / 1e6, 2) AS spend, "
                 "SUM(metrics_conversions::numeric) AS conversions, "
                 "ROUND(SUM(metrics_conversions_value::numeric), 2) AS revenue "
-                "FROM gads_campaign_performance GROUP BY 1 ORDER BY 1"
+                "FROM gads_campaign_performance_1234567890 GROUP BY 1 ORDER BY 1"
             ),
         },
         "by_campaign": {
@@ -106,7 +103,7 @@ result = data_apps_build(
                 "SUM(metrics_cost_micros::numeric) / 1e6 AS spend, "
                 "SUM(metrics_conversions::numeric) AS conversions, "
                 "COALESCE(SUM(metrics_conversions_value::numeric) / NULLIF(SUM(metrics_cost_micros::numeric) / 1e6, 0), 0) AS roas "
-                "FROM gads_campaign_performance GROUP BY 1, 2 ORDER BY spend DESC LIMIT 25"
+                "FROM gads_campaign_performance_1234567890 GROUP BY 1, 2 ORDER BY spend DESC LIMIT 25"
             ),
         },
     },

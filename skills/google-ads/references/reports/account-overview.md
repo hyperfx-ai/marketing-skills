@@ -55,9 +55,6 @@ The account view fits the library template `ads_overview`: KPI rows, a
 daily spend and clicks trend, top campaigns and top ads. Each SQL source
 is named after the template variable it fills.
 
-Google returns the int64 metrics (`cost_micros`, `clicks`, `impressions`)
-as strings, so every metric is cast with `::numeric` in SQL.
-
 ```python
 result = data_apps_build(
     name="Account Overview",
@@ -81,7 +78,7 @@ result = data_apps_build(
                     "AND campaign.status != 'REMOVED'"
                 ),
             },
-            "cache_table": "gads_account_overview",
+            "cache_table": "gads_account_overview_1234567890",
             "mode": "replace",
             "rows_path": "results",
         },
@@ -97,7 +94,7 @@ result = data_apps_build(
                     "AND ad_group_ad.status != 'REMOVED'"
                 ),
             },
-            "cache_table": "gads_account_overview_ads",
+            "cache_table": "gads_account_overview_ads_1234567890",
             "mode": "replace",
             "rows_path": "results",
         },
@@ -108,10 +105,10 @@ result = data_apps_build(
             "sql": (
                 "SELECT 'Spend' AS label, "
                 "'$' || to_char(COALESCE(SUM(metrics_cost_micros::numeric), 0) / 1e6, 'FM999,999,990.00') AS value "
-                "FROM gads_account_overview "
-                "UNION ALL SELECT 'Impressions', to_char(COALESCE(SUM(metrics_impressions::numeric), 0), 'FM999,999,999') FROM gads_account_overview "
-                "UNION ALL SELECT 'Clicks', to_char(COALESCE(SUM(metrics_clicks::numeric), 0), 'FM999,999,999') FROM gads_account_overview "
-                "UNION ALL SELECT 'Conversions', to_char(COALESCE(SUM(metrics_conversions::numeric), 0), 'FM999,999,990.0') FROM gads_account_overview"
+                "FROM gads_account_overview_1234567890 "
+                "UNION ALL SELECT 'Impressions', to_char(COALESCE(SUM(metrics_impressions::numeric), 0), 'FM999,999,999') FROM gads_account_overview_1234567890 "
+                "UNION ALL SELECT 'Clicks', to_char(COALESCE(SUM(metrics_clicks::numeric), 0), 'FM999,999,999') FROM gads_account_overview_1234567890 "
+                "UNION ALL SELECT 'Conversions', to_char(COALESCE(SUM(metrics_conversions::numeric), 0), 'FM999,999,990.0') FROM gads_account_overview_1234567890"
             ),
         },
         "secondary_kpis": {
@@ -119,10 +116,10 @@ result = data_apps_build(
             "sql": (
                 "SELECT 'ROAS' AS label, "
                 "COALESCE(to_char(SUM(metrics_conversions_value::numeric) / NULLIF(SUM(metrics_cost_micros::numeric) / 1e6, 0), 'FM990.00') || 'x', '–') AS value "
-                "FROM gads_account_overview "
-                "UNION ALL SELECT 'Cost / conv.', COALESCE('$' || to_char(SUM(metrics_cost_micros::numeric) / 1e6 / NULLIF(SUM(metrics_conversions::numeric), 0), 'FM999,990.00'), '–') FROM gads_account_overview "
-                "UNION ALL SELECT 'Conv. rate', COALESCE(to_char(100 * SUM(metrics_conversions::numeric) / NULLIF(SUM(metrics_clicks::numeric), 0), 'FM990.00') || '%', '–') FROM gads_account_overview "
-                "UNION ALL SELECT 'Avg. CPC', COALESCE('$' || to_char(SUM(metrics_cost_micros::numeric) / 1e6 / NULLIF(SUM(metrics_clicks::numeric), 0), 'FM990.00'), '–') FROM gads_account_overview"
+                "FROM gads_account_overview_1234567890 "
+                "UNION ALL SELECT 'Cost / conv.', COALESCE('$' || to_char(SUM(metrics_cost_micros::numeric) / 1e6 / NULLIF(SUM(metrics_conversions::numeric), 0), 'FM999,990.00'), '–') FROM gads_account_overview_1234567890 "
+                "UNION ALL SELECT 'Conv. rate', COALESCE(to_char(100 * SUM(metrics_conversions::numeric) / NULLIF(SUM(metrics_clicks::numeric), 0), 'FM990.00') || '%', '–') FROM gads_account_overview_1234567890 "
+                "UNION ALL SELECT 'Avg. CPC', COALESCE('$' || to_char(SUM(metrics_cost_micros::numeric) / 1e6 / NULLIF(SUM(metrics_clicks::numeric), 0), 'FM990.00'), '–') FROM gads_account_overview_1234567890"
             ),
         },
         "trend": {
@@ -135,7 +132,7 @@ result = data_apps_build(
                 "FROM (SELECT segments_date AS day, "
                 "ROUND(SUM(metrics_cost_micros::numeric) / 1e6, 2) AS spend, "
                 "SUM(metrics_clicks::numeric) AS clicks "
-                "FROM gads_account_overview GROUP BY 1) daily"
+                "FROM gads_account_overview_1234567890 GROUP BY 1) daily"
             ),
         },
         "top_campaigns": {
@@ -144,7 +141,7 @@ result = data_apps_build(
                 "SELECT campaign_name AS name, "
                 "ROUND(SUM(metrics_cost_micros::numeric) / 1e6, 2) AS value, "
                 "'$' || to_char(SUM(metrics_cost_micros::numeric) / 1e6, 'FM999,999,990.00') AS display "
-                "FROM gads_account_overview GROUP BY 1 ORDER BY 2 DESC LIMIT 10"
+                "FROM gads_account_overview_1234567890 GROUP BY 1 ORDER BY 2 DESC LIMIT 10"
             ),
         },
         "top_ads": {
@@ -153,7 +150,7 @@ result = data_apps_build(
                 "SELECT ad_group_name || ' · ad ' || ad_group_ad_ad_id AS name, "
                 "ROUND(SUM(metrics_cost_micros::numeric) / 1e6, 2) AS value, "
                 "'$' || to_char(SUM(metrics_cost_micros::numeric) / 1e6, 'FM999,999,990.00') AS display "
-                "FROM gads_account_overview_ads GROUP BY 1 ORDER BY 2 DESC LIMIT 10"
+                "FROM gads_account_overview_ads_1234567890 GROUP BY 1 ORDER BY 2 DESC LIMIT 10"
             ),
         },
     },

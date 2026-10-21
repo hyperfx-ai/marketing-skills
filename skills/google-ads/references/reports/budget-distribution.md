@@ -46,9 +46,6 @@ WHERE segments.date BETWEEN '{start}' AND '{end}'
 
 ## Building a dashboard from this report
 
-Google returns the int64 metrics (`cost_micros`, `clicks`, `amount_micros`)
-as strings, so every metric is cast with `::numeric` in SQL.
-
 ```python
 result = data_apps_build(
     name="Budget Distribution",
@@ -68,7 +65,7 @@ result = data_apps_build(
                     "AND campaign.status != 'REMOVED'"
                 ),
             },
-            "cache_table": "gads_budget",
+            "cache_table": "gads_budget_1234567890",
             "mode": "replace",
             "rows_path": "results",
         },
@@ -80,7 +77,7 @@ result = data_apps_build(
                 "SELECT campaign_name AS campaign, "
                 "ROUND(SUM(metrics_cost_micros::numeric) / 1e6, 2) AS spend, "
                 "SUM(metrics_conversions::numeric) AS conversions "
-                "FROM gads_budget GROUP BY 1 ORDER BY spend DESC LIMIT 25"
+                "FROM gads_budget_1234567890 GROUP BY 1 ORDER BY spend DESC LIMIT 25"
             ),
         },
         "zero_conv_high_spend": {
@@ -88,7 +85,7 @@ result = data_apps_build(
             "sql": (
                 "SELECT campaign_name AS campaign, "
                 "SUM(metrics_cost_micros::numeric) / 1e6 AS spend "
-                "FROM gads_budget GROUP BY 1 "
+                "FROM gads_budget_1234567890 GROUP BY 1 "
                 "HAVING SUM(metrics_conversions::numeric) = 0 "
                 "AND SUM(metrics_cost_micros::numeric) > 50000000 "
                 "ORDER BY spend DESC"
@@ -98,7 +95,7 @@ result = data_apps_build(
             "shape": "scalar",
             "sql": (
                 "SELECT '$' || to_char(COALESCE(SUM(metrics_cost_micros::numeric), 0) / 1e6, 'FM999,999,990.00') "
-                "FROM gads_budget"
+                "FROM gads_budget_1234567890"
             ),
         },
     },

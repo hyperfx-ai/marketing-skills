@@ -101,9 +101,6 @@ sandbox; cache tables are only needed for dashboard/data-app builds.
 
 ## Building a dashboard from this report
 
-Google returns the int64 metrics (`cost_micros`, `clicks`, `impressions`)
-as strings, so every metric is cast with `::numeric` in SQL.
-
 ```python
 # After the agent has mapped action names to ordered stages, e.g.
 # stages = ["application_submitted", "lead_reached",
@@ -122,11 +119,11 @@ result = data_apps_build(
                     "segments.conversion_action_category, metrics.conversions, "
                     "metrics.all_conversions, metrics.conversions_value "
                     "FROM campaign "
-                    "WHERE segments.date BETWEEN '2026-03-01' AND '2026-05-12' "
+                    "WHERE segments.date DURING LAST_30_DAYS "
                     "AND campaign.status != 'REMOVED'"
                 ),
             },
-            "cache_table": "gads_funnel_raw",
+            "cache_table": "gads_funnel_raw_1234567890",
             "mode": "replace",
             "rows_path": "results",
         },
@@ -138,11 +135,11 @@ result = data_apps_build(
                     "SELECT segments.date, campaign.id, campaign.name, "
                     "metrics.cost_micros, metrics.clicks, metrics.impressions "
                     "FROM campaign "
-                    "WHERE segments.date BETWEEN '2026-03-01' AND '2026-05-12' "
+                    "WHERE segments.date DURING LAST_30_DAYS "
                     "AND campaign.status != 'REMOVED'"
                 ),
             },
-            "cache_table": "gads_funnel_cost",
+            "cache_table": "gads_funnel_cost_1234567890",
             "mode": "replace",
             "rows_path": "results",
         },
@@ -161,7 +158,7 @@ result = data_apps_build(
                 "  WHEN 'launched_from_training' THEN 5 "
                 "  WHEN 'rep_that_sells' THEN 6 END AS stage_order, "
                 "  SUM(metrics_conversions::numeric) AS conversions "
-                "  FROM gads_funnel_raw "
+                "  FROM gads_funnel_raw_1234567890 "
                 "  WHERE segments_conversion_action_name IN ("
                 "    'application_submitted', 'lead_reached', "
                 "    'scheduled_for_training', 'showed_for_training', "
@@ -176,8 +173,9 @@ result = data_apps_build(
         "kpis": {
             "shape": "rows",
             "sql": (
-                "SELECT 'Conversions' AS label, to_char(COALESCE(SUM(metrics_conversions::numeric), 0), 'FM999,999,990.0') AS value FROM gads_funnel_raw "
-                "UNION ALL SELECT 'Cost', '$' || to_char(COALESCE(SUM(metrics_cost_micros::numeric), 0) / 1e6, 'FM999,999,990.00') FROM gads_funnel_cost"
+                "SELECT 'Conversions' AS label, to_char(COALESCE(SUM(metrics_conversions::numeric), 0), 'FM999,999,990.0') AS value FROM gads_funnel_raw_1234567890 "
+                "WHERE segments_conversion_action_name IN ('application_submitted', 'lead_reached', 'scheduled_for_training', 'showed_for_training', 'launched_from_training', 'rep_that_sells') "
+                "UNION ALL SELECT 'Cost', '$' || to_char(COALESCE(SUM(metrics_cost_micros::numeric), 0) / 1e6, 'FM999,999,990.00') FROM gads_funnel_cost_1234567890"
             ),
         },
         "stage_trend": {
@@ -185,7 +183,9 @@ result = data_apps_build(
             "sql": (
                 "SELECT segments_date AS date, "
                 "SUM(metrics_conversions::numeric) AS conversions "
-                "FROM gads_funnel_raw GROUP BY 1 ORDER BY 1"
+                "FROM gads_funnel_raw_1234567890 "
+                "WHERE segments_conversion_action_name IN ('application_submitted', 'lead_reached', 'scheduled_for_training', 'showed_for_training', 'launched_from_training', 'rep_that_sells') "
+                "GROUP BY 1 ORDER BY 1"
             ),
         },
     },
@@ -240,13 +240,10 @@ document.addEventListener("DOMContentLoaded", () => {
 ```
 
 `data_apps_refresh(data_app_id=...)` runs both GAQL queries again and
-re-renders the app.
+re-renders the app; the window stays the last 30 days.
 
 ## Variants
 
-- **Step rates**: add an `sql_data_sources` entry that uses window
-  functions (`LAG`) to compute `conversions / lag_conversions` between
-  ordered stages and bind it to a separate KPI row.
 - **Per campaign**: filter `WHERE campaign.id = ...` to compare funnel
   shapes between campaigns.
 - **Allocated cost per stage**: join campaign/date cost to conversion rows,

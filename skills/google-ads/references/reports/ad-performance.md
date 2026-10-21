@@ -51,9 +51,7 @@ WHERE segments.date BETWEEN '{start}' AND '{end}'
 
 ## Building a dashboard from this report
 
-Google returns the int64 metrics (`cost_micros`, `clicks`, `impressions`)
-as strings, so every metric is cast with `::numeric` in SQL. An RSA has
-no `ad.name`, so the table labels each ad by its ad group and id.
+An RSA has no `ad.name`, so the table labels each ad by its ad group and id.
 
 ```python
 result = data_apps_build(
@@ -75,7 +73,7 @@ result = data_apps_build(
                     "AND campaign.status != 'REMOVED'"
                 ),
             },
-            "cache_table": "gads_ad_performance",
+            "cache_table": "gads_ad_performance_1234567890",
             "mode": "replace",
             "rows_path": "results",
         },
@@ -84,9 +82,9 @@ result = data_apps_build(
         "kpis": {
             "shape": "rows",
             "sql": (
-                "SELECT 'Clicks' AS label, to_char(COALESCE(SUM(metrics_clicks::numeric), 0), 'FM999,999,999') AS value FROM gads_ad_performance "
-                "UNION ALL SELECT 'Conversions', to_char(COALESCE(SUM(metrics_conversions::numeric), 0), 'FM999,999,990.0') FROM gads_ad_performance "
-                "UNION ALL SELECT 'Spend', '$' || to_char(COALESCE(SUM(metrics_cost_micros::numeric), 0) / 1e6, 'FM999,999,990.00') FROM gads_ad_performance"
+                "SELECT 'Clicks' AS label, to_char(COALESCE(SUM(metrics_clicks::numeric), 0), 'FM999,999,999') AS value FROM gads_ad_performance_1234567890 "
+                "UNION ALL SELECT 'Conversions', to_char(COALESCE(SUM(metrics_conversions::numeric), 0), 'FM999,999,990.0') FROM gads_ad_performance_1234567890 "
+                "UNION ALL SELECT 'Spend', '$' || to_char(COALESCE(SUM(metrics_cost_micros::numeric), 0) / 1e6, 'FM999,999,990.00') FROM gads_ad_performance_1234567890"
             ),
         },
         "top_ads": {
@@ -98,7 +96,7 @@ result = data_apps_build(
                 "SUM(metrics_clicks::numeric) AS clicks, "
                 "SUM(metrics_conversions::numeric) AS conversions, "
                 "SUM(metrics_cost_micros::numeric) / 1e6 AS spend "
-                "FROM gads_ad_performance "
+                "FROM gads_ad_performance_1234567890 "
                 "GROUP BY 1, 2 ORDER BY clicks DESC LIMIT 25"
             ),
         },
@@ -108,7 +106,7 @@ result = data_apps_build(
                 "SELECT ad_group_ad_ad_type AS ad_type, "
                 "SUM(metrics_clicks::numeric) AS clicks, "
                 "SUM(metrics_conversions::numeric) AS conversions "
-                "FROM gads_ad_performance GROUP BY 1 ORDER BY clicks DESC"
+                "FROM gads_ad_performance_1234567890 GROUP BY 1 ORDER BY clicks DESC"
             ),
         },
     },
@@ -122,8 +120,8 @@ result = data_apps_build(
   {% endfor %}
 </div>
 <div class="card mt-4">
-  <header><h2>Performance by ad type</h2><p>Last 30 days</p></header>
-  <section><div class="chart h-64"><canvas id="by_type" aria-label="Clicks and conversions by ad type"></canvas></div></section>
+  <header><h2>Clicks by ad type</h2><p>Last 30 days</p></header>
+  <section><div class="chart h-64"><canvas id="by_type" aria-label="Clicks by ad type"></canvas></div></section>
 </div>
 <div class="card mt-4">
   <header><h2>Top ads</h2><p>By clicks, last 30 days</p></header>
@@ -143,12 +141,9 @@ result = data_apps_build(
 <script>
 document.addEventListener("DOMContentLoaded", () => {
   window.basecoat.chart("#by_type", {
-    type: "bar", labelKey: "ad_type", legend: true,
+    type: "bar", labelKey: "ad_type",
     data: {{ by_type | tojson }},
-    series: {
-      clicks: { label: "Clicks", color: "var(--chart-1)" },
-      conversions: { label: "Conversions", color: "var(--chart-2)" }
-    }
+    series: { clicks: { label: "Clicks", color: "var(--chart-1)" } }
   });
 });
 </script>

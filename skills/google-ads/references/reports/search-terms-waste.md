@@ -49,9 +49,6 @@ WHERE segments.date BETWEEN '{start}' AND '{end}'
 
 ## Building a dashboard from this report
 
-Google returns the int64 metrics (`cost_micros`, `clicks`) as strings, so
-every metric is cast with `::numeric` in SQL.
-
 ```python
 result = data_apps_build(
     name="Search Terms Waste",
@@ -66,10 +63,12 @@ result = data_apps_build(
                     "metrics.cost_micros, metrics.clicks, "
                     "metrics.conversions, metrics.conversions_value "
                     "FROM search_term_view "
-                    "WHERE segments.date DURING LAST_30_DAYS"
+                    "WHERE segments.date DURING LAST_30_DAYS "
+                    "AND metrics.cost_micros > 0 "
+                    "ORDER BY metrics.cost_micros DESC LIMIT 10000"
                 ),
             },
-            "cache_table": "gads_search_terms",
+            "cache_table": "gads_search_terms_1234567890",
             "mode": "replace",
             "rows_path": "results",
         },
@@ -81,22 +80,14 @@ result = data_apps_build(
                 "SELECT search_term_view_search_term AS term, "
                 "campaign_name AS campaign, "
                 "SUM(metrics_cost_micros::numeric) / 1e6 AS spend, "
-                "SUM(metrics_clicks::numeric) AS clicks "
-                "FROM gads_search_terms "
+                "SUM(metrics_clicks::numeric) AS clicks, "
+                "COUNT(*) OVER () AS flagged_terms, "
+                "'$' || to_char(SUM(SUM(metrics_cost_micros::numeric)) OVER () / 1e6, 'FM999,999,990.00') AS flagged_spend "
+                "FROM gads_search_terms_1234567890 "
                 "GROUP BY 1, 2 "
                 "HAVING SUM(metrics_conversions::numeric) = 0 "
                 "AND SUM(metrics_cost_micros::numeric) > 10000000 "
                 "ORDER BY spend DESC LIMIT 50"
-            ),
-        },
-        "flagged_spend": {
-            "shape": "scalar",
-            "sql": (
-                "SELECT '$' || to_char(COALESCE(SUM(spend), 0), 'FM999,999,990.00') FROM ("
-                "SELECT SUM(metrics_cost_micros::numeric) / 1e6 AS spend "
-                "FROM gads_search_terms GROUP BY search_term_view_search_term, campaign_name "
-                "HAVING SUM(metrics_conversions::numeric) = 0 "
-                "AND SUM(metrics_cost_micros::numeric) > 10000000) flagged"
             ),
         },
     },
@@ -104,15 +95,15 @@ result = data_apps_build(
 <div class="grid gap-3" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr));">
   <div class="card" data-size="sm"><section>
     <p class="text-xs text-muted-foreground">Flagged terms</p>
-    <p class="text-2xl font-semibold tabular-nums">{{ top_waste | length }}</p>
+    <p class="text-2xl font-semibold tabular-nums">{{ top_waste[0].flagged_terms if top_waste else 0 }}</p>
   </section></div>
   <div class="card" data-size="sm"><section>
     <p class="text-xs text-muted-foreground">Flagged spend</p>
-    <p class="text-2xl font-semibold tabular-nums">{{ flagged_spend }}</p>
+    <p class="text-2xl font-semibold tabular-nums">{{ top_waste[0].flagged_spend if top_waste else "$0.00" }}</p>
   </section></div>
 </div>
 <div class="card mt-4">
-  <header><h2>Waste candidates</h2><p>Over $10 and no conversion, last 30 days</p></header>
+  <header><h2>Waste candidates</h2><p>The 50 costliest terms with over $10 and no conversion, last 30 days</p></header>
   <section><div class="table-container"><table class="table">
     <thead><tr><th>Search term</th><th>Campaign</th><th>Spend</th><th>Clicks</th></tr></thead>
     <tbody>
