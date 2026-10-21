@@ -46,6 +46,9 @@ WHERE segments.date BETWEEN '{start}' AND '{end}'
 
 ## Building a dashboard from this report
 
+Google returns the int64 metrics (`cost_micros`, `clicks`, `amount_micros`)
+as strings, so every metric is cast with `::numeric` in SQL.
+
 ```python
 result = data_apps_build(
     name="Budget Distribution",
@@ -67,6 +70,7 @@ result = data_apps_build(
             },
             "cache_table": "gads_budget",
             "mode": "replace",
+            "rows_path": "results",
         },
     },
     sql_data_sources={
@@ -74,8 +78,8 @@ result = data_apps_build(
             "shape": "rows",
             "sql": (
                 "SELECT campaign_name AS campaign, "
-                "SUM(metrics_cost_micros)/1e6 AS spend, "
-                "SUM(metrics_conversions) AS conversions "
+                "ROUND(SUM(metrics_cost_micros::numeric) / 1e6, 2) AS spend, "
+                "SUM(metrics_conversions::numeric) AS conversions "
                 "FROM gads_budget GROUP BY 1 ORDER BY spend DESC LIMIT 25"
             ),
         },
@@ -83,59 +87,62 @@ result = data_apps_build(
             "shape": "rows",
             "sql": (
                 "SELECT campaign_name AS campaign, "
-                "SUM(metrics_cost_micros)/1e6 AS spend "
+                "SUM(metrics_cost_micros::numeric) / 1e6 AS spend "
                 "FROM gads_budget GROUP BY 1 "
-                "HAVING SUM(metrics_conversions) = 0 "
-                "AND SUM(metrics_cost_micros) > 50000000 "
+                "HAVING SUM(metrics_conversions::numeric) = 0 "
+                "AND SUM(metrics_cost_micros::numeric) > 50000000 "
                 "ORDER BY spend DESC"
             ),
         },
+        "total_spend": {
+            "shape": "scalar",
+            "sql": (
+                "SELECT '$' || to_char(COALESCE(SUM(metrics_cost_micros::numeric), 0) / 1e6, 'FM999,999,990.00') "
+                "FROM gads_budget"
+            ),
+        },
     },
-    prefab_python="""
-from prefab_ui import PrefabApp
-from prefab_ui.components import Card, CardContent, Column, DataTable, DataTableColumn, Grid, Heading, Metric, Muted, Text
-from prefab_ui.components.charts import BarChart, ChartSeries
-
-with PrefabApp(title="Budget Distribution") as app:
-    total_spend = sum(row.get("spend", 0) for row in by_campaign)
-
-    with Column(gap=6, css_class="p-6"):
-        with Column(gap=1):
-            Heading("Budget Distribution")
-            Muted("Spend concentration and zero-conversion risk")
-
-        with Grid(columns=4, gap=4):
-            with Card():
-                with CardContent():
-                    Metric(label="Spend", value=f"${total_spend:,.0f}")
-            with Card():
-                with CardContent():
-                    Metric(label="Zero-conversion campaigns", value=f"{len(zero_conv_high_spend):,}")
-
-        with Grid(columns=[2, 1], gap=6):
-            with Card():
-                with CardContent():
-                    Text("Spend by campaign", css_class="text-sm font-medium text-muted-foreground mb-2")
-                    BarChart(
-                        data=by_campaign,
-                        x_axis="campaign",
-                        series=[ChartSeries(data_key="spend", label="Spend")],
-                        height=300,
-                    )
-            with Card():
-                with CardContent():
-                    Text("High spend without conversions", css_class="text-sm font-medium text-muted-foreground mb-2")
-                    DataTable(
-                        columns=[
-                            DataTableColumn(key="campaign", header="Campaign"),
-                            DataTableColumn(key="spend", header="Spend"),
-                        ],
-                        rows=zero_conv_high_spend,
-                    )
+    template_html="""
+<div class="grid gap-3" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr));">
+  <div class="card" data-size="sm"><section>
+    <p class="text-xs text-muted-foreground">Spend</p>
+    <p class="text-2xl font-semibold tabular-nums">{{ total_spend }}</p>
+  </section></div>
+  <div class="card" data-size="sm"><section>
+    <p class="text-xs text-muted-foreground">Zero-conversion campaigns</p>
+    <p class="text-2xl font-semibold tabular-nums">{{ zero_conv_high_spend | length }}</p>
+  </section></div>
+</div>
+<div class="card mt-4">
+  <header><h2>Spend by campaign</h2><p>Last 30 days</p></header>
+  <section><div class="chart h-64"><canvas id="by_campaign" aria-label="Spend by campaign"></canvas></div></section>
+</div>
+<div class="card mt-4">
+  <header><h2>High spend without conversions</h2><p>Over $50 and no conversion</p></header>
+  <section><div class="table-container"><table class="table">
+    <thead><tr><th>Campaign</th><th>Spend</th></tr></thead>
+    <tbody>
+    {% for row in zero_conv_high_spend %}
+      <tr><td class="break-words">{{ row.campaign }}</td><td class="tabular-nums">${{ "%.2f"|format(row.spend) }}</td></tr>
+    {% endfor %}
+    </tbody>
+  </table></div></section>
+</div>
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  window.basecoat.chart("#by_campaign", {
+    type: "bar", labelKey: "campaign", options: { indexAxis: "y" },
+    data: {{ by_campaign | tojson }},
+    series: { spend: { label: "Spend", color: "var(--chart-1)" } }
+  });
+});
+</script>
 """,
-    refresh={"mode": "scheduled", "cron": "0 */6 * * *"},
 )
 ```
+
+`data_apps_refresh(data_app_id=...)` runs the GAQL again and re-renders
+the app; the window stays the last 30 days.
 
 ## Variants
 

@@ -88,9 +88,11 @@ campaigns, query the `conversion_action` resource directly — see
 
 ## Building a dashboard from this report
 
-The dashboard/data app tool reads tool-sourced data via `tool_data_sources`,
-re-aggregates it via `sql_data_sources`, and binds the variables in the
-interface source. Cache table convention: `gads_<report>_<scope>`.
+The data app runs the GAQL through `tool_data_sources`, re-aggregates the
+cached rows with `sql_data_sources`, and binds those variables in its
+template. Cache table convention: `gads_<report>_<scope>`. Google returns
+the int64 metrics (`cost_micros`, `clicks`, `impressions`) as strings, so
+every metric is cast with `::numeric` in SQL.
 
 ```python
 result = data_apps_build(
@@ -112,6 +114,7 @@ result = data_apps_build(
             },
             "cache_table": "gads_conv_by_action",
             "mode": "replace",
+            "rows_path": "results",
         },
         "raw_cost": {
             "tool_name": "google_ads_gaql_query",
@@ -127,6 +130,7 @@ result = data_apps_build(
             },
             "cache_table": "gads_campaign_cost",
             "mode": "replace",
+            "rows_path": "results",
         },
     },
     sql_data_sources={
@@ -134,84 +138,77 @@ result = data_apps_build(
             "shape": "rows",
             "sql": (
                 "SELECT segments_conversion_action_name AS action, "
-                "SUM(metrics_conversions) AS conversions "
+                "SUM(metrics_conversions::numeric) AS conversions "
                 "FROM gads_conv_by_action "
                 "GROUP BY 1 ORDER BY conversions DESC"
             ),
         },
-        "cost_totals": {
+        "kpis": {
             "shape": "rows",
             "sql": (
-                "SELECT SUM(metrics_cost_micros)/1e6 AS cost "
-                "FROM gads_campaign_cost"
+                "SELECT 'Conversions' AS label, to_char(COALESCE(SUM(metrics_conversions::numeric), 0), 'FM999,999,990.0') AS value FROM gads_conv_by_action "
+                "UNION ALL SELECT 'Cost', '$' || to_char(COALESCE(SUM(metrics_cost_micros::numeric), 0) / 1e6, 'FM999,999,990.00') FROM gads_campaign_cost"
             ),
         },
         "trend": {
             "shape": "rows",
             "sql": (
                 "SELECT segments_date AS date, "
-                "segments_conversion_action_name AS action, "
-                "SUM(metrics_conversions) AS conversions "
-                "FROM gads_conv_by_action GROUP BY 1, 2 ORDER BY 1"
+                "SUM(metrics_conversions::numeric) AS conversions "
+                "FROM gads_conv_by_action GROUP BY 1 ORDER BY 1"
             ),
         },
     },
-    prefab_python="""
-from prefab_ui import PrefabApp
-from prefab_ui.components import Card, CardContent, Column, DataTable, DataTableColumn, Grid, Heading, Metric, Muted, Text
-from prefab_ui.components.charts import AreaChart, BarChart, ChartSeries
-
-with PrefabApp(title="Conversions by Action") as app:
-    total_conversions = sum(row.get("conversions", 0) for row in totals_by_action)
-    total_cost = (cost_totals[0].get("cost", 0) if cost_totals else 0)
-
-    with Column(gap=6, css_class="p-6"):
-        with Column(gap=1):
-            Heading("Conversions by Action")
-            Muted("Conversion mix, trend, and campaign spend context")
-
-        with Grid(columns=4, gap=4):
-            with Card():
-                with CardContent():
-                    Metric(label="Conversions", value=f"{total_conversions:,.0f}")
-            with Card():
-                with CardContent():
-                    Metric(label="Cost", value=f"${total_cost:,.0f}")
-
-        with Grid(columns=[2, 1], gap=6):
-            with Card():
-                with CardContent():
-                    Text("Conversion trend", css_class="text-sm font-medium text-muted-foreground mb-2")
-                    AreaChart(
-                        data=trend,
-                        x_axis="date",
-                        series=[ChartSeries(data_key="conversions", label="Conversions")],
-                        height=300,
-                    )
-            with Card():
-                with CardContent():
-                    Text("Conversions by action", css_class="text-sm font-medium text-muted-foreground mb-2")
-                    BarChart(
-                        data=totals_by_action,
-                        x_axis="action",
-                        series=[ChartSeries(data_key="conversions", label="Conversions")],
-                        height=300,
-                    )
-
-        with Card():
-            with CardContent():
-                Text("Action detail", css_class="text-sm font-medium text-muted-foreground mb-2")
-                DataTable(
-                    columns=[
-                        DataTableColumn(key="action", header="Action"),
-                        DataTableColumn(key="conversions", header="Conversions"),
-                    ],
-                    rows=totals_by_action,
-                )
+    template_html="""
+<div class="grid gap-3" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr));">
+  {% for kpi in kpis %}
+  <div class="card" data-size="sm"><section>
+    <p class="text-xs text-muted-foreground">{{ kpi.label }}</p>
+    <p class="text-2xl font-semibold tabular-nums">{{ kpi.value }}</p>
+  </section></div>
+  {% endfor %}
+</div>
+<div class="grid gap-4 mt-4" style="grid-template-columns:repeat(auto-fit,minmax(300px,1fr));">
+  <div class="card min-w-0">
+    <header><h2>Conversion trend</h2><p>All actions, by day</p></header>
+    <section><div class="chart h-64"><canvas id="trend" aria-label="Conversions by day"></canvas></div></section>
+  </div>
+  <div class="card min-w-0">
+    <header><h2>Conversions by action</h2></header>
+    <section><div class="chart h-64"><canvas id="by_action" aria-label="Conversions by action"></canvas></div></section>
+  </div>
+</div>
+<div class="card mt-4">
+  <header><h2>Action detail</h2></header>
+  <section><div class="table-container"><table class="table">
+    <thead><tr><th>Action</th><th>Conversions</th></tr></thead>
+    <tbody>
+    {% for row in totals_by_action %}
+      <tr><td class="break-words">{{ row.action }}</td><td class="tabular-nums">{{ "%.1f"|format(row.conversions) }}</td></tr>
+    {% endfor %}
+    </tbody>
+  </table></div></section>
+</div>
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  window.basecoat.chart("#trend", {
+    type: "line", labelKey: "date",
+    data: {{ trend | tojson }},
+    series: { conversions: { label: "Conversions", color: "var(--chart-1)", dataset: { fill: true, tension: 0.35 } } }
+  });
+  window.basecoat.chart("#by_action", {
+    type: "bar", labelKey: "action", options: { indexAxis: "y" },
+    data: {{ totals_by_action | tojson }},
+    series: { conversions: { label: "Conversions", color: "var(--chart-2)" } }
+  });
+});
+</script>
 """,
-    refresh={"mode": "scheduled", "cron": "0 * * * *"},
 )
 ```
+
+`data_apps_refresh(data_app_id=...)` runs both GAQL queries again and
+re-renders the app.
 
 ## Variants
 

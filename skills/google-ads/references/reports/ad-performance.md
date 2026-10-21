@@ -51,6 +51,10 @@ WHERE segments.date BETWEEN '{start}' AND '{end}'
 
 ## Building a dashboard from this report
 
+Google returns the int64 metrics (`cost_micros`, `clicks`, `impressions`)
+as strings, so every metric is cast with `::numeric` in SQL. An RSA has
+no `ad.name`, so the table labels each ad by its ad group and id.
+
 ```python
 result = data_apps_build(
     name="Ad Performance",
@@ -60,11 +64,10 @@ result = data_apps_build(
             "tool_args": {
                 "customer_id": "123-456-7890",
                 "query": (
-                    "SELECT ad_group_ad.ad.id, ad_group_ad.ad.name, "
-                    "ad_group_ad.ad.type, ad_group_ad.status, "
-                    "ad_group.name, campaign.name, "
+                    "SELECT ad_group_ad.ad.id, ad_group_ad.ad.type, "
+                    "ad_group_ad.status, ad_group.name, campaign.name, "
                     "metrics.impressions, metrics.clicks, metrics.cost_micros, "
-                    "metrics.conversions, metrics.ctr, metrics.average_cpc "
+                    "metrics.conversions "
                     "FROM ad_group_ad "
                     "WHERE segments.date DURING LAST_30_DAYS "
                     "AND ad_group_ad.status != 'REMOVED' "
@@ -74,88 +77,87 @@ result = data_apps_build(
             },
             "cache_table": "gads_ad_performance",
             "mode": "replace",
+            "rows_path": "results",
         },
     },
     sql_data_sources={
+        "kpis": {
+            "shape": "rows",
+            "sql": (
+                "SELECT 'Clicks' AS label, to_char(COALESCE(SUM(metrics_clicks::numeric), 0), 'FM999,999,999') AS value FROM gads_ad_performance "
+                "UNION ALL SELECT 'Conversions', to_char(COALESCE(SUM(metrics_conversions::numeric), 0), 'FM999,999,990.0') FROM gads_ad_performance "
+                "UNION ALL SELECT 'Spend', '$' || to_char(COALESCE(SUM(metrics_cost_micros::numeric), 0) / 1e6, 'FM999,999,990.00') FROM gads_ad_performance"
+            ),
+        },
         "top_ads": {
             "shape": "rows",
             "sql": (
-                "SELECT ad_group_ad_ad_name AS ad_name, "
+                "SELECT ad_group_name || ' · ad ' || ad_group_ad_ad_id AS ad, "
                 "campaign_name AS campaign, "
-                "ad_group_name AS ad_group, "
-                "SUM(metrics_impressions) AS impressions, "
-                "SUM(metrics_clicks) AS clicks, "
-                "SUM(metrics_conversions) AS conversions, "
-                "SUM(metrics_cost_micros)/1e6 AS spend "
+                "SUM(metrics_impressions::numeric) AS impressions, "
+                "SUM(metrics_clicks::numeric) AS clicks, "
+                "SUM(metrics_conversions::numeric) AS conversions, "
+                "SUM(metrics_cost_micros::numeric) / 1e6 AS spend "
                 "FROM gads_ad_performance "
-                "GROUP BY 1, 2, 3 ORDER BY clicks DESC LIMIT 25"
+                "GROUP BY 1, 2 ORDER BY clicks DESC LIMIT 25"
             ),
         },
         "by_type": {
             "shape": "rows",
             "sql": (
                 "SELECT ad_group_ad_ad_type AS ad_type, "
-                "SUM(metrics_clicks) AS clicks, "
-                "SUM(metrics_conversions) AS conversions "
+                "SUM(metrics_clicks::numeric) AS clicks, "
+                "SUM(metrics_conversions::numeric) AS conversions "
                 "FROM gads_ad_performance GROUP BY 1 ORDER BY clicks DESC"
             ),
         },
     },
-    prefab_python="""
-from prefab_ui import PrefabApp
-from prefab_ui.components import Card, CardContent, Column, DataTable, DataTableColumn, Grid, Heading, Metric, Muted, Text
-from prefab_ui.components.charts import BarChart, ChartSeries
-
-with PrefabApp(title="Ad Performance") as app:
-    total_clicks = sum(row.get("clicks", 0) for row in top_ads)
-    total_conversions = sum(row.get("conversions", 0) for row in top_ads)
-
-    with Column(gap=6, css_class="p-6"):
-        with Column(gap=1):
-            Heading("Ad Performance")
-            Muted("Top ads and creative format mix")
-
-        with Grid(columns=4, gap=4):
-            with Card():
-                with CardContent():
-                    Metric(label="Clicks", value=f"{total_clicks:,.0f}")
-            with Card():
-                with CardContent():
-                    Metric(label="Conversions", value=f"{total_conversions:,.0f}")
-
-        with Grid(columns=[2, 1], gap=6):
-            with Card():
-                with CardContent():
-                    Text("Performance by ad type", css_class="text-sm font-medium text-muted-foreground mb-2")
-                    BarChart(
-                        data=by_type,
-                        x_axis="ad_type",
-                        series=[
-                            ChartSeries(data_key="clicks", label="Clicks"),
-                            ChartSeries(data_key="conversions", label="Conversions"),
-                        ],
-                        show_legend=True,
-                        height=300,
-                    )
-            with Card():
-                with CardContent():
-                    Text("Top ads", css_class="text-sm font-medium text-muted-foreground mb-2")
-                    DataTable(
-                        columns=[
-                            DataTableColumn(key="ad_name", header="Ad"),
-                            DataTableColumn(key="campaign", header="Campaign"),
-                            DataTableColumn(key="ad_group", header="Ad Group"),
-                            DataTableColumn(key="impressions", header="Impressions"),
-                            DataTableColumn(key="clicks", header="Clicks"),
-                            DataTableColumn(key="conversions", header="Conversions"),
-                            DataTableColumn(key="spend", header="Spend"),
-                        ],
-                        rows=top_ads,
-                    )
+    template_html="""
+<div class="grid gap-3" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr));">
+  {% for kpi in kpis %}
+  <div class="card" data-size="sm"><section>
+    <p class="text-xs text-muted-foreground">{{ kpi.label }}</p>
+    <p class="text-2xl font-semibold tabular-nums">{{ kpi.value }}</p>
+  </section></div>
+  {% endfor %}
+</div>
+<div class="card mt-4">
+  <header><h2>Performance by ad type</h2><p>Last 30 days</p></header>
+  <section><div class="chart h-64"><canvas id="by_type" aria-label="Clicks and conversions by ad type"></canvas></div></section>
+</div>
+<div class="card mt-4">
+  <header><h2>Top ads</h2><p>By clicks, last 30 days</p></header>
+  <section><div class="table-container"><table class="table">
+    <thead><tr><th>Ad</th><th>Campaign</th><th>Impressions</th><th>Clicks</th><th>Conversions</th><th>Spend</th></tr></thead>
+    <tbody>
+    {% for row in top_ads %}
+      <tr><td class="break-words">{{ row.ad }}</td><td class="break-words">{{ row.campaign }}</td>
+        <td class="tabular-nums">{{ "%.0f"|format(row.impressions) }}</td>
+        <td class="tabular-nums">{{ "%.0f"|format(row.clicks) }}</td>
+        <td class="tabular-nums">{{ "%.1f"|format(row.conversions) }}</td>
+        <td class="tabular-nums">${{ "%.2f"|format(row.spend) }}</td></tr>
+    {% endfor %}
+    </tbody>
+  </table></div></section>
+</div>
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  window.basecoat.chart("#by_type", {
+    type: "bar", labelKey: "ad_type", legend: true,
+    data: {{ by_type | tojson }},
+    series: {
+      clicks: { label: "Clicks", color: "var(--chart-1)" },
+      conversions: { label: "Conversions", color: "var(--chart-2)" }
+    }
+  });
+});
+</script>
 """,
-    refresh={"mode": "scheduled", "cron": "0 */6 * * *"},
 )
 ```
+
+`data_apps_refresh(data_app_id=...)` runs the GAQL again and re-renders
+the app; the window stays the last 30 days.
 
 ## Variants
 

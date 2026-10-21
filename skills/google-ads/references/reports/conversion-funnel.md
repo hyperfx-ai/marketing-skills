@@ -101,6 +101,9 @@ sandbox; cache tables are only needed for dashboard/data-app builds.
 
 ## Building a dashboard from this report
 
+Google returns the int64 metrics (`cost_micros`, `clicks`, `impressions`)
+as strings, so every metric is cast with `::numeric` in SQL.
+
 ```python
 # After the agent has mapped action names to ordered stages, e.g.
 # stages = ["application_submitted", "lead_reached",
@@ -125,6 +128,7 @@ result = data_apps_build(
             },
             "cache_table": "gads_funnel_raw",
             "mode": "replace",
+            "rows_path": "results",
         },
         "raw_cost": {
             "tool_name": "google_ads_gaql_query",
@@ -140,29 +144,10 @@ result = data_apps_build(
             },
             "cache_table": "gads_funnel_cost",
             "mode": "replace",
+            "rows_path": "results",
         },
     },
     sql_data_sources={
-        "stage_totals": {
-            "shape": "rows",
-            "sql": (
-                "SELECT segments_conversion_action_name AS stage, "
-                "CASE segments_conversion_action_name "
-                "WHEN 'application_submitted' THEN 1 "
-                "WHEN 'lead_reached' THEN 2 "
-                "WHEN 'scheduled_for_training' THEN 3 "
-                "WHEN 'showed_for_training' THEN 4 "
-                "WHEN 'launched_from_training' THEN 5 "
-                "WHEN 'rep_that_sells' THEN 6 END AS stage_order, "
-                "SUM(metrics_conversions) AS conversions "
-                "FROM gads_funnel_raw "
-                "WHERE segments_conversion_action_name IN ("
-                "  'application_submitted', 'lead_reached', "
-                "  'scheduled_for_training', 'showed_for_training', "
-                "  'launched_from_training', 'rep_that_sells'"
-                ") GROUP BY 1, 2 ORDER BY 2"
-            ),
-        },
         "step_rates": {
             "shape": "rows",
             "sql": (
@@ -175,7 +160,7 @@ result = data_apps_build(
                 "  WHEN 'showed_for_training' THEN 4 "
                 "  WHEN 'launched_from_training' THEN 5 "
                 "  WHEN 'rep_that_sells' THEN 6 END AS stage_order, "
-                "  SUM(metrics_conversions) AS conversions "
+                "  SUM(metrics_conversions::numeric) AS conversions "
                 "  FROM gads_funnel_raw "
                 "  WHERE segments_conversion_action_name IN ("
                 "    'application_submitted', 'lead_reached', "
@@ -183,96 +168,79 @@ result = data_apps_build(
                 "    'launched_from_training', 'rep_that_sells'"
                 "  ) GROUP BY 1, 2"
                 ") SELECT stage, conversions, "
-                "conversions / NULLIF(LAG(conversions) OVER (ORDER BY stage_order), 0) "
+                "COALESCE(to_char(100 * conversions / NULLIF(LAG(conversions) OVER (ORDER BY stage_order), 0), 'FM990.0') || '%', '–') "
                 "AS step_rate "
                 "FROM ordered ORDER BY stage_order"
             ),
         },
-        "cost_totals": {
+        "kpis": {
             "shape": "rows",
             "sql": (
-                "SELECT SUM(metrics_cost_micros)/1e6 AS cost "
-                "FROM gads_funnel_cost"
+                "SELECT 'Conversions' AS label, to_char(COALESCE(SUM(metrics_conversions::numeric), 0), 'FM999,999,990.0') AS value FROM gads_funnel_raw "
+                "UNION ALL SELECT 'Cost', '$' || to_char(COALESCE(SUM(metrics_cost_micros::numeric), 0) / 1e6, 'FM999,999,990.00') FROM gads_funnel_cost"
             ),
         },
         "stage_trend": {
             "shape": "rows",
             "sql": (
                 "SELECT segments_date AS date, "
-                "segments_conversion_action_name AS stage, "
-                "SUM(metrics_conversions) AS conversions "
-                "FROM gads_funnel_raw GROUP BY 1, 2 ORDER BY 1"
+                "SUM(metrics_conversions::numeric) AS conversions "
+                "FROM gads_funnel_raw GROUP BY 1 ORDER BY 1"
             ),
         },
     },
-    prefab_python="""
-from prefab_ui import PrefabApp
-from prefab_ui.components import Card, CardContent, Column, DataTable, DataTableColumn, Grid, Heading, Metric, Muted, Text
-from prefab_ui.components.charts import AreaChart, BarChart, ChartSeries
-
-with PrefabApp(title="Lead-Gen Funnel") as app:
-    total_conversions = sum(row.get("conversions", 0) for row in stage_totals)
-    total_cost = (cost_totals[0].get("cost", 0) if cost_totals else 0)
-
-    with Column(gap=6, css_class="p-6"):
-        with Column(gap=1):
-            Heading("Lead-Gen Funnel")
-            Muted("Stage volume, trend, and step-rate health")
-
-        with Grid(columns=4, gap=4):
-            with Card():
-                with CardContent():
-                    Metric(label="Conversions", value=f"{total_conversions:,.0f}")
-            with Card():
-                with CardContent():
-                    Metric(label="Cost", value=f"${total_cost:,.0f}")
-
-        with Grid(columns=[2, 1], gap=6):
-            with Card():
-                with CardContent():
-                    Text("Stage trend", css_class="text-sm font-medium text-muted-foreground mb-2")
-                    AreaChart(
-                        data=stage_trend,
-                        x_axis="date",
-                        series=[ChartSeries(data_key="conversions", label="Conversions")],
-                        height=300,
-                    )
-            with Card():
-                with CardContent():
-                    Text("Stage totals", css_class="text-sm font-medium text-muted-foreground mb-2")
-                    BarChart(
-                        data=stage_totals,
-                        x_axis="stage",
-                        series=[ChartSeries(data_key="conversions", label="Conversions")],
-                        height=300,
-                    )
-
-        with Grid(columns=[1, 1], gap=6):
-            with Card():
-                with CardContent():
-                    Text("Stage detail", css_class="text-sm font-medium text-muted-foreground mb-2")
-                    DataTable(
-                        columns=[
-                            DataTableColumn(key="stage", header="Stage"),
-                            DataTableColumn(key="conversions", header="Conversions"),
-                        ],
-                        rows=stage_totals,
-                    )
-            with Card():
-                with CardContent():
-                    Text("Step rates", css_class="text-sm font-medium text-muted-foreground mb-2")
-                    DataTable(
-                        columns=[
-                            DataTableColumn(key="stage", header="Stage"),
-                            DataTableColumn(key="conversions", header="Conversions"),
-                            DataTableColumn(key="step_rate", header="Step Rate"),
-                        ],
-                        rows=step_rates,
-                    )
+    template_html="""
+<div class="grid gap-3" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr));">
+  {% for kpi in kpis %}
+  <div class="card" data-size="sm"><section>
+    <p class="text-xs text-muted-foreground">{{ kpi.label }}</p>
+    <p class="text-2xl font-semibold tabular-nums">{{ kpi.value }}</p>
+  </section></div>
+  {% endfor %}
+</div>
+<div class="grid gap-4 mt-4" style="grid-template-columns:repeat(auto-fit,minmax(300px,1fr));">
+  <div class="card min-w-0">
+    <header><h2>Stage totals</h2><p>In funnel order</p></header>
+    <section><div class="chart h-64"><canvas id="stages" aria-label="Conversions by funnel stage"></canvas></div></section>
+  </div>
+  <div class="card min-w-0">
+    <header><h2>Conversion trend</h2><p>All stages, by day</p></header>
+    <section><div class="chart h-64"><canvas id="trend" aria-label="Conversions by day"></canvas></div></section>
+  </div>
+</div>
+<div class="card mt-4">
+  <header><h2>Step rates</h2><p>Each stage over the stage before it</p></header>
+  <section><div class="table-container"><table class="table">
+    <thead><tr><th>Stage</th><th>Conversions</th><th>Step rate</th></tr></thead>
+    <tbody>
+    {% for row in step_rates %}
+      <tr><td class="break-words">{{ row.stage }}</td>
+        <td class="tabular-nums">{{ "%.1f"|format(row.conversions) }}</td>
+        <td class="tabular-nums">{{ row.step_rate }}</td></tr>
+    {% endfor %}
+    </tbody>
+  </table></div></section>
+</div>
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  window.basecoat.chart("#stages", {
+    type: "bar", labelKey: "stage", options: { indexAxis: "y" },
+    data: {{ step_rates | tojson }},
+    series: { conversions: { label: "Conversions", color: "var(--chart-1)" } }
+  });
+  window.basecoat.chart("#trend", {
+    type: "line", labelKey: "date",
+    data: {{ stage_trend | tojson }},
+    series: { conversions: { label: "Conversions", color: "var(--chart-2)", dataset: { fill: true, tension: 0.35 } } }
+  });
+});
+</script>
 """,
-    refresh={"mode": "scheduled", "cron": "0 * * * *"},
 )
 ```
+
+`data_apps_refresh(data_app_id=...)` runs both GAQL queries again and
+re-renders the app.
 
 ## Variants
 

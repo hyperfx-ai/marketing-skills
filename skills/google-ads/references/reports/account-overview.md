@@ -51,11 +51,23 @@ WHERE segments.date BETWEEN '{start}' AND '{end}'
 
 ## Building a dashboard from this report
 
+The account view fits the library template `ads_overview`: KPI rows, a
+daily spend and clicks trend, top campaigns and top ads. Each SQL source
+is named after the template variable it fills.
+
+Google returns the int64 metrics (`cost_micros`, `clicks`, `impressions`)
+as strings, so every metric is cast with `::numeric` in SQL.
+
 ```python
 result = data_apps_build(
     name="Account Overview",
+    template_name="ads_overview",
+    template_context={
+        "title": "Account Overview",
+        "subtitle": "Last 30 days · Google Ads",
+    },
     tool_data_sources={
-        "raw": {
+        "campaign_days": {
             "tool_name": "google_ads_gaql_query",
             "tool_args": {
                 "customer_id": "123-456-7890",
@@ -71,69 +83,85 @@ result = data_apps_build(
             },
             "cache_table": "gads_account_overview",
             "mode": "replace",
+            "rows_path": "results",
+        },
+        "ad_totals": {
+            "tool_name": "google_ads_gaql_query",
+            "tool_args": {
+                "customer_id": "123-456-7890",
+                "query": (
+                    "SELECT ad_group_ad.ad.id, ad_group.name, "
+                    "metrics.cost_micros "
+                    "FROM ad_group_ad "
+                    "WHERE segments.date DURING LAST_30_DAYS "
+                    "AND ad_group_ad.status != 'REMOVED'"
+                ),
+            },
+            "cache_table": "gads_account_overview_ads",
+            "mode": "replace",
+            "rows_path": "results",
         },
     },
     sql_data_sources={
-        "total_spend": {
-            "shape": "scalar",
-            "sql": (
-                "SELECT COALESCE(SUM(metrics_cost_micros), 0)/1e6 "
-                "FROM gads_account_overview"
-            ),
-        },
-        "total_conversions": {
-            "shape": "scalar",
-            "sql": (
-                "SELECT COALESCE(SUM(metrics_conversions), 0) "
-                "FROM gads_account_overview"
-            ),
-        },
-        "daily": {
+        "kpis": {
             "shape": "rows",
             "sql": (
-                "SELECT segments_date AS date, "
-                "SUM(metrics_cost_micros)/1e6 AS spend, "
-                "SUM(metrics_conversions) AS conversions "
-                "FROM gads_account_overview GROUP BY 1 ORDER BY 1"
+                "SELECT 'Spend' AS label, "
+                "'$' || to_char(COALESCE(SUM(metrics_cost_micros::numeric), 0) / 1e6, 'FM999,999,990.00') AS value "
+                "FROM gads_account_overview "
+                "UNION ALL SELECT 'Impressions', to_char(COALESCE(SUM(metrics_impressions::numeric), 0), 'FM999,999,999') FROM gads_account_overview "
+                "UNION ALL SELECT 'Clicks', to_char(COALESCE(SUM(metrics_clicks::numeric), 0), 'FM999,999,999') FROM gads_account_overview "
+                "UNION ALL SELECT 'Conversions', to_char(COALESCE(SUM(metrics_conversions::numeric), 0), 'FM999,999,990.0') FROM gads_account_overview"
+            ),
+        },
+        "secondary_kpis": {
+            "shape": "rows",
+            "sql": (
+                "SELECT 'ROAS' AS label, "
+                "COALESCE(to_char(SUM(metrics_conversions_value::numeric) / NULLIF(SUM(metrics_cost_micros::numeric) / 1e6, 0), 'FM990.00') || 'x', '–') AS value "
+                "FROM gads_account_overview "
+                "UNION ALL SELECT 'Cost / conv.', COALESCE('$' || to_char(SUM(metrics_cost_micros::numeric) / 1e6 / NULLIF(SUM(metrics_conversions::numeric), 0), 'FM999,990.00'), '–') FROM gads_account_overview "
+                "UNION ALL SELECT 'Conv. rate', COALESCE(to_char(100 * SUM(metrics_conversions::numeric) / NULLIF(SUM(metrics_clicks::numeric), 0), 'FM990.00') || '%', '–') FROM gads_account_overview "
+                "UNION ALL SELECT 'Avg. CPC', COALESCE('$' || to_char(SUM(metrics_cost_micros::numeric) / 1e6 / NULLIF(SUM(metrics_clicks::numeric), 0), 'FM990.00'), '–') FROM gads_account_overview"
+            ),
+        },
+        "trend": {
+            "shape": "scalar",
+            "sql": (
+                "SELECT json_build_object("
+                "'labels', COALESCE(json_agg(day ORDER BY day), '[]'), "
+                "'spend', COALESCE(json_agg(spend ORDER BY day), '[]'), "
+                "'clicks', COALESCE(json_agg(clicks ORDER BY day), '[]')) "
+                "FROM (SELECT segments_date AS day, "
+                "ROUND(SUM(metrics_cost_micros::numeric) / 1e6, 2) AS spend, "
+                "SUM(metrics_clicks::numeric) AS clicks "
+                "FROM gads_account_overview GROUP BY 1) daily"
+            ),
+        },
+        "top_campaigns": {
+            "shape": "rows",
+            "sql": (
+                "SELECT campaign_name AS name, "
+                "ROUND(SUM(metrics_cost_micros::numeric) / 1e6, 2) AS value, "
+                "'$' || to_char(SUM(metrics_cost_micros::numeric) / 1e6, 'FM999,999,990.00') AS display "
+                "FROM gads_account_overview GROUP BY 1 ORDER BY 2 DESC LIMIT 10"
+            ),
+        },
+        "top_ads": {
+            "shape": "rows",
+            "sql": (
+                "SELECT ad_group_name || ' · ad ' || ad_group_ad_ad_id AS name, "
+                "ROUND(SUM(metrics_cost_micros::numeric) / 1e6, 2) AS value, "
+                "'$' || to_char(SUM(metrics_cost_micros::numeric) / 1e6, 'FM999,999,990.00') AS display "
+                "FROM gads_account_overview_ads GROUP BY 1 ORDER BY 2 DESC LIMIT 10"
             ),
         },
     },
-    prefab_python="""
-from prefab_ui import PrefabApp
-from prefab_ui.components import Card, CardContent, Column, Grid, Heading, Metric, Muted, Text
-from prefab_ui.components.charts import AreaChart, ChartSeries
-
-with PrefabApp(title="Account Overview") as app:
-    with Column(gap=6, css_class="p-6"):
-        with Column(gap=1):
-            Heading("Account Overview")
-            Muted("Last 30 days")
-
-        with Grid(columns=4, gap=4):
-            with Card():
-                with CardContent():
-                    Metric(label="Spend", value=f"${total_spend:,.0f}")
-            with Card():
-                with CardContent():
-                    Metric(label="Conversions", value=f"{total_conversions:,.0f}")
-
-        with Card():
-            with CardContent():
-                Text("Daily spend and conversions", css_class="text-sm font-medium text-muted-foreground mb-2")
-                AreaChart(
-                    data=daily,
-                    x_axis="date",
-                    series=[
-                        ChartSeries(data_key="spend", label="Spend"),
-                        ChartSeries(data_key="conversions", label="Conversions"),
-                    ],
-                    show_legend=True,
-                    height=300,
-                )
-""",
-    refresh={"mode": "scheduled", "cron": "0 * * * *"},
 )
 ```
+
+`data_apps_refresh(data_app_id=...)` runs both GAQL queries again and
+re-renders the app; the window stays the last 30 days.
 
 ## Variants
 

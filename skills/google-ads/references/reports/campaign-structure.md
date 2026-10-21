@@ -50,6 +50,9 @@ WHERE segments.date BETWEEN '{start}' AND '{end}'
 
 ## Building a dashboard from this report
 
+Google returns the int64 metrics (`cost_micros`, `clicks`, `impressions`)
+as strings, so every metric is cast with `::numeric` in SQL.
+
 ```python
 result = data_apps_build(
     name="Campaign Structure",
@@ -72,6 +75,7 @@ result = data_apps_build(
             },
             "cache_table": "gads_structure",
             "mode": "replace",
+            "rows_path": "results",
         },
     },
     sql_data_sources={
@@ -80,7 +84,7 @@ result = data_apps_build(
             "sql": (
                 "SELECT campaign_name AS campaign, "
                 "COUNT(DISTINCT ad_group_id) AS ad_groups, "
-                "SUM(metrics_cost_micros)/1e6 AS spend "
+                "ROUND(SUM(metrics_cost_micros::numeric) / 1e6, 2) AS spend "
                 "FROM gads_structure GROUP BY 1 ORDER BY spend DESC LIMIT 25"
             ),
         },
@@ -88,64 +92,63 @@ result = data_apps_build(
             "shape": "rows",
             "sql": (
                 "SELECT campaign_name AS campaign, ad_group_name AS ad_group, "
-                "SUM(metrics_cost_micros)/1e6 AS spend, "
-                "SUM(metrics_conversions) AS conversions "
+                "SUM(metrics_cost_micros::numeric) / 1e6 AS spend, "
+                "SUM(metrics_conversions::numeric) AS conversions "
                 "FROM gads_structure GROUP BY 1, 2 "
                 "ORDER BY spend DESC LIMIT 50"
             ),
         },
+        "ad_group_total": {
+            "shape": "scalar",
+            "sql": "SELECT COUNT(DISTINCT ad_group_id) FROM gads_structure",
+        },
     },
-    prefab_python="""
-from prefab_ui import PrefabApp
-from prefab_ui.components import Card, CardContent, Column, DataTable, DataTableColumn, Grid, Heading, Metric, Muted, Text
-from prefab_ui.components.charts import BarChart, ChartSeries
-
-with PrefabApp(title="Campaign Structure") as app:
-    total_ad_groups = sum(row.get("ad_groups", 0) for row in ad_groups_per_campaign)
-
-    with Column(gap=6, css_class="p-6"):
-        with Column(gap=1):
-            Heading("Campaign Structure")
-            Muted("Ad group distribution and efficiency")
-
-        with Grid(columns=4, gap=4):
-            with Card():
-                with CardContent():
-                    Metric(label="Campaigns", value=f"{len(ad_groups_per_campaign):,}")
-            with Card():
-                with CardContent():
-                    Metric(label="Ad Groups", value=f"{total_ad_groups:,.0f}")
-
-        with Grid(columns=[2, 1], gap=6):
-            with Card():
-                with CardContent():
-                    Text("Ad groups and spend", css_class="text-sm font-medium text-muted-foreground mb-2")
-                    BarChart(
-                        data=ad_groups_per_campaign,
-                        x_axis="campaign",
-                        series=[
-                            ChartSeries(data_key="ad_groups", label="Ad Groups"),
-                            ChartSeries(data_key="spend", label="Spend"),
-                        ],
-                        show_legend=True,
-                        height=300,
-                    )
-            with Card():
-                with CardContent():
-                    Text("Ad group efficiency", css_class="text-sm font-medium text-muted-foreground mb-2")
-                    DataTable(
-                        columns=[
-                            DataTableColumn(key="campaign", header="Campaign"),
-                            DataTableColumn(key="ad_group", header="Ad Group"),
-                            DataTableColumn(key="spend", header="Spend"),
-                            DataTableColumn(key="conversions", header="Conversions"),
-                        ],
-                        rows=ad_group_efficiency,
-                    )
+    template_html="""
+<div class="grid gap-3" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr));">
+  <div class="card" data-size="sm"><section>
+    <p class="text-xs text-muted-foreground">Campaigns</p>
+    <p class="text-2xl font-semibold tabular-nums">{{ ad_groups_per_campaign | length }}</p>
+  </section></div>
+  <div class="card" data-size="sm"><section>
+    <p class="text-xs text-muted-foreground">Ad groups</p>
+    <p class="text-2xl font-semibold tabular-nums">{{ ad_group_total }}</p>
+  </section></div>
+</div>
+<div class="card mt-4">
+  <header><h2>Ad groups and spend</h2><p>By campaign, last 30 days</p></header>
+  <section><div class="chart h-64"><canvas id="structure" aria-label="Ad groups and spend by campaign"></canvas></div></section>
+</div>
+<div class="card mt-4">
+  <header><h2>Ad group efficiency</h2><p>By spend, last 30 days</p></header>
+  <section><div class="table-container"><table class="table">
+    <thead><tr><th>Campaign</th><th>Ad group</th><th>Spend</th><th>Conversions</th></tr></thead>
+    <tbody>
+    {% for row in ad_group_efficiency %}
+      <tr><td class="break-words">{{ row.campaign }}</td><td class="break-words">{{ row.ad_group }}</td>
+        <td class="tabular-nums">${{ "%.2f"|format(row.spend) }}</td>
+        <td class="tabular-nums">{{ "%.1f"|format(row.conversions) }}</td></tr>
+    {% endfor %}
+    </tbody>
+  </table></div></section>
+</div>
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  window.basecoat.chart("#structure", {
+    type: "bar", labelKey: "campaign", legend: true,
+    data: {{ ad_groups_per_campaign | tojson }},
+    series: {
+      ad_groups: { label: "Ad groups", color: "var(--chart-1)" },
+      spend: { label: "Spend", color: "var(--chart-2)" }
+    }
+  });
+});
+</script>
 """,
-    refresh={"mode": "manual"},
 )
 ```
+
+`data_apps_refresh(data_app_id=...)` runs the GAQL again and re-renders
+the app; the window stays the last 30 days.
 
 ## Variants
 
