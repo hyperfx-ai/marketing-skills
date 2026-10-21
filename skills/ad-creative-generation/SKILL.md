@@ -33,14 +33,10 @@ If a tool is not found, its integration is not connected or not enabled for the 
 | Group | Tools |
 |-------|-------|
 | Brand extraction | `firecrawl_branding_extract` |
-| Competitor ads (conditional) | `datastreams_queries_start`, `datastreams_queries_continue` (stream `ads.meta_library`) |
+| Competitor ads | `marketing_queries_start`, `marketing_queries_continue` (stream `ads.meta_library`) |
 | Image generation (default) | `images_generate` (`model="gpt-image-2"`) |
 | Image generation (text-heavy) | `images_generate` (`model="nano-banana-pro"`) |
 | Image generation (photoreal product shots) | `images_generate` (`model="seedream-4.5"`) |
-
-The datastreams tools are conditional — they appear when the workspace has
-the datastreams toolkit. When absent, skip the competitor step; do not fail
-the workflow.
 
 For deeper image-tool selection guidance see the `image-generation` skill. To turn finished creatives into running campaigns see `google-ads` and `meta-ads`.
 
@@ -48,7 +44,7 @@ For deeper image-tool selection guidance see the `image-generation` skill. To tu
 
 - Picking the right image model when the task isn't ad creative — use `image-generation`.
 - Creating, launching, or budgeting actual ad campaigns — use `google-ads`, `meta-ads`, `tiktok-ads`, `pinterest-ads`, or `amazon-ads`.
-- Searching live competitor ads — use `meta-ads-library`. To read the Meta ads of a known competitor by its domain or Meta page in one query, use `datastreams_queries_start` with the `ads.meta_library` stream; a repeated query within a day reads the stored run at no cost.
+- Searching live competitor ads — use `meta-ads-library`. To read the Meta ads of a known competitor by its domain or Meta page in one query, use `marketing_queries_start` with the `ads.meta_library` stream; a repeated query within a day reads the stored run at no cost.
 
 ## Critical rules
 
