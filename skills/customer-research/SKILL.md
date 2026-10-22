@@ -28,9 +28,9 @@ The goal is always the same: surface what customers actually say (in their own w
 ## Requirements
 
 - **Hyper MCP installed.** [https://app.hyperfx.ai/mcp](https://app.hyperfx.ai/mcp)
-- **Apify scrapers toolkit enabled** at [https://app.hyperfx.ai/apps](https://app.hyperfx.ai/apps) — provides Reddit, Twitter, YouTube, TikTok, and Instagram scrapers.
+- **Reddit Scraper, Twitter Scraper, YouTube Scraper, TikTok Scraper and Instagram Scraper toolkits enabled** at [https://app.hyperfx.ai/apps](https://app.hyperfx.ai/apps).
 
-Not all scrapers need to be active for every run — enable the ones relevant to your ICP (Reddit and one review site is the minimum). If a scraper tool is missing from the tool list, skip that source and continue with the others.
+Not all scrapers need to be active for every run — enable the ones relevant to your ICP (Reddit and one review site is the minimum). If a scraper tool is not found, skip that source and continue with the others.
 
 ### How to run the tools in this skill
 

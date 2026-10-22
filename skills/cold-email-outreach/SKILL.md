@@ -29,7 +29,7 @@ End-to-end cold outreach: research, draft, send, follow up, route replies. Strat
 - **Firecrawl** (bundled) — for company-page signals.
 - **Optional: LinkedIn scraper** (bundled, runs through Apify) — for richer per-prospect personalization.
 
-If `gmail_messages_send` or `apollo_people_search` is not found, the integrations to connect are Gmail and Apollo.
+If `gmail_messages_send` is not found, the integration to connect is Gmail; if `apollo_people_search` is not found, it is Apollo.
 
 ### How to run the tools in this skill
 

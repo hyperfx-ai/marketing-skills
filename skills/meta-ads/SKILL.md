@@ -24,8 +24,8 @@ Strategic guide for creating and managing Meta advertising campaigns, analyzing 
 ## Requirements
 
 - **Hyper MCP installed and connected.** [https://app.hyperfx.ai/mcp](https://app.hyperfx.ai/mcp)
-- **Meta Business integration connected** (Facebook + Instagram, with at least one ad account and one Page) at [https://app.hyperfx.ai/apps](https://app.hyperfx.ai/apps).
-- **Firecrawl integration connected** for site research and screenshot grounding (discovery phase).
+- **Meta Ads integration connected** (Facebook + Instagram, with at least one ad account and one Page) at [https://app.hyperfx.ai/apps](https://app.hyperfx.ai/apps).
+- **Firecrawl toolkit enabled** for site research and screenshot grounding (discovery phase).
 
 If `meta_ads_adaccount_list` is not found, the integration to connect is Meta Ads.
 
@@ -45,7 +45,7 @@ If a tool is not found: in Hyper chat, find its toolkit id with `discover_toolki
 
 ## Tool names
 
-Use the **exact tool name from your connected tool list**. Canonical names are `meta_ads_*` (listed below). On Hyper platform chat, legacy `meta_business_*` names (e.g. `meta_ads_adaccount_list`) and the retired plural names (e.g. `meta_ads_campaign_create`) resolve to the same tools via aliases — if a call fails with "tool not found", search the live catalog for the canonical name.
+Use the **exact tool name that `search` or `describe` returns**. Canonical names are `meta_ads_*` (listed below). On Hyper platform chat, legacy `meta_business_*` names (e.g. `meta_ads_adaccount_list`) and the retired plural names (e.g. `meta_ads_campaign_create`) resolve to the same tools via aliases — if a call fails with "tool not found", search the live catalog for the canonical name.
 
 | Group | Tools |
 | --- | --- |

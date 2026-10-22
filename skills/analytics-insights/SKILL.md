@@ -31,7 +31,7 @@ GSC and HyperSEO overlap on search-performance data. Rule of thumb: use GSC here
   - **Google Search Console** — search-performance data, sitemaps, URL inspection.
   - **BigQuery** — SQL queries against the GA4 export (or any other dataset).
 
-If `google_analytics_ga4_reports_run`, `google_tag_manager_tags_manage` and `google_search_console_performance_get` are all not found, the integration to connect is one of Google Analytics, Google Tag Manager or Google Search Console.
+If `google_analytics_ga4_reports_run`, `google_tag_manager_tags_manage`, `google_search_console_performance_get` and `database_query` are all not found, the integration to connect is one of Google Analytics, Google Tag Manager, Google Search Console or Database (a BigQuery connection).
 
 ### How to run the tools in this skill
 
