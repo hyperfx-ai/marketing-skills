@@ -100,7 +100,7 @@ Discover org/account → audit account → research (objective, audience, budget
 | Forecast returns OE101 / UNSUPPORTED_DELIVERY_CONSTRAINT | The tool auto-adds `delivery_constraint`; if it persists, outcome estimation is unavailable for the account type (often PARTNER) — use the Ads Manager reach planner. |
 | DAY-granularity stats reject the time range (E1008) | Handled automatically — pass `ad_account_id` to `get_stats`/`create_stats_report` and the tool aligns to account-timezone midnight + hour boundaries. |
 | Media rejected with E2601 ("cannot be used to create any creative type") | The file doesn't meet specs — use a 1080×1920 (9:16) PNG/JPG ≤ 5 MB image or 1080×1920 MP4/MOV. Re-generate the asset at the right size, re-upload, and confirm `media_status` is `READY`. |
-| Upload fails on file_path / internal URL (Errno 2 / DNS error) | Pass `file_id` (the Hyper file id) instead — it reads from storage directly. Avoid server-local paths and internal `files.*` URLs. |
+| Upload refuses `file_path`, or fails on an internal URL (DNS error) | Pass `file_id` (the Hyper file id) instead — it reads from storage directly. `snapchat_ads_upload_media` takes no `file_path`. Use `file_url` only for a public external asset, never an internal `files.*` URL. |
 | Account-level stats reject non-`spend` fields (error E1008) | Query other metrics at campaign/adsquad/ad/creative/media level. |
 | No `time_range`/date preset | Pass `start_time` + `end_time`; omitting them returns lifetime totals. |
 | Ad squad creation fails on unfunded accounts | Add a funding source; campaigns/media/creatives still work without one. |
