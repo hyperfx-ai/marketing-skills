@@ -19,7 +19,7 @@ image-to-image (pass `reference_images`), and multi-image composition. By defaul
 
 This skill assumes the [Hyper MCP](https://app.hyperfx.ai/mcp) is connected to your
 agent so the `images_generate` tool is available. For brand-consistent ad creative
-work, Firecrawl must also be configured under your Hyper integrations.
+work, Firecrawl must also be configured under your Hyper integrations. Connect through the endpoint on your MCP page, not the Hyper listing in the Claude connectors directory: the directory listing excludes AI image, video, and audio generation.
 
 ### How to run the tools in this skill
 
@@ -27,7 +27,8 @@ Every tool in this skill is named by its canonical tool name. Run it with the ca
 
 | Surface | Find a tool | Run it |
 | --- | --- | --- |
-| MCP client (Claude, Cursor, Codex, ChatGPT) | `search("<what you want to do>")`, then `describe("<name>")` | `call("<name>", {...})` |
+| Hyper chat and Hyper agents | The tool is in your tool list | Call the tool by its name |
+| MCP client (Claude, Cursor, Codex, ChatGPT) | `search("<what you want to do>")`, then `describe("<name>")` | the call tool named in the result's `call_with`: `call_read("<name>", {...})` for a read tool, `call_write` for a write tool, `call_destructive` for a delete or money-moving tool |
 | Hyper CLI | `hyperai search "<what you want to do>"`, then `hyperai describe <name>` | `hyperai call <name> --json '{...}'` |
 
 If a tool is not found, its integration is not connected or not enabled for the workspace: stop and tell the user which integration to connect.
