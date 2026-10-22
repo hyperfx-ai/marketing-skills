@@ -29,7 +29,7 @@ End-to-end cold outreach: research, draft, send, follow up, route replies. Strat
 - **Firecrawl** (bundled) — for company-page signals.
 - **Optional: LinkedIn scraper** (bundled, runs through Apify) — for richer per-prospect personalization.
 
-If `gmail_messages_send` and `apollo_people_search` are not in the agent's tool list, stop and tell the user to enable the Hyper MCP and connect Gmail + Apollo.
+If `gmail_messages_send` or `apollo_people_search` is not found, the integrations to connect are Gmail and Apollo.
 
 ### How to run the tools in this skill
 
@@ -41,7 +41,7 @@ Every tool in this skill is named by its canonical tool name. Run it with the ca
 | MCP client (Claude, Cursor, Codex, ChatGPT) | `search("<what you want to do>")`, then `describe("<name>")` | `call_read("<name>", {...})`, `call_write` or `call_destructive`: the one that `describe` names in `call_with` |
 | Hyper CLI | `hyperai search "<what you want to do>"`, then `hyperai describe <name>` | `hyperai call <name> --json '{...}'` |
 
-If a tool is not found: in Hyper chat, find its integration with `discover_toolkits` and connect it with `enable_toolkit`. On an MCP client or the CLI, tell the user which integration to connect in Hyper.
+If a tool is not found: in Hyper chat, find its toolkit id with `discover_toolkits` and pass it to `enable_toolkit`. On an MCP client or the CLI, tell the user which integration to connect in Hyper.
 
 ## Tool surface
 

@@ -34,7 +34,7 @@ End-to-end competitor research and monitoring. Define the set, pull from every p
   - **Apify scrapers** — Instagram, TikTok, LinkedIn, Twitter, Reddit, Google search, Google Trends
   - **Image generation** *(optional — only if the brief feeds a comparison-page or battle-card asset downstream)*
 
-If none of those tool prefixes appear in the agent's tool list (`firecrawl_*`, `hyperseo_*`, `instagram_scrape*`, `scrape_tiktok*`, `x_tweets_search`, `reddit_scrape*`, `google_search_results_search`, `google_trends_scrape`, `web_pages_scrape`), stop and tell the user to enable the Hyper MCP and connect at least Firecrawl + one social scraper. The LinkedIn scraper (`scrape_linkedin_profiles`) is only present when that specific integration is enabled — gracefully skip the LinkedIn slice if it's missing rather than failing the whole brief.
+If no tool with those prefixes is found (`firecrawl_*`, `hyperseo_*`, `instagram_scrape*`, `scrape_tiktok*`, `x_tweets_search`, `reddit_scrape*`, `google_search_results_search`, `google_trends_scrape`, `web_pages_scrape`), the toolkits to enable are Firecrawl and at least one social scraper. The LinkedIn scraper (`scrape_linkedin_profiles`) is only present when that specific integration is enabled — gracefully skip the LinkedIn slice if it's missing rather than failing the whole brief.
 
 ### How to run the tools in this skill
 
@@ -46,7 +46,7 @@ Every tool in this skill is named by its canonical tool name. Run it with the ca
 | MCP client (Claude, Cursor, Codex, ChatGPT) | `search("<what you want to do>")`, then `describe("<name>")` | `call_read("<name>", {...})`, `call_write` or `call_destructive`: the one that `describe` names in `call_with` |
 | Hyper CLI | `hyperai search "<what you want to do>"`, then `hyperai describe <name>` | `hyperai call <name> --json '{...}'` |
 
-If a tool is not found: in Hyper chat, find its integration with `discover_toolkits` and connect it with `enable_toolkit`. On an MCP client or the CLI, tell the user which integration to connect in Hyper.
+If a tool is not found: in Hyper chat, find its toolkit id with `discover_toolkits` and pass it to `enable_toolkit`. On an MCP client or the CLI, tell the user which integration to connect in Hyper.
 
 ## Tool surface
 

@@ -31,7 +31,7 @@ GSC and HyperSEO overlap on search-performance data. Rule of thumb: use GSC here
   - **Google Search Console** — search-performance data, sitemaps, URL inspection.
   - **BigQuery** — SQL queries against the GA4 export (or any other dataset).
 
-If `google_analytics_ga4_reports_run`, `google_tag_manager_tags_manage`, `google_search_console_performance_get`, and `bigquery_execute_query` are all missing from the agent's tool list, stop and tell the user to enable the Hyper MCP and connect at least one of these integrations.
+If `google_analytics_ga4_reports_run`, `google_tag_manager_tags_manage` and `google_search_console_performance_get` are all not found, the integration to connect is one of Google Analytics, Google Tag Manager or Google Search Console.
 
 ### How to run the tools in this skill
 
@@ -43,7 +43,7 @@ Every tool in this skill is named by its canonical tool name. Run it with the ca
 | MCP client (Claude, Cursor, Codex, ChatGPT) | `search("<what you want to do>")`, then `describe("<name>")` | `call_read("<name>", {...})`, `call_write` or `call_destructive`: the one that `describe` names in `call_with` |
 | Hyper CLI | `hyperai search "<what you want to do>"`, then `hyperai describe <name>` | `hyperai call <name> --json '{...}'` |
 
-If a tool is not found: in Hyper chat, find its integration with `discover_toolkits` and connect it with `enable_toolkit`. On an MCP client or the CLI, tell the user which integration to connect in Hyper.
+If a tool is not found: in Hyper chat, find its toolkit id with `discover_toolkits` and pass it to `enable_toolkit`. On an MCP client or the CLI, tell the user which integration to connect in Hyper.
 
 ## Tool surface
 
