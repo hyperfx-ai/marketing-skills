@@ -98,6 +98,7 @@ review = videos_analyze(file_id="video_file_id", analysis_type="quality_review")
 | Generate a video (any model) | [references/generation.md](references/generation.md) — model selection, parameter matrix, prompt templates |
 | Build a longer multi-scene video | [references/generation.md](references/generation.md) — script planning + scene chaining |
 | Add subtitles / captions / voiceover / overlays, or clip a video | [references/post-production.md](references/post-production.md) |
+| Caption an attached video with word-timed captions, or translate its captions | The [`video-editing`](../video-editing) skill, which owns captions on user videos |
 | Produce UGC / TikTok content end-to-end | [references/ugc-video.md](references/ugc-video.md) (`ugc_videos_create` modes) → [references/workflows.md](references/workflows.md) |
 | Shape a prompt for a specific model (Veo / Seedance / Kling) | [references/video-prompting.md](references/video-prompting.md) |
 | Turn a podcast / long video into short clips | [references/workflows.md](references/workflows.md) → [references/post-production.md](references/post-production.md) |
