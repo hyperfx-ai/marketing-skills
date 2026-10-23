@@ -21,7 +21,7 @@ Call `meta_ads_owned_pages_list` with `{"account_id": "<selected_act_id>", "deta
 
 > `account_id` is REQUIRED — never call this tool without it.
 
-**Capture the returned `page_id` explicitly.** Put it in `object_story_spec.page_id` of every creative or ad, and in `promoted_object.page_id` of a lead-form ad set. Do not rely on auto-resolution.
+**Capture the returned `page_id` explicitly.** Where it goes: section 11 of [constraints.md](constraints.md). Do not rely on auto-resolution.
 
 **If the call fails with "No business ID found for this ad account":**
 

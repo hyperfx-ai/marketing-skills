@@ -21,7 +21,7 @@ Bidding is one object on the campaign body:
 
 Smart Bidding needs conversion tracking.
 
-> For PMax, put `target_cpa_micros` inside `maximize_conversions`, or `target_roas` inside `maximize_conversion_value`, yourself. Nothing translates `target_cpa` / `target_roas`.
+> For PMax, use only `maximize_conversions` (optional `target_cpa_micros` inside) or `maximize_conversion_value` (optional `target_roas` inside); Google rejects any other scheme. Nothing translates `target_cpa` / `target_roas`.
 
 ## Technical Rules
 

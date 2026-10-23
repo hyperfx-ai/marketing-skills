@@ -18,7 +18,7 @@
 }
 ```
 
-   Do NOT set `network_settings`, `manual_cpc` or `manual_cpm`: the validator rejects them. Use only `maximize_conversions` (optional `target_cpa_micros` inside) or `maximize_conversion_value` (optional `target_roas` inside). Google rejects any other scheme. Set `contains_eu_political_advertising` ([constraints.md](../constraints.md), Technical Rules).
+   Do NOT set `network_settings`, `manual_cpc` or `manual_cpm`: the validator rejects them. Bidding: the PMax line of [constraints.md](../constraints.md), Bidding. Set `contains_eu_political_advertising` ([constraints.md](../constraints.md), Technical Rules).
 3. **Locations** — `google_ads_locations_search` → `google_ads_location_targets_add`.
 4. **Image assets** — `google_ads_image_assets_upload` (prefer `file_id` from the workspace file manager). Required ratios: landscape 1.91:1, square 1:1, logo 1:1 (or 4:1).
 5. **Asset group** — `google_ads_asset_groups_create` (atomic: creates the asset group, its text assets, and all links in ONE API call, which the API requires):

@@ -74,7 +74,7 @@ meta_ads_campaign_create(
         "status": "PAUSED",
         "daily_budget": 2000,              # $20/day in cents — Advantage+ only; omit for manual
         # iOS 14+ only (SKAdNetwork): the next three keys, campaign-level and immutable.
-        # Omit them for Android. Meta refuses is_skadnetwork_attribution with smart_promotion_type SMART_APP_PROMOTION.
+        # Omit them for Android. Meta refuses is_skadnetwork_attribution unless smart_promotion_type is GUIDED_CREATION.
         "is_skadnetwork_attribution": True,
         "smart_promotion_type": "GUIDED_CREATION",
         "promoted_object": {

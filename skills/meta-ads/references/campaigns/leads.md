@@ -140,7 +140,7 @@ Skip if using the native lead form path — `promoted_object` uses only `page_id
 }
 ```
 
-> **CRITICAL**: Website leads: `promoted_object` = `{"pixel_id": ..., "custom_event_type": "LEAD"}`. Native form: `promoted_object` = `{"page_id": ...}`. Meta, not a local check, refuses a missing field.
+> **CRITICAL**: `promoted_object` for each lead path: section 9 of [../constraints.md](../constraints.md).
 
 **Advantage+ — native lead form path:**
 
@@ -207,11 +207,7 @@ Skip if using the native lead form path — `promoted_object` uses only `page_id
 
 #### If the optimization goal is rejected (error 2490408)
 
-See section 14 of [../constraints.md](../constraints.md).
-
-1. Read `meta_ads_campaign_get(campaign_id=..., fields="objective,bid_strategy")`.
-2. Fix the goal and the destination of the ad set for the lead capture method the user chose.
-3. **Do not substitute `LINK_CLICKS` or change the objective to `OUTCOME_TRAFFIC`** without the user. That silently creates a traffic campaign, not a leads campaign.
+See section 14 of [../constraints.md](../constraints.md). Then fix the goal and the destination of the ad set for the lead capture method the user chose.
 
 ### 5. (Native lead form path only) List lead forms
 
@@ -384,7 +380,7 @@ meta_accounts_list()
 |---|---|---|
 | "No business ID found" from `meta_ads_owned_pages_list` | Account not linked to a Business Manager | Use `meta_accounts_list` as fallback |
 | "Bid amount required" | Account-level bid strategy requires explicit bid | **Stop. Surface to user. Do NOT add bid_amount or change optimization_goal.** |
-| "Performance goal isn't available" (subcode 2490408) | The goal does not fit the objective or the destination | See section 14 of [../constraints.md](../constraints.md). Do NOT substitute LINK_CLICKS. |
+| "Performance goal isn't available" (subcode 2490408) | The goal does not fit the objective or the destination | See section 14 of [../constraints.md](../constraints.md). |
 | Cryptic API error on ad set | Missing `promoted_object` entirely | Add promoted_object with all required fields |
 | Budget at wrong level | Set budget on ad set for Advantage+ | Move to campaign level; remove from ad set |
 | Nothing serves after activation | Used `meta_ads_campaign_update(campaign_id, body={"status": "ACTIVE"})` | See section 3 of [../constraints.md](../constraints.md) |

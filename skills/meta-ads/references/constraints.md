@@ -275,7 +275,7 @@ meta_ads_ad_previews_get(creative_ids=["<existing_creative_id>"])
 | Error | Do NOT do this | Do this instead |
 |---|---|---|
 | "Bid amount required" (subcode 1815857) — **and the user did NOT ask for a bid cap** | Change `optimization_goal` or invent a `bid_amount` | **Stop.** Surface to user: "This account requires an explicit bid amount due to its bid strategy. How would you like to proceed?" Do NOT change the optimization goal as a workaround — that silently misconfigures the campaign. (If the user *did* specify a bid strategy/cap, just set it — see section 16.) |
-| "Performance goal isn't available" (subcode 2490408) | Substitute a different `optimization_goal` (e.g. LINK_CLICKS) | The goal does not fit the objective or the destination. Read `meta_ads_campaign_get(campaign_id=..., fields="objective,bid_strategy")`. On OUTCOME_LEADS, `LEAD_GENERATION` works only with `destination_type: "ON_AD"` (a native lead form); website leads use `OFFSITE_CONVERSIONS` with `destination_type: "WEBSITE"` and `promoted_object: {"pixel_id": ..., "custom_event_type": "LEAD"}`. Never change the objective without the user. |
+| "Performance goal isn't available" (subcode 2490408) | Substitute a different `optimization_goal` (e.g. LINK_CLICKS) | The goal does not fit the objective or the destination. Read `meta_ads_campaign_get(campaign_id=..., fields="objective,bid_strategy")`. Match `optimization_goal` and `destination_type` to section 8, and `promoted_object` to section 9. Never change the objective without the user. |
 | "No Facebook Pages found" | Guess a page_id | Run `meta_ads_health_check`, surface results |
 | "No business ID found" from `meta_ads_owned_pages_list` | Skip and ask user | Try `meta_accounts_list` as fallback |
 | "image_hash is not valid" or "Link data image_hash" | Invalid or wrong-account hash | Call `meta_ads_ad_images_list(account_id)` to find valid hashes in this account, then re-upload if needed |
@@ -299,8 +299,8 @@ When the user wants to update, pause, adjust budget, or change targeting on an e
 Before updating, fetch current state with `meta_ads_campaign_get(campaign_id=..., fields="name,objective,status,daily_budget,lifetime_budget,bid_strategy")` or `meta_ads_adset_get(adset_id=..., fields="promoted_object,attribution_spec,bid_strategy,bid_amount,targeting")` — do not guess at current values.
 
 What the list reads return:
-- `meta_ads_adset_list` returns every ad set of the account with `campaign_id`, `promoted_object` and `bid_strategy`; filter its rows by `campaign_id`. `meta_ads_ad_sets_list(campaign_id=...)` returns neither `promoted_object` nor `bid_strategy`.
-- `meta_ads_creative_list` does not return `link_url`. Read the destination from `object_story_spec.link_data.link` (or `asset_feed_spec.link_urls`) in its rows, or call `meta_ads_creative_get(creative_id=..., fields="link_url,object_story_spec,url_tags")`.
+- `meta_ads_adset_list` returns every ad set of the account with `campaign_id`, `promoted_object` and `bid_strategy`; add `bid_amount` to `fields` to read it, and filter the rows by `campaign_id`. `meta_ads_ad_sets_list(campaign_id=...)` returns none of `promoted_object`, `bid_strategy` and `bid_amount`.
+- `meta_ads_creative_list` returns no `link_url` unless `fields` names it. Pass `fields="id,name,link_url,object_story_spec,url_tags"`, or read the destination from `object_story_spec.link_data.link` (or `asset_feed_spec.link_urls`) in its rows, or call `meta_ads_creative_get(creative_id=..., fields="link_url,object_story_spec,url_tags")`.
 
 **To pause:** `meta_ads_campaign_update(campaign_id="...", body={"status": "PAUSED"})`
 **To increase budget:** `meta_ads_campaign_update(campaign_id="...", body={"daily_budget": 5000})` (in cents)
