@@ -51,7 +51,7 @@ Capture the `pixel_id`. It goes in `promoted_object` on the ad set.
 
 **If multiple pixels are returned:** Do not guess. Either:
 - Ask the user: "I found [N] pixels ([list names]). Which one should I use for this campaign?"
-- Or call `meta_ads_ad_pixels_get(pixel_id)` on candidates to check which ones are actively receiving the relevant events (e.g. Lead, Purchase) before selecting.
+- Or call `meta_ads_dataset_stats_list` with each candidate pixel id as `dataset_id` and a recent `start_time` and `end_time` to check which ones are receiving the relevant events (e.g. Lead, Purchase) before selecting.
 
 ---
 
