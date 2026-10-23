@@ -194,7 +194,7 @@ These objectives **require** `promoted_object` on the ad set. Meta, not a local 
 | OUTCOME_AWARENESS | Not required | — |
 | OUTCOME_ENGAGEMENT | Optional | `{"page_id": "PAGE_ID"}` |
 
-> **App promotion — the creative link must match `object_store_url`.** For OUTCOME_APP_PROMOTION, the ad's creative CTA destination (`link_data.link`, and `call_to_action.value.link` if set) must equal the ad set's `promoted_object.object_store_url` **exactly**, or Meta rejects the ad with *"Object store URL does not match promoted object"* (code 100). When you didn't just author the ad set yourself, call `meta_ads_adset_get(adset_id=..., fields="promoted_object")` and copy `promoted_object.object_store_url` verbatim — never guess the store URL.
+> **App promotion:** the creative link must equal the ad set's `object_store_url`. See step 4 of [campaigns/app-promotion.md](campaigns/app-promotion.md).
 
 ### Attribution window (`attribution_spec`)
 
@@ -275,11 +275,11 @@ meta_ads_ad_previews_get(creative_ids=["<existing_creative_id>"])
 | Error | Do NOT do this | Do this instead |
 |---|---|---|
 | "Bid amount required" (subcode 1815857) — **and the user did NOT ask for a bid cap** | Change `optimization_goal` or invent a `bid_amount` | **Stop.** Surface to user: "This account requires an explicit bid amount due to its bid strategy. How would you like to proceed?" Do NOT change the optimization goal as a workaround — that silently misconfigures the campaign. (If the user *did* specify a bid strategy/cap, just set it — see section 16.) |
-| "Performance goal isn't available" (subcode 2490408) | Substitute a different `optimization_goal` (e.g. LINK_CLICKS) | The goal does not fit the objective or the destination. Read `meta_ads_campaign_get(campaign_id=..., fields="objective,bid_strategy")`. Match `optimization_goal` and `destination_type` to section 8, and `promoted_object` to section 9. Never change the objective without the user. |
+| "Performance goal isn't available" (subcode 2490408) | Substitute a different `optimization_goal` (e.g. LINK_CLICKS) | The goal does not fit the objective or the destination. Read `meta_ads_campaign_get(campaign_id=..., fields="objective,bid_strategy")`. Match `optimization_goal` and `destination_type` to section 8, and `promoted_object` to section 9. Objective: section 10. |
 | "No Facebook Pages found" | Guess a page_id | Run `meta_ads_health_check`, surface results |
 | "No business ID found" from `meta_ads_owned_pages_list` | Skip and ask user | Try `meta_accounts_list` as fallback |
 | "image_hash is not valid" or "Link data image_hash" | Invalid or wrong-account hash | Call `meta_ads_ad_images_list(account_id)` to find valid hashes in this account, then re-upload if needed |
-| "Cannot set daily_budget on ad set when campaign has budget (CBO)" | Campaign was created with a budget | Recreate the campaign with no budget, OR put budget at ad-set level only. To limit an ad set's share under CBO, use `daily_spend_cap`/`lifetime_spend_cap`. See section 2. |
+| "Cannot set daily_budget on ad set when campaign has budget (CBO)" | Campaign was created with a budget | Recreate the campaign with no budget, OR put budget at ad-set level only. See section 2. |
 | `meta_ads_ad_images_list` rejects `detail` value | Invalid enum | `detail` accepts only `"id_only"`, `"core"`, `"summary"`, `"full"`. Not `"minimal"`. |
 | `Unknown argument(s) for <tool>` or `Request body validation failed for <tool>` | Guess a different field name | A body property sent at the top level moves into `body` by itself. For `Unknown argument(s)`, use a name from its "Valid arguments" list. For `Request body validation failed`, the message names the wrong key (`... was unexpected`) and lists no valid key: read the body's properties with `describe` (MCP) or `search_tools` (Hyper chat), and the example of this skill for the object. |
 
@@ -299,7 +299,7 @@ When the user wants to update, pause, adjust budget, or change targeting on an e
 Before updating, fetch current state with `meta_ads_campaign_get(campaign_id=..., fields="name,objective,status,daily_budget,lifetime_budget,bid_strategy")` or `meta_ads_adset_get(adset_id=..., fields="promoted_object,attribution_spec,bid_strategy,bid_amount,targeting")` — do not guess at current values.
 
 What the list reads return:
-- `meta_ads_adset_list` returns every ad set of the account with `campaign_id`, `promoted_object` and `bid_strategy`; add `bid_amount` to `fields` to read it, and filter the rows by `campaign_id`. `meta_ads_ad_sets_list(campaign_id=...)` returns none of `promoted_object`, `bid_strategy` and `bid_amount`.
+- `meta_ads_adset_list` returns every ad set of the account with `campaign_id`, `promoted_object` and `bid_strategy`; filter the rows by `campaign_id`. A `fields` value replaces that list: to read `bid_amount` too, pass `fields="id,name,campaign_id,promoted_object,bid_strategy,bid_amount"`. `meta_ads_ad_sets_list(campaign_id=...)` returns none of `promoted_object`, `bid_strategy` and `bid_amount`.
 - `meta_ads_creative_list` returns no `link_url` unless `fields` names it. Pass `fields="id,name,link_url,object_story_spec,url_tags"`, or read the destination from `object_story_spec.link_data.link` (or `asset_feed_spec.link_urls`) in its rows, or call `meta_ads_creative_get(creative_id=..., fields="link_url,object_story_spec,url_tags")`.
 
 **To pause:** `meta_ads_campaign_update(campaign_id="...", body={"status": "PAUSED"})`

@@ -61,7 +61,7 @@ Default to APP_INSTALLS unless re-engagement is specified.
 - [ ] Budget confirmed and converted to cents
 - [ ] Page ID captured explicitly from discovery
 - [ ] Creative assets ready or will use app store screenshots
-- [ ] Adding to an **existing** ad set? Call `meta_ads_adset_get(adset_id=..., fields="promoted_object")` first and copy `promoted_object.object_store_url` into the creative link verbatim
+- [ ] Adding to an **existing** ad set? Read its `object_store_url` first (step 4).
 
 ### 1. Create campaign
 
@@ -232,11 +232,11 @@ meta_ads_campaigns_activate(campaign_id="<campaign_id>")  # when user approves
 
 | Symptom | Cause | Fix |
 |---|---|---|
-| `Object store URL does not match promoted object` (code 100) | Creative CTA link ≠ ad set's `promoted_object.object_store_url` | Read `promoted_object.object_store_url` via `meta_ads_adset_get(adset_id=..., fields="promoted_object")` and copy it exactly into the creative's `link` (don't guess the URL) |
+| `Object store URL does not match promoted object` (code 100) | Creative CTA link ≠ ad set's `promoted_object.object_store_url` | See step 4. |
 | Cryptic API error on ad set | Missing `promoted_object` | Add `application_id` + `object_store_url` |
 | "App not found" error | Wrong `application_id` | Verify in Meta App Dashboard, not app store |
 | `object_store_url` invalid | URL format wrong or missing https:// | Use full URL with https:// |
 | Budget rejected | Passed dollars not cents | Multiply by 100 |
 | Ad set error: unexpected argument | A misspelled field | See section 14 of [../constraints.md](../constraints.md) |
 | Campaign ACTIVE but no installs | Used `meta_ads_campaign_update(campaign_id, body={"status": "ACTIVE"})` | See section 3 of [../constraints.md](../constraints.md) |
-| Ad set shows "iOS 13.7 or earlier" / `user_os` reads `iOS_ver_14.0_to_14.4` | Parent **campaign** not created as iOS-14 SKAdNetwork, so Meta clamped the open-ended target | Recreate the campaign: in the `meta_ads_campaign_create` body set `is_skadnetwork_attribution: true`, `smart_promotion_type: "GUIDED_CREATION"` and `promoted_object: {"application_id": ..., "object_store_url": ...}` — campaign-level, immutable after creation |
+| Ad set shows "iOS 13.7 or earlier" / `user_os` reads `iOS_ver_14.0_to_14.4` | Parent **campaign** not created as iOS-14 SKAdNetwork, so Meta clamped the open-ended target | Recreate the campaign as the "iOS 14+ targeting" note of step 2 says. |
