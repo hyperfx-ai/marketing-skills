@@ -74,7 +74,7 @@ The same applies to **audience parameters that don't match the brief** — e.g. 
 
 ## Step 4: Health check (recommended)
 
-Call `meta_ads_health_check` before a first campaign on any account.
+Call `meta_ads_health_check` before a first campaign on any account. It takes no account argument; it checks every ad account of the connection.
 
 It verifies: token permissions, ad account access, Page publish access, and pixel access.
 

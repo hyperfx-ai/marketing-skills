@@ -37,7 +37,7 @@ Pull performance for the audit window (default: last 30 days — confirm with th
 
 For top-spending campaigns:
 
-1. `meta_ads_ad_sets_list(campaign_id=...)` for one campaign. `meta_ads_adset_list` returns every ad set of the account with `campaign_id`, so filter its rows by `campaign_id` when you need its fields.
+1. `meta_ads_ad_sets_list(campaign_id=...)` for one campaign. For its fields, use `meta_ads_adset_list` (section 15 of [constraints.md](constraints.md)).
 2. Review targeting settings:
    - Audience sizes (too narrow → high CPM; overlapping → auction competition)
    - Age/gender targeting

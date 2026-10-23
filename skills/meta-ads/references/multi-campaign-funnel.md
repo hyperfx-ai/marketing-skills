@@ -46,7 +46,6 @@ Filling this table forces the two decisions that prevent rebuilds: **budget mode
 
 For every tier that targets a custom or lookalike audience, run the audience validation from [discovery.md](discovery.md) step 3b **before creating any campaign**:
 
-- `operation_status.code` = 200, `delivery_status.code` = 200, and `approximate_count_lower_bound` > ~1000 from `meta_ads_custom_audience_get(custom_audience_id=...)`
 - Confirm the audience parameters match the brief (e.g. retention window)
 
 If any audience is broken, too small, or mismatched, **surface it to the user and resolve it before building.** Do not build two campaigns and then silently swap in a customer list for the broken BOF lookalike — the user asked for a specific structure.

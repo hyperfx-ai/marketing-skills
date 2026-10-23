@@ -13,8 +13,8 @@ Re-read [../constraints.md](../constraints.md). Every rule there applies here. M
 - Budget at campaign level for Advantage+
 - `meta_ads_adset_create` takes `ad_account_id` (numeric, no `act_` prefix) + a `body` dict — all ad set fields inside `body`
 - `meta_ads_ad_create` takes `ad_account_id` + a `body` dict — no separate top-level args
-- Use `meta_ads_campaigns_activate()`, not `meta_ads_campaign_update(campaign_id, body={"status": "ACTIVE"})`
-- Every ad starts `PAUSED`: the body of each `meta_ads_ad_create` carries `"status": "PAUSED"` (section 4)
+- Activation: section 3
+- Ad status: section 4
 
 ---
 
@@ -262,7 +262,7 @@ The single-image `object_story_spec` above is the most common. `meta_ads_ad_crea
 }
 ```
 
-**Dynamic creative** (Meta auto-optimizes combinations) — create it with `meta_ads_creative_create` (`asset_feed_spec` + `object_story_spec.page_id`), then pass `creative: {"creative_id": ...}` to `meta_ads_ad_create`:
+**Dynamic creative** (Meta auto-optimizes combinations) takes two calls (section 19 of [../constraints.md](../constraints.md)):
 
 ```json
 {
@@ -348,7 +348,7 @@ The single-image `object_story_spec` above is the most common. `meta_ads_ad_crea
 | Cryptic API error on ad set creation | Missing `promoted_object` | Add `pixel_id` + `custom_event_type` to ad set |
 | Budget rejected | Passed dollars not cents | Multiply by 100 |
 | Ad set error: unexpected argument | A misspelled field | See section 14 of [../constraints.md](../constraints.md) |
-| Campaign ACTIVE but nothing serves | Used `meta_ads_campaign_update(campaign_id, body={"status": "ACTIVE"})` | Use `meta_ads_campaigns_activate()` |
+| Campaign ACTIVE but nothing serves | Used `meta_ads_campaign_update(campaign_id, body={"status": "ACTIVE"})` | See section 3 of [../constraints.md](../constraints.md) |
 | "Bid amount required" | Optimization goal requires explicit bid | Do NOT change goal — ask user |
 | `targeting_automation` error | Placed at ad set top level | Move inside `targeting` object |
 

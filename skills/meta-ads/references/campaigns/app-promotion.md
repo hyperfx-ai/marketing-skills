@@ -13,8 +13,8 @@ Re-read [../constraints.md](../constraints.md). Most relevant:
 - Budget at campaign level for Advantage+
 - `meta_ads_adset_create` takes `ad_account_id` (numeric, no `act_` prefix) + a `body` dict — all ad set fields inside `body`
 - `meta_ads_ad_create` takes `ad_account_id` + a `body` dict — no separate top-level args
-- Use `meta_ads_campaigns_activate()`, not `meta_ads_campaign_update(campaign_id, body={"status": "ACTIVE"})`
-- Every ad starts `PAUSED`: the body of each `meta_ads_ad_create` carries `"status": "PAUSED"` (section 4)
+- Activation: section 3
+- Ad status: section 4
 
 ---
 
@@ -74,7 +74,7 @@ meta_ads_campaign_create(
         "status": "PAUSED",
         "daily_budget": 2000,              # $20/day in cents — Advantage+ only; omit for manual
         # iOS 14+ only (SKAdNetwork): the next three keys, campaign-level and immutable.
-        # Omit them for Android and for an Advantage+ app campaign.
+        # Omit them for Android. Meta refuses is_skadnetwork_attribution with smart_promotion_type SMART_APP_PROMOTION.
         "is_skadnetwork_attribution": True,
         "smart_promotion_type": "GUIDED_CREATION",
         "promoted_object": {
@@ -238,5 +238,5 @@ meta_ads_campaigns_activate(campaign_id="<campaign_id>")  # when user approves
 | `object_store_url` invalid | URL format wrong or missing https:// | Use full URL with https:// |
 | Budget rejected | Passed dollars not cents | Multiply by 100 |
 | Ad set error: unexpected argument | A misspelled field | See section 14 of [../constraints.md](../constraints.md) |
-| Campaign ACTIVE but no installs | Used `meta_ads_campaign_update(campaign_id, body={"status": "ACTIVE"})` | Use `meta_ads_campaigns_activate()` |
+| Campaign ACTIVE but no installs | Used `meta_ads_campaign_update(campaign_id, body={"status": "ACTIVE"})` | See section 3 of [../constraints.md](../constraints.md) |
 | Ad set shows "iOS 13.7 or earlier" / `user_os` reads `iOS_ver_14.0_to_14.4` | Parent **campaign** not created as iOS-14 SKAdNetwork, so Meta clamped the open-ended target | Recreate the campaign: in the `meta_ads_campaign_create` body set `is_skadnetwork_attribution: true`, `smart_promotion_type: "GUIDED_CREATION"` and `promoted_object: {"application_id": ..., "object_store_url": ...}` — campaign-level, immutable after creation |

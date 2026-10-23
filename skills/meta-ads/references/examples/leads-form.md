@@ -87,7 +87,7 @@ connections_info(toolkit_id="meta_ads")
 meta_ads_owned_pages_list({"account_id": "act_111222333", "detail": "id_only"})
 # → page_id: 632278516639981  ← captured explicitly
 
-meta_ads_health_check()  # it checks every ad account of the connection
+meta_ads_health_check()
 # → All checks PASS
 ```
 

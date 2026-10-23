@@ -146,7 +146,7 @@ For an Advantage+ audience, set `targeting_automation.advantage_audience` inside
 ✅ RIGHT:  meta_ads_ad_create(ad_account_id="1122334455", body={"adset_id": "123", "name": "My Ad", "creative": {"creative_id": "..."}, "status": "PAUSED"})
 ```
 
-`meta_ads_ad_images_upload` returns the hash as `images[0].hash`. Pass it as `link_data.image_hash`.
+`meta_ads_ad_images_upload` returns the hash as `images[0].hash`. Pass it as `link_data.image_hash` (a carousel card: `child_attachments[].image_hash`; a dynamic creative: `asset_feed_spec.images[].hash`).
 
 ### object_story_spec / link_data fields (applies to every objective)
 
@@ -298,9 +298,13 @@ When the user wants to update, pause, adjust budget, or change targeting on an e
 
 Before updating, fetch current state with `meta_ads_campaign_get(campaign_id=..., fields="name,objective,status,daily_budget,lifetime_budget,bid_strategy")` or `meta_ads_adset_get(adset_id=..., fields="promoted_object,attribution_spec,bid_strategy,bid_amount,targeting")` — do not guess at current values.
 
+What the list reads return:
+- `meta_ads_adset_list` returns every ad set of the account with `campaign_id`, `promoted_object` and `bid_strategy`; filter its rows by `campaign_id`. `meta_ads_ad_sets_list(campaign_id=...)` returns neither `promoted_object` nor `bid_strategy`.
+- `meta_ads_creative_list` does not return `link_url`. Read the destination from `object_story_spec.link_data.link` (or `asset_feed_spec.link_urls`) in its rows, or call `meta_ads_creative_get(creative_id=..., fields="link_url,object_story_spec,url_tags")`.
+
 **To pause:** `meta_ads_campaign_update(campaign_id="...", body={"status": "PAUSED"})`
 **To increase budget:** `meta_ads_campaign_update(campaign_id="...", body={"daily_budget": 5000})` (in cents)
-**To go live:** always `meta_ads_campaigns_activate(campaign_id)`, not `meta_ads_campaign_update(campaign_id, body={"status": "ACTIVE"})`
+**To go live:** section 3.
 
 ---
 

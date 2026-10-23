@@ -1,6 +1,6 @@
 # Search & Display campaigns (granular build)
 
-> **CRITICAL**: Present the full plan and get explicit user approval before the first mutate ([discovery.md](../discovery.md) must be complete and the summary approved). Create everything **PAUSED**, in dependency order. A generated body takes the full returned `resource_name`; a flat tool (`google_ads_location_targets_add`, `google_ads_keywords_create`) takes the bare id, the last part of that resource name. The tools validate bodies (writable fields, real enums, channel-type rules) and return corrective errors — fix and retry.
+> **CRITICAL**: Present the full plan and get explicit user approval before the first mutate ([discovery.md](../discovery.md) must be complete and the summary approved). Create everything **PAUSED**, in dependency order. The tools validate bodies (writable fields, real enums, channel-type rules) and return corrective errors — fix and retry.
 
 ## Build order
 

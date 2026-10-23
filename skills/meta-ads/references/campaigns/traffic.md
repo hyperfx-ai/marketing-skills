@@ -12,8 +12,8 @@ Re-read [../constraints.md](../constraints.md). Most relevant:
 - Budget at campaign level for Advantage+
 - `meta_ads_adset_create` takes `ad_account_id` (numeric, no `act_` prefix) + a `body` dict — all ad set fields inside `body`
 - `meta_ads_ad_create` takes `ad_account_id` + a `body` dict — no separate top-level args
-- Use `meta_ads_campaigns_activate()`, not `meta_ads_campaign_update(campaign_id, body={"status": "ACTIVE"})`
-- Every ad starts `PAUSED`: the body of each `meta_ads_ad_create` carries `"status": "PAUSED"` (section 4)
+- Activation: section 3
+- Ad status: section 4
 
 `promoted_object` is **not required** for OUTCOME_TRAFFIC. No pixel needed.
 
@@ -195,5 +195,5 @@ meta_ads_campaigns_activate(campaign_id="<campaign_id>")
 |---|---|---|
 | Budget rejected | Passed dollars not cents | Multiply by 100 |
 | Ad set error: unexpected argument | A misspelled field | See section 14 of [../constraints.md](../constraints.md) |
-| Campaign ACTIVE but no traffic | Used `meta_ads_campaign_update(campaign_id, body={"status": "ACTIVE"})` | Use `meta_ads_campaigns_activate()` |
+| Campaign ACTIVE but no traffic | Used `meta_ads_campaign_update(campaign_id, body={"status": "ACTIVE"})` | See section 3 of [../constraints.md](../constraints.md) |
 | `targeting_automation` error | Placed at top level of ad set | Move inside `targeting` object |

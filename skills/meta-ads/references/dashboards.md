@@ -8,15 +8,15 @@ When the user asks for a Meta dashboard or performance report interface, follow 
 
 ### 1. Use cached data
 
-Read the Meta context block (`connections_info(toolkit_id="meta_ads")`) for the table name and last sync timestamp. Query the synced data with `database_query(query=..., connection="lakehouse")` in ClickHouse SQL, SELECT only, before making any live Meta API calls.
+Query the synced data as "Querying warehouse tables" in [analytics.md](analytics.md) says, before making any live Meta API calls.
 
 ### 2. Build the dashboard
 
-Build the dashboard using `data_apps_build` with `name`, `template_html` (or `template_name` + `template_context`), `tool_data_sources` and `sql_data_sources` (see the custom pattern below). Read "Querying warehouse tables" in [analytics.md](analytics.md) first. Inspect the live tool schema before calling — it documents the accepted data-source shapes and UI components. Do not invent dashboard patterns.
+Build the dashboard using `data_apps_build` with `name`, `template_html` (or `template_name` + `template_context`), `tool_data_sources` and `sql_data_sources` (see the custom pattern below). Inspect the live tool schema before calling — it documents the accepted data-source shapes and UI components. Do not invent dashboard patterns.
 
 ### 3. Cache refresh policy
 
-Today's numbers sync about every 15 minutes and the daily report tables once a day; `connections_info(toolkit_id="meta_ads")` names the last sync. For up-to-the-minute numbers, call `meta_ads_insights_get`; there is no manual sync tool.
+Today's numbers sync about every 15 minutes and the daily report tables once a day. For up-to-the-minute numbers, call `meta_ads_insights_get`; there is no manual sync tool.
 
 If no cached data exists yet, use Meta API tools directly as a fallback and cache the results.
 

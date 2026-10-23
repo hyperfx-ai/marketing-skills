@@ -16,8 +16,8 @@ Re-read [../constraints.md](../constraints.md). Most relevant:
 - Budget at campaign level for Advantage+
 - `meta_ads_adset_create` takes `ad_account_id` (numeric, no `act_` prefix) + a `body` dict — all ad set fields inside `body`
 - `meta_ads_ad_create` takes `ad_account_id` + a `body` dict — no separate top-level args
-- Use `meta_ads_campaigns_activate()`, not `meta_ads_campaign_update(campaign_id, body={"status": "ACTIVE"})`
-- Every ad starts `PAUSED`: the body of each `meta_ads_ad_create` carries `"status": "PAUSED"` (section 4)
+- Activation: section 3
+- Ad status: section 4
 
 ---
 

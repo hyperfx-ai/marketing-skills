@@ -13,8 +13,8 @@ Re-read [../constraints.md](../constraints.md). Every rule there applies here. M
 - Budget at campaign level for Advantage+
 - `meta_ads_adset_create` takes `ad_account_id` (numeric, no `act_` prefix) + a `body` dict — all ad set fields inside `body`
 - `meta_ads_ad_create` takes `ad_account_id` + a `body` dict — no separate top-level args
-- Use `meta_ads_campaigns_activate()`, not `meta_ads_campaign_update(campaign_id, body={"status": "ACTIVE"})`
-- Every ad starts `PAUSED`: the body of each `meta_ads_ad_create` carries `"status": "PAUSED"` (section 4)
+- Activation: section 3
+- Ad status: section 4
 - **"Bid amount required" errors MUST be surfaced to the user — do NOT change optimization_goal as a workaround**
 
 ---
@@ -74,7 +74,7 @@ If the user hasn't specified, ask:
 ### 1. Run health check
 
 ```python
-meta_ads_health_check()  # it checks every ad account of the connection
+meta_ads_health_check()
 ```
 
 Surface any non-PASS items before continuing. A failing pixel health check means the website path (`OFFSITE_CONVERSIONS` on `LEAD` events) cannot optimize yet.
@@ -207,7 +207,7 @@ Skip if using the native lead form path — `promoted_object` uses only `page_id
 
 #### If the optimization goal is rejected (error 2490408)
 
-The goal does not fit the objective or the destination. `LEAD_GENERATION` works only with `destination_type: "ON_AD"`; website leads use `OFFSITE_CONVERSIONS` with `destination_type: "WEBSITE"`.
+See section 14 of [../constraints.md](../constraints.md).
 
 1. Read `meta_ads_campaign_get(campaign_id=..., fields="objective,bid_strategy")`.
 2. Fix the goal and the destination of the ad set for the lead capture method the user chose.
@@ -279,7 +279,7 @@ meta_ads_creative_create(
 
 If the user has provided or selected an **existing creative** (`creative_id`), skip the upload — but verify the destination URL first.
 
-`meta_ads_creative_list` does not return `link_url`. Read the destination from `object_story_spec.link_data.link` (or `asset_feed_spec.link_urls`) in its rows, or call `meta_ads_creative_get` with `fields` before attaching it:
+Check the destination first (section 15 of [../constraints.md](../constraints.md)):
 
 ```python
 meta_ads_creative_get(creative_id="33892633203717215", fields="link_url,object_story_spec,url_tags")
@@ -291,7 +291,7 @@ If the destination doesn't match, tell the user and either select a different cr
 **Selecting among multiple existing creatives:** When `meta_ads_creative_list` returns several options, choose based on:
 1. Body copy alignment with campaign goal (lead-focused language > viral/social tone)
 2. Headline relevance to the offer or CTA
-3. Destination URL (`object_story_spec.link_data.link` in the list rows, or `meta_ads_creative_get` with `fields`)
+3. Destination URL (section 15 of [../constraints.md](../constraints.md))
 
 If you're unsure, show the user the top 2–3 options (name + body copy) and let them choose.
 
@@ -384,10 +384,10 @@ meta_accounts_list()
 |---|---|---|
 | "No business ID found" from `meta_ads_owned_pages_list` | Account not linked to a Business Manager | Use `meta_accounts_list` as fallback |
 | "Bid amount required" | Account-level bid strategy requires explicit bid | **Stop. Surface to user. Do NOT add bid_amount or change optimization_goal.** |
-| "Performance goal isn't available" (subcode 2490408) | The goal does not fit the objective or the destination | Website leads: `OFFSITE_CONVERSIONS` with `destination_type: "WEBSITE"`. Read the objective with `meta_ads_campaign_get(campaign_id=..., fields="objective,bid_strategy")`. Do NOT substitute LINK_CLICKS. |
+| "Performance goal isn't available" (subcode 2490408) | The goal does not fit the objective or the destination | See section 14 of [../constraints.md](../constraints.md). Do NOT substitute LINK_CLICKS. |
 | Cryptic API error on ad set | Missing `promoted_object` entirely | Add promoted_object with all required fields |
 | Budget at wrong level | Set budget on ad set for Advantage+ | Move to campaign level; remove from ad set |
-| Nothing serves after activation | Used `meta_ads_campaign_update(campaign_id, body={"status": "ACTIVE"})` | Use `meta_ads_campaigns_activate()` |
+| Nothing serves after activation | Used `meta_ads_campaign_update(campaign_id, body={"status": "ACTIVE"})` | See section 3 of [../constraints.md](../constraints.md) |
 | Creative destination URL wrong | Existing creative linked to different URL | Verify creative destination before attaching |
 
 ---
