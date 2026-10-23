@@ -57,7 +57,7 @@ Default to APP_INSTALLS unless re-engagement is specified.
 ### Pre-build checklist
 
 - [ ] App ID confirmed (from Meta App Dashboard — NOT the app store numeric ID)
-- [ ] App store URL confirmed (full URL with https://) — this exact URL becomes both the ad set's `object_store_url` AND the creative's CTA `link`
+- [ ] App store URL confirmed (full URL with https://)
 - [ ] Budget confirmed and converted to cents
 - [ ] Page ID captured explicitly from discovery
 - [ ] Creative assets ready or will use app store screenshots

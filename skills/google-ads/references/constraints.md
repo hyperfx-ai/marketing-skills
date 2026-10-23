@@ -13,7 +13,7 @@ Bidding is one object on the campaign body:
 | Object | Inner fields | Notes |
 | --- | --- | --- |
 | `target_spend: {}` | — | Maximize Clicks. |
-| `maximize_conversions` | `target_cpa_micros` (optional) | Requires conversion tracking. |
+| `maximize_conversions` | `target_cpa_micros` (optional) | Maximize Conversions. |
 | `maximize_conversion_value` | `target_roas` (optional) | Requires conversion values. |
 | `target_cpa` | `target_cpa_micros` | Sets a target cost per acquisition. |
 | `target_roas` | `target_roas` | Sets a target return on ad spend. |

@@ -171,16 +171,16 @@ one and the request genuinely needs it.
 
 When the task is "find the best performer and build a new campaign modelled on it," inspect the source with `meta_ads_campaign_get(campaign_id=..., fields="name,objective,status,daily_budget,lifetime_budget,bid_strategy")` and `meta_ads_adset_list` (section 15 of [constraints.md](constraints.md)), then build the new campaign via the matching objective workflow ([discovery.md](discovery.md) → relevant `campaigns/<objective>.md`).
 
-> Read the source ad set's `promoted_object`, `bid_strategy` and `bid_amount` as section 15 of [constraints.md](constraints.md) says, or with `meta_ads_adset_get(adset_id=..., fields="promoted_object,bid_strategy,bid_amount")`. Do not assume the source had no pixel because a field is missing. When replicating a sales or leads campaign, re-derive `promoted_object` yourself: look up the pixel with `meta_ads_ad_pixels_list`, infer the `custom_event_type` from the conversion events visible in the source's insights (e.g. PURCHASE, LEAD, COMPLETE_REGISTRATION), and set it explicitly on the new ad set per the objective workflow.
+> Read the source ad set's `promoted_object`, `bid_strategy` and `bid_amount` as section 15 of [constraints.md](constraints.md) says, or with `meta_ads_adset_get(adset_id=..., fields="promoted_object,bid_strategy,bid_amount")`, and copy them to the new ad set. When a sales or leads source has no `promoted_object`, derive it: look up the pixel with `meta_ads_ad_pixels_list`, infer the `custom_event_type` from the conversion events visible in the source's insights (e.g. PURCHASE, LEAD, COMPLETE_REGISTRATION), and set it explicitly on the new ad set per the objective workflow.
 
-Carry forward from the source: objective, targeting (age/geo/advantage_audience), and budget mode (campaign-level CBO vs ad-set). Re-derive everything pixel/promoted_object-related rather than trusting the GET response.
+Carry forward from the source: objective, targeting (age/geo/advantage_audience), and budget mode (campaign-level CBO vs ad-set). `promoted_object`: the note above.
 
 ### Duplicating a campaign and swapping creatives
 
 For "duplicate this campaign exactly but with new creatives":
 
 1. **Read the source structure**: `meta_ads_campaign_get(campaign_id=..., fields="name,objective,status,daily_budget,lifetime_budget,bid_strategy")`, `meta_ads_ad_sets_list(campaign_id=...)`, `meta_ads_list(ad_set_id=...)`. Read each creative's destination as section 15 of [constraints.md](constraints.md) says.
-2. **Recreate** campaign → ad set → ad via the matching objective workflow, copying objective, targeting, and budget mode. Re-derive `promoted_object` (see warning above). Name the new campaign as the user specified.
+2. **Recreate** campaign → ad set → ad via the matching objective workflow, copying objective, targeting, and budget mode. Set `promoted_object` as the note above says. Name the new campaign as the user specified.
 3. **Swap creatives**: upload the new images (`meta_ads_ad_images_upload`), then either build a fresh inline `object_story_spec` on the new ad or create new creatives with `meta_ads_creative_create` and attach by `creative_id`.
 4. **Verify before deleting anything**: confirm the new ads were created and the new creatives are attached (`meta_ads_list(ad_set_id=...)` / `meta_ads_creative_get(creative_id=..., fields="link_url,object_story_spec,url_tags")`).
 5. **Only then** delete old draft creatives with `meta_ads_creative_delete` (or `meta_ads_ad_delete` for ads). Never delete the source until the replacement is confirmed.
