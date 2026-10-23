@@ -17,6 +17,7 @@ Re-read [../constraints.md](../constraints.md). Most relevant:
 - `meta_ads_adset_create` takes `ad_account_id` (numeric, no `act_` prefix) + a `body` dict — all ad set fields inside `body`
 - `meta_ads_ad_create` takes `ad_account_id` + a `body` dict — no separate top-level args
 - Use `meta_ads_campaigns_activate()`, not `meta_ads_campaign_update(campaign_id, body={"status": "ACTIVE"})`
+- Every ad starts `PAUSED`: the body of each `meta_ads_ad_create` carries `"status": "PAUSED"` (section 4)
 
 ---
 
@@ -136,7 +137,7 @@ meta_ads_campaign_create(
 meta_ads_ad_images_upload(account_id="act_123456789", image_url="<url>")
 ```
 
-→ Capture `images[0].hash` and pass it as `image_hash`.
+→ Capture the image hash (section 7 of [../constraints.md](../constraints.md)).
 
 ### 4. Create ad
 
@@ -148,6 +149,7 @@ meta_ads_ad_images_upload(account_id="act_123456789", image_url="<url>")
   "body": {
     "name": "Awareness Ad - [Creative]",
     "adset_id": "<adset_id>",
+    "status": "PAUSED",
     "creative": {
       "object_story_spec": {
         "page_id": "<page_id>",
@@ -166,14 +168,12 @@ meta_ads_ad_images_upload(account_id="act_123456789", image_url="<url>")
 }
 ```
 
-> Pass `"status": "PAUSED"` in the body of every `meta_ads_ad_create`. Never pass ACTIVE.
-
 → Capture `ad_id`.
 
 ### 5. Preview and activate
 
 ```python
-# creative_id: meta_ads_ad_get(ad_id=..., fields="creative") (creative.id), or the id that meta_ads_creative_create returned
+# creative_id: section 13 of ../constraints.md
 meta_ads_ad_previews_get(creative_ids=["<creative_id>"])
 meta_ads_campaigns_activate(campaign_id="<campaign_id>")  # when user approves
 ```

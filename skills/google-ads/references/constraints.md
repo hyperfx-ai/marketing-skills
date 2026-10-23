@@ -27,6 +27,7 @@ Smart Bidding needs conversion tracking.
 
 - Budget in micros: $50 → 50,000,000.
 - Create PAUSED; activate only after approval.
+- Every `google_ads_campaigns_create` body sets `contains_eu_political_advertising` (`"DOES_NOT_CONTAIN_EU_POLITICAL_ADVERTISING"` unless the user says otherwise).
 - Location resolution: `google_ads_locations_search` to resolve names, then `google_ads_location_targets_add`.
 - RSA limits: headlines ≤30 chars (min 3), descriptions ≤90 chars (min 2).
 - Creative source: only from the actual site; no generic claims.

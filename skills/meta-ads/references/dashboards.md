@@ -12,7 +12,7 @@ Read the Meta context block (`connections_info(toolkit_id="meta_ads")`) for the 
 
 ### 2. Build the dashboard
 
-Build the dashboard using `data_apps_build` with `name`, `template_html` (or `template_name` + `template_context`), `tool_data_sources` and `sql_data_sources` (see the custom pattern below). Read the `database` skill first. Inspect the live tool schema before calling — it documents the accepted data-source shapes and UI components. Do not invent dashboard patterns.
+Build the dashboard using `data_apps_build` with `name`, `template_html` (or `template_name` + `template_context`), `tool_data_sources` and `sql_data_sources` (see the custom pattern below). Read "Querying warehouse tables" in [analytics.md](analytics.md) first. Inspect the live tool schema before calling — it documents the accepted data-source shapes and UI components. Do not invent dashboard patterns.
 
 ### 3. Cache refresh policy
 
@@ -77,7 +77,7 @@ Do not mention internal dashboard implementation details to the user unless they
 
 ## Ad preview handling
 
-After campaign creation, call `meta_ads_ad_previews_get(creative_ids=["<creative_id>"])` — read the creative id with `meta_ads_ad_get(ad_id=..., fields="creative")` (`creative.id`), or use the id that `meta_ads_creative_create` returned. Note: `ad_id` is not a valid parameter.
+After campaign creation, call `meta_ads_ad_previews_get(creative_ids=["<creative_id>"])`. Section 13 of [constraints.md](constraints.md) says where the creative id comes from. Note: `ad_id` is not a valid parameter.
 
 - Never paste or render iframe/html preview snippets directly in chat.
 - Summarize which preview formats succeeded or failed.

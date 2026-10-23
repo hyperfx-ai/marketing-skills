@@ -13,7 +13,7 @@ Report on existing Google Ads accounts using GAQL-backed data. Dashboards and da
 
 ## Phase 1: Access and scope
 
-1. In Hyper chat, read the accounts from `connections_info(toolkit_id="google_ads")` before touching account data. Call `google_ads_accounts_list()` only on an MCP client or the CLI, or to refresh the list.
+1. Read the accounts as [discovery.md](discovery.md) Phase 1 says, before touching account data.
 2. Confirm the customer ID if more than one account is available.
 3. Confirm the reporting window if the user has not given one.
 4. If the user did not ask for a dashboard/data app and the best output is unclear, ask whether they want a written report or an interactive view.

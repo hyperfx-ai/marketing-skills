@@ -44,16 +44,16 @@ If a tool is not found: in Hyper chat, find its toolkit id with `discover_toolki
 
 ## Tool names
 
-Use the exact tool name that `search_tools` (Hyper chat) or `search` / `describe` (MCP) returns. Canonical names are `meta_ads_*` (listed below). Legacy names (e.g. `meta_business_list_ad_accounts`) and the retired plural names (e.g. `meta_ads_campaigns_create`) resolve to the canonical tools through aliases.
+Use the exact tool name that `search_tools` (Hyper chat) or `search` / `describe` (MCP) returns. Canonical names are `meta_ads_*` (listed below). An older name resolves to its canonical tool through an alias.
 
 | Group | Tools |
 | --- | --- |
-| Discovery | `meta_ads_adaccount_list`, `meta_ads_owned_pages_list`, `meta_ads_pages_search`, `meta_accounts_list`, `meta_ads_instagram_accounts_list` |
+| Discovery | `connections_info` (Hyper chat), `meta_ads_adaccount_list`, `meta_ads_owned_pages_list`, `meta_ads_pages_search`, `meta_accounts_list`, `meta_ads_instagram_accounts_list` |
 | Health & sync | `meta_ads_health_check`, `meta_ads_health_get` |
 | Tracking assets | `meta_ads_ad_pixels_list`, `meta_ads_ad_pixels_get`, `meta_ads_custom_audiences_list`, `meta_ads_lookalike_audiences_list`, `meta_ads_targeting_search` |
 | Step-by-step creation (preferred) | `meta_ads_campaign_create`, `meta_ads_adset_create`, `meta_ads_ad_create`, `meta_ads_ad_images_upload`, `meta_ads_creative_create` |
-| Read & preview | `meta_ads_campaign_get`, `meta_ads_campaigns_search`, `meta_ads_adset_list`, `meta_ads_ad_list`, `meta_ads_ad_get`, `meta_ads_ad_previews_get` |
-| Insights & dashboards | `meta_ads_insights_get`, `data_apps_build`, `database_query` |
+| Read & preview | `meta_ads_campaign_get`, `meta_ads_campaigns_search`, `meta_ads_adset_list`, `meta_ads_ad_sets_list`, `meta_ads_adset_get`, `meta_ads_ad_list`, `meta_ads_list`, `meta_ads_ad_get`, `meta_ads_creative_list`, `meta_ads_creative_get`, `meta_ads_custom_audience_get`, `meta_ads_ad_previews_get` |
+| Insights & dashboards | `meta_ads_insights_get`, `data_apps_build`, `database_tables_list`, `database_tables_describe`, `database_query` |
 | Launch & edits | `meta_ads_campaigns_activate`, `meta_ads_campaign_update`, `meta_ads_adset_update`, `meta_ads_ad_update` |
 | Automated rules | `meta_ads_adrule_create`, `meta_ads_adrule_list`, `meta_ads_adrule_get`, `meta_ads_adrule_update`, `meta_ads_adrule_delete`, `meta_ads_adrule_history_list` |
 | Site research | `firecrawl_branding_extract`, `firecrawl_screenshots_create` |

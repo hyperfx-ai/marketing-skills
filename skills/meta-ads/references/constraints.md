@@ -146,6 +146,8 @@ For an Advantage+ audience, set `targeting_automation.advantage_audience` inside
 ✅ RIGHT:  meta_ads_ad_create(ad_account_id="1122334455", body={"adset_id": "123", "name": "My Ad", "creative": {"creative_id": "..."}, "status": "PAUSED"})
 ```
 
+`meta_ads_ad_images_upload` returns the hash as `images[0].hash`. Pass it as `link_data.image_hash`.
+
 ### object_story_spec / link_data fields (applies to every objective)
 
 When building an inline creative (`creative.object_story_spec`):
@@ -273,17 +275,13 @@ meta_ads_ad_previews_get(creative_ids=["<existing_creative_id>"])
 | Error | Do NOT do this | Do this instead |
 |---|---|---|
 | "Bid amount required" (subcode 1815857) — **and the user did NOT ask for a bid cap** | Change `optimization_goal` or invent a `bid_amount` | **Stop.** Surface to user: "This account requires an explicit bid amount due to its bid strategy. How would you like to proceed?" Do NOT change the optimization goal as a workaround — that silently misconfigures the campaign. (If the user *did* specify a bid strategy/cap, just set it — see section 16.) |
-| "Performance goal isn't available" (subcode 2490408) | Substitute a different `optimization_goal` (e.g. LINK_CLICKS) | The goal does not fit the objective or the destination. Read `meta_ads_campaign_get(campaign_id=..., fields="objective,bid_strategy")`. For website leads, use `OFFSITE_CONVERSIONS` with `destination_type: "WEBSITE"`. Never change the objective without the user. |
+| "Performance goal isn't available" (subcode 2490408) | Substitute a different `optimization_goal` (e.g. LINK_CLICKS) | The goal does not fit the objective or the destination. Read `meta_ads_campaign_get(campaign_id=..., fields="objective,bid_strategy")`. On OUTCOME_LEADS, `LEAD_GENERATION` works only with `destination_type: "ON_AD"` (a native lead form); website leads use `OFFSITE_CONVERSIONS` with `destination_type: "WEBSITE"` and `promoted_object: {"pixel_id": ..., "custom_event_type": "LEAD"}`. Never change the objective without the user. |
 | "No Facebook Pages found" | Guess a page_id | Run `meta_ads_health_check`, surface results |
 | "No business ID found" from `meta_ads_owned_pages_list` | Skip and ask user | Try `meta_accounts_list` as fallback |
 | "image_hash is not valid" or "Link data image_hash" | Invalid or wrong-account hash | Call `meta_ads_ad_images_list(account_id)` to find valid hashes in this account, then re-upload if needed |
 | "Cannot set daily_budget on ad set when campaign has budget (CBO)" | Campaign was created with a budget | Recreate the campaign with no budget, OR put budget at ad-set level only. To limit an ad set's share under CBO, use `daily_spend_cap`/`lifetime_spend_cap`. See section 2. |
 | `meta_ads_ad_images_list` rejects `detail` value | Invalid enum | `detail` accepts only `"id_only"`, `"core"`, `"summary"`, `"full"`. Not `"minimal"`. |
-| `Unknown argument(s) for <tool>` or `Request body validation failed for <tool>` | Guess a different field name | Use a name from the valid list in the message |
-
-**Error 2490408 on OUTCOME_LEADS:** the optimization goal does not fit the objective or the destination. `LEAD_GENERATION` works only with `destination_type: "ON_AD"` (a native lead form). Website leads use `OFFSITE_CONVERSIONS` with `destination_type: "WEBSITE"` and `promoted_object: {"pixel_id": ..., "custom_event_type": "LEAD"}`. Read the objective with `meta_ads_campaign_get(campaign_id=..., fields="objective,bid_strategy")`, then choose a goal that the objective and the destination allow. Never change the objective without the user.
-
-Never choose a resolution path without telling the user what the constraint is and what the tradeoff is.
+| `Unknown argument(s) for <tool>` or `Request body validation failed for <tool>` | Guess a different field name | A body property sent at the top level moves into `body` by itself. For `Unknown argument(s)`, use a name from its "Valid arguments" list. For `Request body validation failed`, the message names the wrong key (`... was unexpected`) and lists no valid key: read the body's properties with `describe` (MCP) or `search_tools` (Hyper chat), and the example of this skill for the object. |
 
 ---
 

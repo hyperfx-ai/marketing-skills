@@ -178,7 +178,7 @@ meta_ads_ad_create(
 ### Preview and summary
 
 ```python
-# creative_id: meta_ads_ad_get(ad_id=..., fields="creative") (creative.id), or the id that meta_ads_creative_create returned
+# creative_id: section 13 of ../constraints.md
 meta_ads_ad_previews_get(creative_ids=["<creative_id>"])
 # Summarize preview formats to user — never render iframe inline
 ```

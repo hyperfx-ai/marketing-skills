@@ -14,6 +14,7 @@ Re-read [../constraints.md](../constraints.md). Most relevant:
 - `meta_ads_adset_create` takes `ad_account_id` (numeric, no `act_` prefix) + a `body` dict — all ad set fields inside `body`
 - `meta_ads_ad_create` takes `ad_account_id` + a `body` dict — no separate top-level args
 - Use `meta_ads_campaigns_activate()`, not `meta_ads_campaign_update(campaign_id, body={"status": "ACTIVE"})`
+- Every ad starts `PAUSED`: the body of each `meta_ads_ad_create` carries `"status": "PAUSED"` (section 4)
 
 ---
 
@@ -72,8 +73,9 @@ meta_ads_campaign_create(
         "objective": "OUTCOME_APP_PROMOTION",
         "status": "PAUSED",
         "daily_budget": 2000,              # $20/day in cents — Advantage+ only; omit for manual
-        "is_skadnetwork_attribution": True, # REQUIRED if the ad set targets iOS 14+ (see note in step 2);
-                                        # campaign-level and immutable — can't be added later
+        # iOS 14+ only (SKAdNetwork): the next three keys, campaign-level and immutable.
+        # Omit them for Android and for an Advantage+ app campaign.
+        "is_skadnetwork_attribution": True,
         "smart_promotion_type": "GUIDED_CREATION",
         "promoted_object": {
             "application_id": "<APP_ID>",
@@ -174,7 +176,7 @@ meta_ads_campaign_create(
 meta_ads_ad_images_upload(account_id="act_123456789", image_url="<url>")
 ```
 
-→ Capture `images[0].hash` and pass it as `image_hash`.
+→ Capture the image hash (section 7 of [../constraints.md](../constraints.md)).
 
 ### 4. Create ad
 
@@ -192,6 +194,7 @@ meta_ads_ad_images_upload(account_id="act_123456789", image_url="<url>")
   "body": {
     "name": "App Install Ad - [Creative]",
     "adset_id": "<adset_id>",
+    "status": "PAUSED",
     "creative": {
       "object_story_spec": {
         "page_id": "<page_id>",
@@ -213,14 +216,12 @@ meta_ads_ad_images_upload(account_id="act_123456789", image_url="<url>")
 }
 ```
 
-> Pass `"status": "PAUSED"` in the body of every `meta_ads_ad_create`. Never pass ACTIVE.
-
 → Capture `ad_id`.
 
 ### 5. Preview and activate
 
 ```python
-# creative_id: meta_ads_ad_get(ad_id=..., fields="creative") (creative.id), or the id that meta_ads_creative_create returned
+# creative_id: section 13 of ../constraints.md
 meta_ads_ad_previews_get(creative_ids=["<creative_id>"])
 meta_ads_campaigns_activate(campaign_id="<campaign_id>")  # when user approves
 ```
@@ -236,6 +237,6 @@ meta_ads_campaigns_activate(campaign_id="<campaign_id>")  # when user approves
 | "App not found" error | Wrong `application_id` | Verify in Meta App Dashboard, not app store |
 | `object_store_url` invalid | URL format wrong or missing https:// | Use full URL with https:// |
 | Budget rejected | Passed dollars not cents | Multiply by 100 |
-| Ad set error: unexpected argument | A misspelled field | A body property sent at the top level moves into `body` by itself. A misspelled property is refused, because the body schema allows no extra keys: use a name from the valid list in the message |
+| Ad set error: unexpected argument | A misspelled field | See section 14 of [../constraints.md](../constraints.md) |
 | Campaign ACTIVE but no installs | Used `meta_ads_campaign_update(campaign_id, body={"status": "ACTIVE"})` | Use `meta_ads_campaigns_activate()` |
 | Ad set shows "iOS 13.7 or earlier" / `user_os` reads `iOS_ver_14.0_to_14.4` | Parent **campaign** not created as iOS-14 SKAdNetwork, so Meta clamped the open-ended target | Recreate the campaign: in the `meta_ads_campaign_create` body set `is_skadnetwork_attribution: true`, `smart_promotion_type: "GUIDED_CREATION"` and `promoted_object: {"application_id": ..., "object_store_url": ...}` — campaign-level, immutable after creation |

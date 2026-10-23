@@ -1,6 +1,6 @@
 # Search & Display campaigns (granular build)
 
-> **CRITICAL**: Present the full plan and get explicit user approval before the first mutate ([discovery.md](../discovery.md) must be complete and the summary approved). Create everything **PAUSED**, in dependency order. A generated body takes the full returned `resource_name`; a flat tool (`location_targets_add`, `keywords_create`) takes the bare id, the last part of that resource name. The tools validate bodies (writable fields, real enums, channel-type rules) and return corrective errors — fix and retry.
+> **CRITICAL**: Present the full plan and get explicit user approval before the first mutate ([discovery.md](../discovery.md) must be complete and the summary approved). Create everything **PAUSED**, in dependency order. A generated body takes the full returned `resource_name`; a flat tool (`google_ads_location_targets_add`, `google_ads_keywords_create`) takes the bare id, the last part of that resource name. The tools validate bodies (writable fields, real enums, channel-type rules) and return corrective errors — fix and retry.
 
 ## Build order
 
@@ -19,7 +19,7 @@
 }
 ```
 
-   Bidding is ONE scheme field on the campaign: `target_spend` (Maximize Clicks), `maximize_conversions`, `maximize_conversion_value`, `target_cpa`, `target_roas` or `manual_cpc`. Every campaign create body needs `contains_eu_political_advertising`. For Display set `"advertising_channel_type": "DISPLAY"`.
+   Bidding is ONE scheme field on the campaign: `target_spend` (Maximize Clicks), `maximize_conversions`, `maximize_conversion_value`, `target_cpa`, `target_roas` or `manual_cpc`. Set `contains_eu_political_advertising` ([constraints.md](../constraints.md), Technical Rules). For Display set `"advertising_channel_type": "DISPLAY"`.
 3. **Locations** — resolve names with `google_ads_locations_search(customer_id, query="...")`. Then call `google_ads_location_targets_add(customer_id, campaign_id="<numeric id>", location_id="1023191")` once for each location. Add `negative=True` to exclude a location.
 4. **Ad group** — `google_ads_ad_groups_create(customer_id, body={"name": "Ad Group 1", "campaign": "customers/{cid}/campaigns/{id}", "status": "PAUSED"})`.
 5. **Keywords** (Search) — `google_ads_keywords_create(customer_id, ad_group_id="<numeric id>", keyword_text="marketing software", match_type="PHRASE")`, one call for each keyword. For a negative, add `negative=True`.
@@ -71,6 +71,6 @@ Create assets with `google_ads_assets_create` (`sitelink_asset` / `callout_asset
 
 ## Verify, then activate
 
-After building, confirm the tree by GAQL (campaign, ad groups, ads, keywords), present it to the user, then call `google_ads_campaigns_update(customer_id, campaign_id="<numeric id>", body={"status": "ENABLED"})` after explicit approval.
+After building, confirm the tree by GAQL (campaign, ad groups, ads, keywords), present it to the user, then call `google_ads_campaigns_update(customer_id, body={"resource_name": "customers/<cid>/campaigns/<id>", "status": "ENABLED"})` after explicit approval.
 
 Re-check [constraints.md](../constraints.md) (bidding strategies, technical rules) at each creation step.

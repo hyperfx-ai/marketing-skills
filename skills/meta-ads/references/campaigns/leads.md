@@ -14,6 +14,7 @@ Re-read [../constraints.md](../constraints.md). Every rule there applies here. M
 - `meta_ads_adset_create` takes `ad_account_id` (numeric, no `act_` prefix) + a `body` dict — all ad set fields inside `body`
 - `meta_ads_ad_create` takes `ad_account_id` + a `body` dict — no separate top-level args
 - Use `meta_ads_campaigns_activate()`, not `meta_ads_campaign_update(campaign_id, body={"status": "ACTIVE"})`
+- Every ad starts `PAUSED`: the body of each `meta_ads_ad_create` carries `"status": "PAUSED"` (section 4)
 - **"Bid amount required" errors MUST be surfaced to the user — do NOT change optimization_goal as a workaround**
 
 ---
@@ -234,7 +235,7 @@ meta_ads_ad_images_upload(
 )
 ```
 
-→ Capture `images[0].hash` and pass it as `image_hash`.
+→ Capture the image hash (section 7 of [../constraints.md](../constraints.md)).
 
 #### Creating a creative from scratch with `meta_ads_creative_create`
 
@@ -252,7 +253,7 @@ meta_ads_creative_create(
                 "link": "<destination_url>",
                 "description": "<secondary copy or headline>",
                 "picture": "<image_url>",
-                "call_to_action": {"type": "SIGN_UP"}
+                "call_to_action": {"type": "SIGN_UP", "value": {"lead_gen_form_id": "<lead_gen_form_id>"}}
             }
         }
     }
@@ -306,6 +307,7 @@ If you're unsure, show the user the top 2–3 options (name + body copy) and let
   "body": {
     "name": "Lead Ad - [Creative Name]",
     "adset_id": "<adset_id>",
+    "status": "PAUSED",
     "creative": {
       "object_story_spec": {
         "page_id": "<page_id>",
@@ -333,6 +335,7 @@ If you're unsure, show the user the top 2–3 options (name + body copy) and let
   "body": {
     "name": "Lead Ad - [Creative Name]",
     "adset_id": "<adset_id>",
+    "status": "PAUSED",
     "creative": {
       "creative_id": "<creative_id>"
     }
@@ -340,14 +343,12 @@ If you're unsure, show the user the top 2–3 options (name + body copy) and let
 }
 ```
 
-> Pass `"status": "PAUSED"` in the body of every `meta_ads_ad_create`. Never pass ACTIVE.
-
 → Capture `ad_id` from the response.
 
 ### 7. Preview and activate
 
 ```python
-# creative_id: meta_ads_ad_get(ad_id=..., fields="creative") (creative.id), or the id that meta_ads_creative_create returned
+# creative_id: section 13 of ../constraints.md
 # ad_id is NOT a valid parameter — creative_ids (list) is always required
 meta_ads_ad_previews_get(creative_ids=["<creative_id>"])
 ```
@@ -373,7 +374,7 @@ meta_ads_campaigns_activate(campaign_id="<campaign_id>")
 meta_accounts_list()
 ```
 
-It takes no account argument; it lists every Page the token can see. Capture `page_id` from the response.
+[../discovery.md](../discovery.md) says what it returns. Capture `page_id` from the response.
 
 ---
 

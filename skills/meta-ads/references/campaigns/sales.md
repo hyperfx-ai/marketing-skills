@@ -14,6 +14,7 @@ Re-read [../constraints.md](../constraints.md). Every rule there applies here. M
 - `meta_ads_adset_create` takes `ad_account_id` (numeric, no `act_` prefix) + a `body` dict — all ad set fields inside `body`
 - `meta_ads_ad_create` takes `ad_account_id` + a `body` dict — no separate top-level args
 - Use `meta_ads_campaigns_activate()`, not `meta_ads_campaign_update(campaign_id, body={"status": "ACTIVE"})`
+- Every ad starts `PAUSED`: the body of each `meta_ads_ad_create` carries `"status": "PAUSED"` (section 4)
 
 ---
 
@@ -165,7 +166,7 @@ meta_ads_ad_images_upload(
 )
 ```
 
-→ Capture `images[0].hash` and pass it as `image_hash`.
+→ Capture the image hash (section 7 of [../constraints.md](../constraints.md)).
 
 ### 5. Create ad
 
@@ -183,6 +184,7 @@ meta_ads_ad_images_upload(
   "body": {
     "name": "Sales Ad - [Creative Name]",
     "adset_id": "<adset_id>",
+    "status": "PAUSED",
     "creative": {
       "object_story_spec": {
         "page_id": "<page_id>",
@@ -202,14 +204,12 @@ meta_ads_ad_images_upload(
 }
 ```
 
-> Pass `"status": "PAUSED"` in the body of every `meta_ads_ad_create`. Never pass ACTIVE.
-
 → Capture `ad_id` from the response.
 
 ### 6. Preview and activate
 
 ```python
-# creative_id: meta_ads_ad_get(ad_id=..., fields="creative") (creative.id), or the id that meta_ads_creative_create returned
+# creative_id: section 13 of ../constraints.md
 meta_ads_ad_previews_get(creative_ids=["<creative_id>"])
 # Summarize formats to user — never render iframe inline
 # Wait for explicit user approval
@@ -233,6 +233,7 @@ The single-image `object_story_spec` above is the most common. `meta_ads_ad_crea
   "body": {
     "name": "Sales Carousel Ad",
     "adset_id": "<adset_id>",
+    "status": "PAUSED",
     "creative": {
       "object_story_spec": {
         "page_id": "<page_id>",
@@ -346,8 +347,7 @@ The single-image `object_story_spec` above is the most common. `meta_ads_ad_crea
 |---|---|---|
 | Cryptic API error on ad set creation | Missing `promoted_object` | Add `pixel_id` + `custom_event_type` to ad set |
 | Budget rejected | Passed dollars not cents | Multiply by 100 |
-| Ad set error: unexpected argument | A misspelled field | A body property sent at the top level moves into `body` by itself. A misspelled property is refused, because the body schema allows no extra keys: use a name from the valid list in the message |
-| Ad creation error | Separate top-level args used | Use `ad_account_id` + `body` |
+| Ad set error: unexpected argument | A misspelled field | See section 14 of [../constraints.md](../constraints.md) |
 | Campaign ACTIVE but nothing serves | Used `meta_ads_campaign_update(campaign_id, body={"status": "ACTIVE"})` | Use `meta_ads_campaigns_activate()` |
 | "Bid amount required" | Optimization goal requires explicit bid | Do NOT change goal — ask user |
 | `targeting_automation` error | Placed at ad set top level | Move inside `targeting` object |
