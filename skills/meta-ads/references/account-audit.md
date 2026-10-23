@@ -6,7 +6,7 @@ For query mechanics (insights args, date presets, cached data vs live API), see 
 
 ## Step 1: Account overview
 
-1. In Hyper chat, `connections_info(toolkit_id="meta_ads")` lists the ad accounts. For the audit fields, call `meta_ads_adaccount_list(fields="id,name,account_status,currency,timezone_name,spend_cap,amount_spent")`.
+1. Read the ad accounts as [discovery.md](discovery.md) Step 1 says. For the audit fields, call `meta_ads_adaccount_list(fields="id,name,account_status,currency,timezone_name,spend_cap,amount_spent")`.
 2. For each account in scope, note spend limits, timezone, and currency.
 3. Check account status and any restrictions. If accounts are missing or errors look like permission problems, run `meta_ads_health_check()` and surface the diagnostics.
 

@@ -16,7 +16,7 @@ Build the dashboard using `data_apps_build` with `name`, `template_html` (or `te
 
 ### 3. Cache refresh policy
 
-Today's numbers sync about every 15 minutes and the daily report tables once a day. For up-to-the-minute numbers, call `meta_ads_insights_get`; there is no manual sync tool.
+Today's numbers sync about every 15 minutes and the daily report tables once a day. Live data: "Where Meta performance data comes from" in [analytics.md](analytics.md).
 
 If no cached data exists yet, use Meta API tools directly as a fallback and cache the results.
 

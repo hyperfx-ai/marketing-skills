@@ -51,7 +51,7 @@ The moment a campaign is created with a `daily_budget` (or `lifetime_budget`), M
 Cannot set daily_budget/lifetime_budget on ad set when campaign has budget (CBO).
 ```
 
-> Under CBO an ad set cannot carry `daily_budget`/`lifetime_budget`. It can carry `daily_spend_cap`/`lifetime_spend_cap` (and `daily_min_spend_target`/`lifetime_min_spend_target`) to limit its share.
+> An ad set under CBO can carry `daily_spend_cap`/`lifetime_spend_cap` (and `daily_min_spend_target`/`lifetime_min_spend_target`) to limit its share.
 
 **Correct build order when you need ad-set-level budgets (manual campaigns):**
 
@@ -60,7 +60,7 @@ Cannot set daily_budget/lifetime_budget on ad set when campaign has budget (CBO)
 
 **Correct build order for Advantage+ (campaign-level budget):**
 
-1. Create the campaign WITH `daily_budget` or `lifetime_budget` (and `bid_strategy`, if any).
+1. Create the campaign WITH `daily_budget` or `lifetime_budget` (`bid_strategy`: section 16).
 2. Create the ad sets with **no budget** (just `bid_amount` if the bid strategy requires it).
 
 Deciding budget placement per campaign *before* creating anything avoids a delete-and-rebuild cycle. This matters most in multi-campaign builds that mix Advantage+ and manual modes — see [multi-campaign-funnel.md](multi-campaign-funnel.md).
@@ -338,7 +338,7 @@ meta_ads_adset_create(
 
 ## 17. Geo targeting beyond country (regions, cities, DMAs)
 
-`geo_locations.countries` accepts ISO codes directly (`["US", "CA"]`). But regions, cities, and DMAs (`geo_markets`) require Meta's internal **numeric keys** — you **cannot guess them**. Meta refuses a hand-written key like `"US-CA-803"`, and the error tells you to resolve it with `meta_ads_targeting_search`.
+`geo_locations.countries` accepts ISO codes directly (`["US", "CA"]`). But regions, cities, and DMAs (`geo_markets`) require Meta's internal **numeric keys** — you **cannot guess them**. Meta refuses a hand-written key like `"US-CA-803"`.
 
 Resolve keys first with `meta_ads_targeting_search`:
 

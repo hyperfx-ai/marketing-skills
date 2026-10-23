@@ -7,7 +7,7 @@ Use this for querying performance data, ad-level insights, and historical report
 ## Where Meta performance data comes from
 
 Synced Meta reports are in the workspace warehouse. `connections_info(toolkit_id="meta_ads")`
-names the table and the last sync. Read it with `database_query(query=..., connection="lakehouse")`.
+names the table and the last sync. Read it as "Querying warehouse tables" below says.
 Use `meta_ads_insights_get` for live data or data that is not synced. There is no Meta sync tool.
 
 | Situation | Use |
@@ -171,7 +171,7 @@ one and the request genuinely needs it.
 
 When the task is "find the best performer and build a new campaign modelled on it," inspect the source with `meta_ads_campaign_get(campaign_id=..., fields="name,objective,status,daily_budget,lifetime_budget,bid_strategy")` and `meta_ads_adset_list` (section 15 of [constraints.md](constraints.md)), then build the new campaign via the matching objective workflow ([discovery.md](discovery.md) → relevant `campaigns/<objective>.md`).
 
-> Read the source ad set's `promoted_object`, `bid_strategy` and `bid_amount` as section 15 of [constraints.md](constraints.md) says, or with `meta_ads_adset_get(adset_id=..., fields="promoted_object,bid_strategy,bid_amount")`, and copy them to the new ad set. When a sales or leads source has no `promoted_object`, derive it: look up the pixel with `meta_ads_ad_pixels_list`, infer the `custom_event_type` from the conversion events visible in the source's insights (e.g. PURCHASE, LEAD, COMPLETE_REGISTRATION), and set it explicitly on the new ad set per the objective workflow.
+> Read the source ad set's `promoted_object`, `bid_strategy` and `bid_amount` as section 15 of [constraints.md](constraints.md) says, or with `meta_ads_adset_get(adset_id=..., fields="promoted_object,bid_strategy,bid_amount")`. Copy `promoted_object` and `bid_amount` to the new ad set, and `bid_strategy` to the level that holds the budget (section 16 of [constraints.md](constraints.md)). When a sales or leads source has no `promoted_object`, derive it: look up the pixel with `meta_ads_ad_pixels_list`, infer the `custom_event_type` from the conversion events visible in the source's insights (e.g. PURCHASE, LEAD, COMPLETE_REGISTRATION), and set it explicitly on the new ad set per the objective workflow.
 
 Carry forward from the source: objective, targeting (age/geo/advantage_audience), and budget mode (campaign-level CBO vs ad-set). `promoted_object`: the note above.
 

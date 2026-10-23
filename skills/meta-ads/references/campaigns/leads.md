@@ -219,7 +219,7 @@ meta_ads_lead_forms_list(page_id="<page_id>")
 
 > **Warning**: This tool requires a **Page Access Token** and will fail with error 190 ("This method must be called with a Page Access Token") when using a User Access Token. If this happens:
 > - Ask the user to supply the form ID manually from their Facebook Page → Publishing Tools → Forms Library
-> - With no form id, stop and ask the user: a native lead ad needs `lead_gen_form_id`
+> - With no form id, do not create the native lead ad.
 > - Do not proceed silently without informing the user of this limitation
 
 ### 5. Upload image or prepare creative
