@@ -13,7 +13,7 @@ Re-read [../constraints.md](../constraints.md). Every rule there applies here. M
 - Budget at campaign level for Advantage+
 - `meta_ads_adset_create` takes `ad_account_id` (numeric, no `act_` prefix) + a `body` dict — all ad set fields inside `body`
 - `meta_ads_ad_create` takes `ad_account_id` + a `body` dict — no separate top-level args
-- Use `meta_ads_campaigns_activate()`, not `update_campaign(status="ACTIVE")`
+- Use `meta_ads_campaigns_activate()`, not `meta_ads_campaign_update(campaign_id, body={"status": "ACTIVE"})`
 - **"Bid amount required" errors MUST be surfaced to the user — do NOT change optimization_goal as a workaround**
 
 ---
@@ -41,14 +41,15 @@ Re-read [../constraints.md](../constraints.md). Every rule there applies here. M
 User wants leads
   ├── Native Meta Lead Form
   │     Users fill form directly on Facebook/Instagram
+  │     optimization_goal: LEAD_GENERATION, destination_type: ON_AD
   │     promoted_object: {"page_id": "<page_id>"}
   │
   └── Website pixel (landing page)
         Users click through to your website and submit a form
+        optimization_goal: OFFSITE_CONVERSIONS, destination_type: WEBSITE
         promoted_object: {
           "pixel_id": "<pixel_id>",
-          "custom_event_type": "LEAD",
-          "page_id": "<page_id>"       ← required on BOTH paths
+          "custom_event_type": "LEAD"
         }
 ```
 
@@ -72,10 +73,10 @@ If the user hasn't specified, ask:
 ### 1. Run health check
 
 ```python
-meta_ads_health_check(account_id="act_123456789")
+meta_ads_health_check()  # it checks every ad account of the connection
 ```
 
-Surface any non-PASS items before continuing. A failing pixel health check means `LEAD_GENERATION` optimization may not be available for this account.
+Surface any non-PASS items before continuing. A failing pixel health check means the website path (`OFFSITE_CONVERSIONS` on `LEAD` events) cannot optimize yet.
 
 ### 2. Create campaign
 
@@ -117,7 +118,8 @@ Skip if using the native lead form path — `promoted_object` uses only `page_id
   "body": {
     "name": "US Broad - Demo Requests",
     "campaign_id": "<campaign_id>",
-    "optimization_goal": "LEAD_GENERATION",
+    "optimization_goal": "OFFSITE_CONVERSIONS",
+    "destination_type": "WEBSITE",
     "billing_event": "IMPRESSIONS",
     "targeting": {
       "geo_locations": {
@@ -131,14 +133,13 @@ Skip if using the native lead form path — `promoted_object` uses only `page_id
     },
     "promoted_object": {
       "pixel_id": "<pixel_id>",
-      "custom_event_type": "LEAD",
-      "page_id": "<page_id>"
+      "custom_event_type": "LEAD"
     }
   }
 }
 ```
 
-> **CRITICAL**: `promoted_object` requires `pixel_id`, `custom_event_type`, **and** `page_id` for the website pixel path. The local validator will reject the call if any of these three fields is missing.
+> **CRITICAL**: Website leads: `promoted_object` = `{"pixel_id": ..., "custom_event_type": "LEAD"}`. Native form: `promoted_object` = `{"page_id": ...}`. Meta, not a local check, refuses a missing field.
 
 **Advantage+ — native lead form path:**
 
@@ -149,6 +150,7 @@ Skip if using the native lead form path — `promoted_object` uses only `page_id
     "name": "US Broad - Lead Form",
     "campaign_id": "<campaign_id>",
     "optimization_goal": "LEAD_GENERATION",
+    "destination_type": "ON_AD",
     "billing_event": "IMPRESSIONS",
     "targeting": {
       "geo_locations": {
@@ -179,7 +181,8 @@ Skip if using the native lead form path — `promoted_object` uses only `page_id
   "body": {
     "name": "UK Decision Makers 30-55",
     "campaign_id": "<campaign_id>",
-    "optimization_goal": "LEAD_GENERATION",
+    "optimization_goal": "OFFSITE_CONVERSIONS",
+    "destination_type": "WEBSITE",
     "billing_event": "IMPRESSIONS",
     "daily_budget": 3000,
     "targeting": {
@@ -193,8 +196,7 @@ Skip if using the native lead form path — `promoted_object` uses only `page_id
     },
     "promoted_object": {
       "pixel_id": "<pixel_id>",
-      "custom_event_type": "LEAD",
-      "page_id": "<page_id>"
+      "custom_event_type": "LEAD"
     }
   }
 }
@@ -202,20 +204,13 @@ Skip if using the native lead form path — `promoted_object` uses only `page_id
 
 → Capture `adset_id` from the response.
 
-#### If LEAD_GENERATION optimization goal is rejected (error 2490408)
+#### If the optimization goal is rejected (error 2490408)
 
-This error means the account's bid strategy (`LOWEST_COST_WITH_BID_CAP`) is incompatible with `LEAD_GENERATION`. **Adding `bid_amount` will not fix it** — the optimization goal is simply unavailable under this bid strategy, regardless of what values you pass.
+The goal does not fit the objective or the destination. `LEAD_GENERATION` works only with `destination_type: "ON_AD"`; website leads use `OFFSITE_CONVERSIONS` with `destination_type: "WEBSITE"`.
 
-1. **Stop. Do not substitute `LINK_CLICKS` or change the objective to `OUTCOME_TRAFFIC`.** That silently creates a traffic campaign, not a leads campaign.
-2. Surface the constraint to the user with the available resolution paths:
-
-   > "Meta's `LEAD_GENERATION` optimization goal isn't available on this account due to its current bid strategy (`LOWEST_COST_WITH_BID_CAP`). Here are your options:
-   > - **Recommended**: Change the account's bid strategy to 'Lowest Cost' (no cap) in Meta Business Manager, then I'll retry.
-   > - **Workaround**: Run as a traffic campaign with link click optimization — this will drive clicks to your landing page but won't optimize for lead events.
-   > - **Alternative**: Use a native Meta Lead Form instead of the website landing page, which may work under this bid strategy.
-   > Which would you like to do?"
-
-3. Do not proceed until the user has chosen a path.
+1. Read `meta_ads_campaign_get(campaign_id=..., fields="objective,bid_strategy")`.
+2. Fix the goal and the destination of the ad set for the lead capture method the user chose.
+3. **Do not substitute `LINK_CLICKS` or change the objective to `OUTCOME_TRAFFIC`** without the user. That silently creates a traffic campaign, not a leads campaign.
 
 ### 5. (Native lead form path only) List lead forms
 
@@ -227,7 +222,7 @@ meta_ads_lead_forms_list(page_id="<page_id>")
 
 > **Warning**: This tool requires a **Page Access Token** and will fail with error 190 ("This method must be called with a Page Access Token") when using a User Access Token. If this happens:
 > - Ask the user to supply the form ID manually from their Facebook Page → Publishing Tools → Forms Library
-> - Or proceed without a form ID for testing purposes (the ad will link to the Page, not a form — it will not collect leads until a form is attached)
+> - With no form id, stop and ask the user: a native lead ad needs `lead_gen_form_id`
 > - Do not proceed silently without informing the user of this limitation
 
 ### 5. Upload image or prepare creative
@@ -239,11 +234,11 @@ meta_ads_ad_images_upload(
 )
 ```
 
-→ Capture `image_hash`.
+→ Capture `images[0].hash` and pass it as `image_hash`.
 
 #### Creating a creative from scratch with `meta_ads_creative_create`
 
-Use this when you need full control over the creative spec (e.g., native lead form ads). `name` is a **required** positional argument — it will fail silently if omitted.
+Use this when you need full control over the creative spec (e.g., native lead form ads). `name` is required inside `body`. A native lead form creative also sets `call_to_action: {"type": "SIGN_UP", "value": {"lead_gen_form_id": "<id>"}}`.
 
 ```python
 meta_ads_creative_create(
@@ -283,10 +278,10 @@ meta_ads_creative_create(
 
 If the user has provided or selected an **existing creative** (`creative_id`), skip the upload — but verify the destination URL first.
 
-`meta_ads_creative_list` returns `link_url: null` in its list response, so you cannot verify the destination from the list alone. Call `meta_ads_creative_get(creative_id)` on the selected creative to retrieve the actual `link_url` before attaching it:
+`meta_ads_creative_list` does not return `link_url`. Read the destination from `object_story_spec.link_data.link` (or `asset_feed_spec.link_urls`) in its rows, or call `meta_ads_creative_get` with `fields` before attaching it:
 
 ```python
-meta_ads_creative_get(creative_id="33892633203717215")
+meta_ads_creative_get(creative_id="33892633203717215", fields="link_url,object_story_spec,url_tags")
 # Check the returned link_url matches the user's intended landing page
 ```
 
@@ -295,7 +290,7 @@ If the destination doesn't match, tell the user and either select a different cr
 **Selecting among multiple existing creatives:** When `meta_ads_creative_list` returns several options, choose based on:
 1. Body copy alignment with campaign goal (lead-focused language > viral/social tone)
 2. Headline relevance to the offer or CTA
-3. Destination URL (verify via `meta_ads_creative_get` — the list shows `null`)
+3. Destination URL (`object_story_spec.link_data.link` in the list rows, or `meta_ads_creative_get` with `fields`)
 
 If you're unsure, show the user the top 2–3 options (name + body copy) and let them choose.
 
@@ -345,15 +340,14 @@ If you're unsure, show the user the top 2–3 options (name + body copy) and let
 }
 ```
 
-> Omit `status` — ads default to PAUSED. Never pass `status="ACTIVE"` on creation.
+> Pass `"status": "PAUSED"` in the body of every `meta_ads_ad_create`. Never pass ACTIVE.
 
 → Capture `ad_id` from the response.
 
 ### 7. Preview and activate
 
 ```python
-# creative_id comes from the ad creation response (response.creative.id)
-# or from the creative you created separately via create_ad_creative
+# creative_id: meta_ads_ad_get(ad_id=..., fields="creative") (creative.id), or the id that meta_ads_creative_create returned
 # ad_id is NOT a valid parameter — creative_ids (list) is always required
 meta_ads_ad_previews_get(creative_ids=["<creative_id>"])
 ```
@@ -376,10 +370,10 @@ meta_ads_campaigns_activate(campaign_id="<campaign_id>")
 **If this happens**, call `meta_accounts_list` as a fallback:
 
 ```python
-meta_accounts_list(account_id="act_123456789")
+meta_accounts_list()
 ```
 
-This returns connected pages and accounts through an alternate lookup path. Capture `page_id` from the response.
+It takes no account argument; it lists every Page the token can see. Capture `page_id` from the response.
 
 ---
 
@@ -387,13 +381,12 @@ This returns connected pages and accounts through an alternate lookup path. Capt
 
 | Symptom | Cause | Fix |
 |---|---|---|
-| Local validation error: "page_id required in promoted_object" | Missing page_id on website pixel path | Add `page_id` alongside `pixel_id` and `custom_event_type` |
-| "No business ID found" from `list_owned_pages` | Account not linked to a Business Manager | Use `meta_accounts_list` as fallback |
+| "No business ID found" from `meta_ads_owned_pages_list` | Account not linked to a Business Manager | Use `meta_accounts_list` as fallback |
 | "Bid amount required" | Account-level bid strategy requires explicit bid | **Stop. Surface to user. Do NOT add bid_amount or change optimization_goal.** |
-| "Performance goal isn't available" (subcode 2490408) | LEAD_GENERATION rejected by account | Run health check, stop, ask user. Do NOT substitute LINK_CLICKS. |
+| "Performance goal isn't available" (subcode 2490408) | The goal does not fit the objective or the destination | Website leads: `OFFSITE_CONVERSIONS` with `destination_type: "WEBSITE"`. Read the objective with `meta_ads_campaign_get(campaign_id=..., fields="objective,bid_strategy")`. Do NOT substitute LINK_CLICKS. |
 | Cryptic API error on ad set | Missing `promoted_object` entirely | Add promoted_object with all required fields |
 | Budget at wrong level | Set budget on ad set for Advantage+ | Move to campaign level; remove from ad set |
-| Nothing serves after activation | Used `update_campaign(status="ACTIVE")` | Use `meta_ads_campaigns_activate()` |
+| Nothing serves after activation | Used `meta_ads_campaign_update(campaign_id, body={"status": "ACTIVE"})` | Use `meta_ads_campaigns_activate()` |
 | Creative destination URL wrong | Existing creative linked to different URL | Verify creative destination before attaching |
 
 ---

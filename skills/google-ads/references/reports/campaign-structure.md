@@ -151,4 +151,4 @@ with PrefabApp(title="Campaign Structure") as app:
 
 - Filter to `campaign.advertising_channel_type = 'SEARCH'` for
   search-only restructure analysis.
-- Add `ad_group.type` to distinguish standard vs PMax asset groups.
+- For PMax, run a separate query `FROM asset_group` (asset_group.id, asset_group.name, campaign.name).

@@ -6,14 +6,14 @@ Report on existing Google Ads accounts using GAQL-backed data. Dashboards and da
 
 - Use `google_ads_gaql_query` as the canonical Google Ads data tool.
 - Written GAQL-backed reports are valid outputs. Build a dashboard or data app only when the user asks for one or when an interactive view materially improves the answer.
-- Read the `google_ads_gaql_query` descriptor and select the account whose data the report needs.
+- Call `google_ads_gaql_query(customer_id, query)`. Its description gives the GAQL rules. Select the account whose data the report needs.
 - Treat rows as evidence, not as automatic recommendations ([heuristics.md](heuristics.md)).
 - Keep reporting separate from live account changes.
 - Do not mention internal dashboard implementation details to the user unless they explicitly ask how the interface is built.
 
 ## Phase 1: Access and scope
 
-1. Call `google_ads_accounts_list()` before touching account data.
+1. In Hyper chat, read the accounts from `connections_info(toolkit_id="google_ads")` before touching account data. Call `google_ads_accounts_list()` only on an MCP client or the CLI, or to refresh the list.
 2. Confirm the customer ID if more than one account is available.
 3. Confirm the reporting window if the user has not given one.
 4. If the user did not ask for a dashboard/data app and the best output is unclear, ask whether they want a written report or an interactive view.

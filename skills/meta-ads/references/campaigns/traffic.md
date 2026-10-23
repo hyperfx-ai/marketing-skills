@@ -12,7 +12,7 @@ Re-read [../constraints.md](../constraints.md). Most relevant:
 - Budget at campaign level for Advantage+
 - `meta_ads_adset_create` takes `ad_account_id` (numeric, no `act_` prefix) + a `body` dict — all ad set fields inside `body`
 - `meta_ads_ad_create` takes `ad_account_id` + a `body` dict — no separate top-level args
-- Use `meta_ads_campaigns_activate()`, not `update_campaign(status="ACTIVE")`
+- Use `meta_ads_campaigns_activate()`, not `meta_ads_campaign_update(campaign_id, body={"status": "ACTIVE"})`
 
 `promoted_object` is **not required** for OUTCOME_TRAFFIC. No pixel needed.
 
@@ -141,7 +141,7 @@ meta_ads_ad_images_upload(
 )
 ```
 
-→ Capture `image_hash` from the response.
+→ Capture `images[0].hash` and pass it as `image_hash`.
 
 ### 4. Create ad
 
@@ -172,14 +172,14 @@ meta_ads_ad_images_upload(
 }
 ```
 
-> Omit `status` — ads default to PAUSED.
+> Pass `"status": "PAUSED"` in the body of every `meta_ads_ad_create`. Never pass ACTIVE.
 
 → Capture `ad_id` from the response.
 
 ### 5. Preview and activate
 
 ```python
-# creative_id is in the ad creation response: response.creative.id
+# creative_id: meta_ads_ad_get(ad_id=..., fields="creative") (creative.id), or the id that meta_ads_creative_create returned
 meta_ads_ad_previews_get(creative_ids=["<creative_id>"])
 # Summarize formats to user — never render iframe inline
 
@@ -194,6 +194,6 @@ meta_ads_campaigns_activate(campaign_id="<campaign_id>")
 | Symptom | Cause | Fix |
 |---|---|---|
 | Budget rejected | Passed dollars not cents | Multiply by 100 |
-| Ad set error: unexpected argument | Fields outside `body` | All fields must be inside the `body` dict |
-| Campaign ACTIVE but no traffic | Used `update_campaign(status="ACTIVE")` | Use `meta_ads_campaigns_activate()` |
+| Ad set error: unexpected argument | A misspelled field | A body property sent at the top level moves into `body` by itself. A misspelled property is refused, because the body schema allows no extra keys: use a name from the valid list in the message |
+| Campaign ACTIVE but no traffic | Used `meta_ads_campaign_update(campaign_id, body={"status": "ACTIVE"})` | Use `meta_ads_campaigns_activate()` |
 | `targeting_automation` error | Placed at top level of ad set | Move inside `targeting` object |

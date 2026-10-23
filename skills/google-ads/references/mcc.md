@@ -26,8 +26,9 @@ If a `google_ads_gaql_query` call times out (504 / "Google Ads API timed out aft
 For MCC search term reports across many sub-accounts:
 
 ```
-1. Get all accounts: google_ads_accounts_list()
-   Filter to sub-accounts: [a for a in result.accounts if not a["manager"]]
+1. Get all accounts: connections_info(toolkit_id="google_ads") in Hyper chat,
+   or google_ads_accounts_list() on an MCP client or the CLI.
+   Filter to sub-accounts: [a for a in result["accounts"] if "customer_id" in a and not a.get("manager")]
 2. For each batch of 5 accounts:
    - Run search_term_view GAQL (using segments.keyword.info.*, NOT ad_group_criterion).
    - Collect results tagged with customer.descriptive_name.

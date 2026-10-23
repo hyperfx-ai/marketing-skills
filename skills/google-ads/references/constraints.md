@@ -2,32 +2,26 @@
 
 Re-check this file at each creation step.
 
-## Blueprint Features
+## Granular tools
 
-| Feature | Details |
-| --- | --- |
-| **Smart defaults** | Budget name, start date, network settings, ad group type auto-filled. |
-| **Location resolution** | Pass `location_names` (human-readable) instead of IDs. |
-| **Client-side validation** | Char limits, match types, image ratios checked before any API call. |
-| **Batch operations** | Keywords, extensions, ad schedules batched for efficiency. |
-| **Cleanup on failure** | Entire campaign removed if any step fails after campaign creation. |
-| **Ad extensions** | Sitelinks, callouts, structured snippets — created and linked automatically. |
-| **Ad scheduling** | Day-parting at campaign level via `ad_schedules`. |
-| **Audiences** | Target or exclude audiences per ad group. |
-| **Conversion actions** | Link specific conversion actions via `conversion_action_ids`. |
+The granular tools fill no defaults and do not roll back. When a later step fails, remove what was made with `google_ads_campaigns_remove` / `google_ads_campaign_budgets_remove` (`body={"resource_name": ...}`).
 
-## Bidding Strategies
+## Bidding
 
-| Strategy | Fields | Notes |
+Bidding is one object on the campaign body:
+
+| Object | Inner fields | Notes |
 | --- | --- | --- |
-| `MANUAL_CPC` | — | Manual cost-per-click. |
-| `MAXIMIZE_CLICKS` | — | Default, good starting point. |
-| `MAXIMIZE_CONVERSIONS` | `target_cpa_micros` (optional) | Requires conversion tracking. |
-| `MAXIMIZE_CONVERSION_VALUE` | `target_roas` (optional) | Requires conversion values. |
-| `TARGET_CPA` | `target_cpa_micros` (required) | Sets a target cost per acquisition. |
-| `TARGET_ROAS` | `target_roas` (required) | Sets a target return on ad spend. |
+| `target_spend: {}` | — | Maximize Clicks. |
+| `maximize_conversions` | `target_cpa_micros` (optional) | Requires conversion tracking. |
+| `maximize_conversion_value` | `target_roas` (optional) | Requires conversion values. |
+| `target_cpa` | `target_cpa_micros` | Sets a target cost per acquisition. |
+| `target_roas` | `target_roas` | Sets a target return on ad spend. |
+| `manual_cpc: {}` | — | Manual cost-per-click. |
 
-> For PMax: `TARGET_CPA` and `TARGET_ROAS` are translated to constraints within `MAXIMIZE_CONVERSIONS` / `MAXIMIZE_CONVERSION_VALUE`.
+Smart Bidding needs conversion tracking.
+
+> For PMax, put `target_cpa_micros` inside `maximize_conversions`, or `target_roas` inside `maximize_conversion_value`, yourself. Nothing translates `target_cpa` / `target_roas`.
 
 ## Technical Rules
 
@@ -36,7 +30,7 @@ Re-check this file at each creation step.
 - Location resolution: `google_ads_locations_search` to resolve names, then `google_ads_location_targets_add`.
 - RSA limits: headlines ≤30 chars (min 3), descriptions ≤90 chars (min 2).
 - Creative source: only from the actual site; no generic claims.
-- Image assets must already exist in the account (use `google_ads_assets_list` to find them).
+- Upload images with `google_ads_image_assets_upload`, or reuse existing ones from `google_ads_assets_list(customer_id, type="IMAGE")`.
 
 ## Critical Safety Rules
 

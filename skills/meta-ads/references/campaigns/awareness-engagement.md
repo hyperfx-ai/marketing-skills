@@ -16,7 +16,7 @@ Re-read [../constraints.md](../constraints.md). Most relevant:
 - Budget at campaign level for Advantage+
 - `meta_ads_adset_create` takes `ad_account_id` (numeric, no `act_` prefix) + a `body` dict — all ad set fields inside `body`
 - `meta_ads_ad_create` takes `ad_account_id` + a `body` dict — no separate top-level args
-- Use `meta_ads_campaigns_activate()`, not `update_campaign(status="ACTIVE")`
+- Use `meta_ads_campaigns_activate()`, not `meta_ads_campaign_update(campaign_id, body={"status": "ACTIVE"})`
 
 ---
 
@@ -56,7 +56,7 @@ meta_ads_campaign_create(
         "name": "Awareness - [Brand] - [Date]",
         "objective": "OUTCOME_AWARENESS",
         "status": "PAUSED",
-        "daily_budget": 2000
+        "daily_budget": 2000    # $20/day in cents — Advantage+ only; omit for manual
     }
 )
 ```
@@ -69,7 +69,7 @@ meta_ads_campaign_create(
         "name": "Engagement - [Brand] - [Date]",
         "objective": "OUTCOME_ENGAGEMENT",
         "status": "PAUSED",
-        "daily_budget": 2000
+        "daily_budget": 2000    # $20/day in cents — Advantage+ only; omit for manual
     }
 )
 ```
@@ -136,7 +136,7 @@ meta_ads_campaign_create(
 meta_ads_ad_images_upload(account_id="act_123456789", image_url="<url>")
 ```
 
-→ Capture `image_hash`.
+→ Capture `images[0].hash` and pass it as `image_hash`.
 
 ### 4. Create ad
 
@@ -166,14 +166,14 @@ meta_ads_ad_images_upload(account_id="act_123456789", image_url="<url>")
 }
 ```
 
-> Omit `status` — ads default to PAUSED.
+> Pass `"status": "PAUSED"` in the body of every `meta_ads_ad_create`. Never pass ACTIVE.
 
 → Capture `ad_id`.
 
 ### 5. Preview and activate
 
 ```python
-# creative_id is in the ad creation response: response.creative.id
+# creative_id: meta_ads_ad_get(ad_id=..., fields="creative") (creative.id), or the id that meta_ads_creative_create returned
 meta_ads_ad_previews_get(creative_ids=["<creative_id>"])
 meta_ads_campaigns_activate(campaign_id="<campaign_id>")  # when user approves
 ```

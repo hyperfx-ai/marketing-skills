@@ -6,14 +6,15 @@ Use this for querying performance data, ad-level insights, and historical report
 
 ## Where Meta performance data comes from
 
-The Meta API insights tools are the source of truth. There is no Hyper-managed Meta cache
-table and no Meta sync tool. Do not query one and do not try to refresh one.
+Synced Meta reports are in the workspace warehouse. `connections_info(toolkit_id="meta_ads")`
+names the table and the last sync. Read it with `database_query(query=..., connection="lakehouse")`.
+Use `meta_ads_insights_get` for live data or data that is not synced. There is no Meta sync tool.
 
 | Situation | Use |
 |---|---|
 | Any performance check, trend, or drilldown | `meta_ads_insights_get` |
-| Campaign created in this session | `meta_ads_insights_get` or `meta_ads_campaign_get` |
-| History longer than the API returns conveniently, or a join against non-Meta data | A warehouse table the workspace loads itself — see "Querying warehouse tables" below |
+| Campaign created in this session | `meta_ads_insights_get` or `meta_ads_campaign_get(campaign_id=..., fields="name,objective,status,daily_budget,lifetime_budget,bid_strategy")` |
+| History longer than the API returns conveniently, or a join against non-Meta data | The synced warehouse table — see "Querying warehouse tables" below |
 
 > **Important**: always name the date range you queried when you report numbers back. Meta
 > attribution shifts as conversions land, so the same window can return different totals on
@@ -103,14 +104,14 @@ Do not claim Meta only supports 7 or 28 days unless an actual API response says 
 
 ---
 
-## Querying warehouse tables (optional)
+## Querying warehouse tables
 
-This section applies only when the workspace loads Meta data into its own database or
-warehouse. Read it through the `database` toolkit — the single database path in Hyper:
+Read the synced Meta reports through the `database` toolkit — the single database path in Hyper.
+Pass `connection="lakehouse"` to each call, and write ClickHouse SQL (SELECT only):
 
-1. Call `database_tables_list` to discover what the connected database actually holds.
-2. Call `database_tables_describe` on the table you found to get its real columns.
-3. Query it with `database_query`.
+1. Call `database_tables_list(connection="lakehouse")` to discover what the warehouse holds.
+2. Call `database_tables_describe(tables=[...], connection="lakehouse")` on the table you found to get its real columns.
+3. Query it with `database_query(query=..., connection="lakehouse")`.
 
 **Never guess a table name or a column name.** The queries below are shapes, not literals —
 substitute the real table and the real column names you got from steps 1 and 2. If the
@@ -138,8 +139,8 @@ SELECT
   SUM(spend) AS spend,
   SUM(impressions) AS impressions,
   SUM(clicks) AS clicks,
-  ROUND(SUM(clicks)::numeric / NULLIF(SUM(impressions), 0) * 100, 2) AS ctr_pct,
-  ROUND(SUM(spend)::numeric / NULLIF(SUM(clicks), 0), 2) AS cpc
+  ROUND(toFloat64(SUM(clicks)) / NULLIF(SUM(impressions), 0) * 100, 2) AS ctr_pct,
+  ROUND(toFloat64(SUM(spend)) / NULLIF(SUM(clicks), 0), 2) AS cpc
 FROM <table from database_tables_list>
 GROUP BY campaign_name
 ORDER BY spend DESC;
@@ -153,7 +154,7 @@ SELECT
   SUM(spend) AS spend,
   SUM(conversions) AS conversions,
   CASE
-    WHEN SUM(conversions) > 0 THEN ROUND(SUM(spend)::numeric / SUM(conversions), 2)
+    WHEN SUM(conversions) > 0 THEN ROUND(toFloat64(SUM(spend)) / SUM(conversions), 2)
     ELSE NULL
   END AS cost_per_conversion
 FROM <table from database_tables_list>
@@ -168,9 +169,9 @@ one and the request genuinely needs it.
 
 ## Replicating an existing campaign (analyze → create)
 
-When the task is "find the best performer and build a new campaign modelled on it," inspect the source with `meta_ads_campaign_get` and `meta_ads_adset_list`, then build the new campaign via the matching objective workflow ([discovery.md](discovery.md) → relevant `campaigns/<objective>.md`).
+When the task is "find the best performer and build a new campaign modelled on it," inspect the source with `meta_ads_campaign_get(campaign_id=..., fields="name,objective,status,daily_budget,lifetime_budget,bid_strategy")` and `meta_ads_adset_list` (it returns `promoted_object` and `bid_strategy`; filter its rows by `campaign_id`), then build the new campaign via the matching objective workflow ([discovery.md](discovery.md) → relevant `campaigns/<objective>.md`).
 
-> **`get_ad_sets` often returns `promoted_object: null` (and `bid_amount`/`bid_strategy: null`) even when the source ad set actually uses pixel tracking.** Do not assume the source had no pixel just because the GET response shows null. When replicating a sales or leads campaign, re-derive `promoted_object` yourself: look up the pixel with `meta_ads_ad_pixels_list`, infer the `custom_event_type` from the conversion events visible in the source's insights (e.g. PURCHASE, LEAD, COMPLETE_REGISTRATION), and set it explicitly on the new ad set per the objective workflow.
+> **`meta_ads_ad_sets_list` does not return `promoted_object`, `bid_amount` or `bid_strategy`.** Read the source with `meta_ads_adset_list` (it returns `promoted_object` and `bid_strategy`) or with `meta_ads_adset_get(adset_id=..., fields="promoted_object,bid_strategy,bid_amount")`. Do not assume the source had no pixel because a field is missing. When replicating a sales or leads campaign, re-derive `promoted_object` yourself: look up the pixel with `meta_ads_ad_pixels_list`, infer the `custom_event_type` from the conversion events visible in the source's insights (e.g. PURCHASE, LEAD, COMPLETE_REGISTRATION), and set it explicitly on the new ad set per the objective workflow.
 
 Carry forward from the source: objective, targeting (age/geo/advantage_audience), and budget mode (campaign-level CBO vs ad-set). Re-derive everything pixel/promoted_object-related rather than trusting the GET response.
 
@@ -178,10 +179,10 @@ Carry forward from the source: objective, targeting (age/geo/advantage_audience)
 
 For "duplicate this campaign exactly but with new creatives":
 
-1. **Read the source structure**: `meta_ads_campaign_get`, `meta_ads_adset_list`, `meta_ads_ad_list`. For the creative, `meta_ads_creative_get` (the list view shows `link_url: null` — get the full creative to see the real destination).
+1. **Read the source structure**: `meta_ads_campaign_get(campaign_id=..., fields="name,objective,status,daily_budget,lifetime_budget,bid_strategy")`, `meta_ads_ad_sets_list(campaign_id=...)`, `meta_ads_list(ad_set_id=...)`. `meta_ads_creative_list` does not return `link_url`: read the destination from `object_story_spec.link_data.link` (or `asset_feed_spec.link_urls`) in its rows, or call `meta_ads_creative_get(creative_id=..., fields="link_url,object_story_spec,url_tags")`.
 2. **Recreate** campaign → ad set → ad via the matching objective workflow, copying objective, targeting, and budget mode. Re-derive `promoted_object` (see warning above). Name the new campaign as the user specified.
 3. **Swap creatives**: upload the new images (`meta_ads_ad_images_upload`), then either build a fresh inline `object_story_spec` on the new ad or create new creatives with `meta_ads_creative_create` and attach by `creative_id`.
-4. **Verify before deleting anything**: confirm the new ads were created and the new creatives are attached (`meta_ads_ad_list` / `meta_ads_creative_get`).
+4. **Verify before deleting anything**: confirm the new ads were created and the new creatives are attached (`meta_ads_list(ad_set_id=...)` / `meta_ads_creative_get(creative_id=..., fields="link_url,object_story_spec,url_tags")`).
 5. **Only then** delete old draft creatives with `meta_ads_creative_delete` (or `meta_ads_ad_delete` for ads). Never delete the source until the replacement is confirmed.
 
 Leave the new campaign PAUSED unless the user said to activate.

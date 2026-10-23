@@ -4,7 +4,7 @@
 
 ## Build order
 
-1. **Budget** — `google_ads_campaign_budgets_create(customer_id, body={"name": "...", "amount_micros": 50000000})`. PMax budgets must not be shared.
+1. **Budget** — `google_ads_campaign_budgets_create(customer_id, body={"name": "...", "amount_micros": 50000000, "explicitly_shared": false})`. A PMax budget must not be shared.
 2. **Campaign** — `google_ads_campaigns_create(customer_id, body={...})`:
 
 ```json
@@ -13,17 +13,18 @@
   "advertising_channel_type": "PERFORMANCE_MAX",
   "status": "PAUSED",
   "campaign_budget": "customers/1234567890/campaignBudgets/111",
-  "maximize_conversions": {}
+  "maximize_conversions": {},
+  "contains_eu_political_advertising": "DOES_NOT_CONTAIN_EU_POLITICAL_ADVERTISING"
 }
 ```
 
-   Do NOT set `network_settings` or manual bidding — PMax serves across all networks automatically and only accepts `maximize_conversions` / `maximize_conversion_value` (optionally with `target_cpa` / `target_roas` inside the scheme). The validator rejects anything else.
+   Do NOT set `network_settings`, `manual_cpc` or `manual_cpm`: the validator rejects them. Use only `maximize_conversions` (optional `target_cpa_micros` inside) or `maximize_conversion_value` (optional `target_roas` inside). Google rejects any other scheme. Every campaign create body needs `contains_eu_political_advertising`.
 3. **Locations** — `google_ads_locations_search` → `google_ads_location_targets_add`.
 4. **Image assets** — `google_ads_image_assets_upload` (prefer `file_id` from the workspace file manager). Required ratios: landscape 1.91:1, square 1:1, logo 1:1 (or 4:1).
 5. **Asset group** — `google_ads_asset_groups_create` (atomic: creates the asset group, its text assets, and all links in ONE API call, which the API requires):
 
-   Required: `customer_id`, `campaign_id`, `final_urls`, `headlines` (3–15, ≤30 chars), `long_headlines` (1+, ≤90), `descriptions` (2+, ≤90), `business_name`, and all three image asset ID lists (`marketing_image_asset_ids`, `square_marketing_image_asset_ids`, `logo_asset_ids`).
-6. **Optional video** — register a YouTube video with `google_ads_video_assets_link(customer_id, youtube_video_id)`, then link it to the asset group with `google_ads_asset_group_assets_link(field_type="YOUTUBE_VIDEO")`. Without one, Google auto-generates video from your assets.
+   Required: `customer_id`, `campaign_id` (numeric id), `final_urls`, `headlines` (3–15, ≤30 chars), `long_headlines` (1–5, ≤90), `descriptions` (2–5, ≤90), `business_name` (≤25 chars), and the three image asset id lists (`marketing_image_asset_ids`, `square_marketing_image_asset_ids`, `logo_asset_ids`). Text fields are lists of plain strings. Image ids are the `asset_id` values that `google_ads_image_assets_upload` returns.
+6. **Optional video** — register a YouTube video with `google_ads_video_assets_link(customer_id, youtube_video_id)`, then link it with `google_ads_asset_group_assets_link(customer_id, asset_group_id="<id>", asset_id="<last part of results[0].resourceName>", field_type="YOUTUBE_VIDEO")`. Without one, Google auto-generates video from your assets.
 
 ## Standalone PMax asset group (existing campaign)
 
@@ -31,10 +32,10 @@
 
 ## Campaign dates (API v24)
 
-Optional `start_date` / `end_date` use `YYYY-MM-DD`. The backend encodes them to v24 wire fields `startDateTime` / `endDateTime`. Omit both to let Google set schedule defaults.
+Optional `"start_date_time": "YYYY-MM-DD 00:00:00"` and `"end_date_time": "YYYY-MM-DD 23:59:59"`. Omit both to let Google set the defaults.
 
 ## Verify, then activate
 
-Confirm by GAQL (campaign + asset_group + asset_group_asset), present to the user, and only set `status: "ENABLED"` via `google_ads_campaigns_update` after explicit approval.
+Confirm by GAQL (campaign + asset_group + asset_group_asset), present to the user, then call `google_ads_campaigns_update(customer_id, campaign_id="<numeric id>", body={"status": "ENABLED"})` after explicit approval.
 
 Re-check [constraints.md](../constraints.md) at each creation step.

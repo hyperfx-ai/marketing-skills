@@ -38,7 +38,7 @@ If a tool is not found: in Hyper chat, find its toolkit id with `discover_toolki
 
 ## Tool surface
 
-Reads are GAQL (`google_ads_gaql_query` covers every resource). Writes are one tool per resource operation, named `google_ads_<resource>_<create|update|remove>`; create/update take `(customer_id, body)` where `body` is the bare resource object in snake_case.
+Reads are GAQL (`google_ads_gaql_query` covers every resource). Writes are one tool per resource operation, named `google_ads_<resource>_<create|update|remove>`. Generated create and update tools take `(customer_id, body)`, where `body` is the bare resource object in snake_case. A generated `_remove` takes `body={"resource_name": "customers/<cid>/<collection>/<id>"}`. The keyword, location, asset-group, asset-link, image-upload and `_delete` tools take flat arguments: read them with `describe` or `search_tools`.
 
 | Tool | Purpose |
 | --- | --- |
@@ -63,7 +63,7 @@ Reads are GAQL (`google_ads_gaql_query` covers every resource). Writes are one t
 
 > **ALWAYS START PAUSED**: Create campaigns with `status="PAUSED"`. Activate only after explicit user approval.
 
-> **SUMMARIZE BEFORE CREATE**: Present the full build plan (budget, campaign settings, targeting, ad groups, ads/assets) and get explicit user approval before the first mutate. Create in dependency order and reference each created resource by the `resource_name` the mutate returns. The tools validate bodies against the real API schema (writable fields, enum values) plus channel-type rules and return corrective errors — fix and retry rather than guessing.
+> **SUMMARIZE BEFORE CREATE**: Present the full build plan (budget, campaign settings, targeting, ad groups, ads/assets) and get explicit user approval before the first mutate. Create in dependency order. Generated bodies take the full `resource_name` that the mutate returns (e.g. `"campaign": "customers/<cid>/campaigns/<id>"`). The flat tools (`google_ads_location_targets_add`, `google_ads_keywords_create`, `google_ads_asset_groups_create`, `google_ads_asset_group_assets_link`, `google_ads_campaign_assets_link`) take the bare id: the last part of that resource name. The tools validate bodies against the real API schema (writable fields, enum values) plus channel-type rules and return corrective errors — fix and retry rather than guessing.
 
 > **NEVER INVENT**: Don't assume URLs, budgets, or location IDs. Don't skip research. Don't invent keywords or copy — creative comes only from the actual site. Don't build without user buy-in.
 

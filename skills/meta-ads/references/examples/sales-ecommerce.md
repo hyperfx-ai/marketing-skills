@@ -48,8 +48,8 @@ TARGETING: Broad US, Advantage+ audience automation
 STATUS: PAUSED until you approve
 
 Steps:
-1. Select ad account (meta_ads_adaccount_list)
-2. Get Page ID (meta_ads_owned_pages_list)
+1. Select ad account and Page (connections_info(toolkit_id="meta_ads") in Hyper chat)
+2. Get Page ID (meta_ads_owned_pages_list) when the context does not show it
 3. Run health check (meta_ads_health_check)
 4. Screenshot skinfirst.com for creative reference (firecrawl_screenshots_create)
 5. Extract branding (firecrawl_branding_extract)
@@ -67,9 +67,9 @@ Key constraints:
 - promoted_object required: pixel_id + PURCHASE
 - targeting_automation inside targeting object
 - Budget at campaign level (ad set has no budget)
-- create_ad_set takes ad_account_id + body
-- create_ad takes ad_account_id + body
-- Will use meta_ads_campaigns_activate(), not update(status="ACTIVE")
+- meta_ads_adset_create takes ad_account_id + body
+- meta_ads_ad_create takes ad_account_id + body
+- Will use meta_ads_campaigns_activate(), not meta_ads_campaign_update(campaign_id, body={"status": "ACTIVE"})
 ```
 
 ---
@@ -79,13 +79,14 @@ Key constraints:
 ### Discovery
 
 ```python
-meta_ads_adaccount_list({"detail": "id_only"})
-# → account: act_111222333
+connections_info(toolkit_id="meta_ads")
+# → account: act_111222333, Page 632278516639981
+# On MCP or the CLI: meta_ads_adaccount_list(fields="id,name,account_status,currency")
 
 meta_ads_owned_pages_list({"account_id": "act_111222333", "detail": "id_only"})
 # → page_id: 632278516639981  ← captured explicitly
 
-meta_ads_health_check({"account_id": "act_111222333"})
+meta_ads_health_check()  # it checks every ad account of the connection
 # → All checks PASS
 ```
 
@@ -105,7 +106,7 @@ firecrawl_branding_extract({"url": "https://skinfirst.com"})
 ```python
 # Generate ad image using screenshot as visual reference
 meta_ads_ad_images_upload({"account_id": "act_111222333", "image_url": "<generated_image_url>"})
-# → image_hash: abc123def456
+# → images[0].hash: abc123def456 (pass it as image_hash)
 ```
 
 ### Campaign creation (step-by-step)
@@ -165,8 +166,8 @@ meta_ads_ad_create(
                     "description": "Free shipping on orders over $40."
                 }
             }
-        }
-        # No status field — ads default to PAUSED
+        },
+        "status": "PAUSED"
     }
 )
 # → ad_id: 112233445
@@ -175,7 +176,7 @@ meta_ads_ad_create(
 ### Preview and summary
 
 ```python
-# creative_id from ad creation response: response.creative.id
+# creative_id: meta_ads_ad_get(ad_id=..., fields="creative") (creative.id), or the id that meta_ads_creative_create returned
 meta_ads_ad_previews_get(creative_ids=["<creative_id>"])
 # Summarize preview formats to user — never render iframe inline
 ```
