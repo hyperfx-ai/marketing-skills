@@ -85,7 +85,7 @@ meta_ads_campaigns_activate(campaign_id)
 
 Always create campaigns with `status="PAUSED"`. Never launch live without user review.
 
-Pass `"status": "PAUSED"` in the body of every `meta_ads_ad_create`. Never pass ACTIVE; always go through `meta_ads_campaigns_activate` as a deliberate launch step.
+Pass `"status": "PAUSED"` in the body of every `meta_ads_ad_create`. Never pass ACTIVE; launch as section 3 says.
 
 ---
 
@@ -277,7 +277,7 @@ meta_ads_ad_previews_get(creative_ids=["<existing_creative_id>"])
 | "Bid amount required" (subcode 1815857) — **and the user did NOT ask for a bid cap** | Change `optimization_goal` or invent a `bid_amount` | **Stop.** Surface to user: "This account requires an explicit bid amount due to its bid strategy. How would you like to proceed?" Do NOT change the optimization goal as a workaround — that silently misconfigures the campaign. (If the user *did* specify a bid strategy/cap, just set it — see section 16.) |
 | "Performance goal isn't available" (subcode 2490408) | Substitute a different `optimization_goal` (e.g. LINK_CLICKS) | The goal does not fit the objective or the destination. Read `meta_ads_campaign_get(campaign_id=..., fields="objective,bid_strategy")`. Match `optimization_goal` and `destination_type` to section 8, and `promoted_object` to section 9. Objective: section 10. |
 | "No Facebook Pages found" | Guess a page_id | Run `meta_ads_health_check`, surface results |
-| "No business ID found" from `meta_ads_owned_pages_list` | Skip and ask user | Try `meta_accounts_list` as fallback |
+| "No business ID found" from `meta_ads_owned_pages_list` | Skip and ask user | Step 2 of [discovery.md](discovery.md) |
 | "image_hash is not valid" or "Link data image_hash" | Invalid or wrong-account hash | Call `meta_ads_ad_images_list(account_id)` to find valid hashes in this account, then re-upload if needed |
 | "Cannot set daily_budget on ad set when campaign has budget (CBO)" | Campaign was created with a budget | Recreate the campaign with no budget, OR put budget at ad-set level only. See section 2. |
 | `meta_ads_ad_images_list` rejects `detail` value | Invalid enum | `detail` accepts only `"id_only"`, `"core"`, `"summary"`, `"full"`. Not `"minimal"`. |

@@ -364,13 +364,7 @@ meta_ads_campaigns_activate(campaign_id="<campaign_id>")
 
 `meta_ads_owned_pages_list` can fail with "No business ID found for this ad account" when the account is not connected to a Business Manager with a recognized business ID.
 
-**If this happens**, call `meta_accounts_list` as a fallback:
-
-```python
-meta_accounts_list()
-```
-
-[../discovery.md](../discovery.md) says what it returns. Capture `page_id` from the response.
+**If this happens**, follow Step 2 of [../discovery.md](../discovery.md).
 
 ---
 
@@ -378,7 +372,7 @@ meta_accounts_list()
 
 | Symptom | Cause | Fix |
 |---|---|---|
-| "No business ID found" from `meta_ads_owned_pages_list` | Account not linked to a Business Manager | Use `meta_accounts_list` as fallback |
+| "No business ID found" from `meta_ads_owned_pages_list` | Account not linked to a Business Manager | Step 2 of [../discovery.md](../discovery.md) |
 | "Bid amount required" | Account-level bid strategy requires explicit bid | **Stop. Surface to user. Do NOT add bid_amount or change optimization_goal.** |
 | "Performance goal isn't available" (subcode 2490408) | The goal does not fit the objective or the destination | See section 14 of [../constraints.md](../constraints.md). |
 | Cryptic API error on ad set | Missing `promoted_object` entirely | Add promoted_object with all required fields |

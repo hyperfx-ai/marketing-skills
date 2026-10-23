@@ -77,7 +77,7 @@ Do not mention internal dashboard implementation details to the user unless they
 
 ## Ad preview handling
 
-After campaign creation, call `meta_ads_ad_previews_get(creative_ids=["<creative_id>"])`. Section 13 of [constraints.md](constraints.md) says where the creative id comes from. Note: `ad_id` is not a valid parameter.
+After campaign creation, call `meta_ads_ad_previews_get(creative_ids=["<creative_id>"])`. Section 13 of [constraints.md](constraints.md) says where the creative id comes from.
 
 - Never paste or render iframe/html preview snippets directly in chat.
 - Summarize which preview formats succeeded or failed.
