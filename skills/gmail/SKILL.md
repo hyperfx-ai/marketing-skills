@@ -20,7 +20,7 @@ requires_toolkits:
   - gmail
 suggested_toolkits: []
 icon: gmail
-short_description: Read, draft, send, and organize Gmail, including labels, threads, and attachments.
+short_description: Read, draft, send, and organize Gmail, including labels and attachments.
 ---
 
 # Gmail Email Management
@@ -90,8 +90,8 @@ If a tool is not found: in Hyper chat, find its toolkit id with `discover_toolki
 - `query` parameter accepts the same syntax as Gmail's search box
 - Examples: `"is:unread"`, `"from:user@example.com"`, `"has:attachment subject:invoice"`
 - Combine operators: `"from:user@example.com is:unread has:attachment"`
-- By default, excludes drafts (adds `-in:draft` automatically)
-- Use `label` parameter to filter by specific label
+- With no `query`, the tool adds `-in:draft`. When you pass a `query`, add `-in:draft` to it yourself
+- The `label` parameter takes the label NAME (or INBOX, SENT, SPAM, TRASH, CATEGORY_*), not a `Label_…` ID. An ID is ignored with no error
 
 ## Drafts Workflow
 
@@ -107,7 +107,12 @@ If a tool is not found: in Hyper chat, find its toolkit id with `discover_toolki
 
 ### When to use drafts vs direct send
 - Use `gmail_messages_send` for immediate one-step sending
-- Use draft workflow when you want to review/edit before sending or schedule for later
+- Use the draft workflow when a person must review or edit the email before it is sent
+- To send later, pass `scheduled_at="<ISO datetime>"` to `gmail_messages_send`; a draft does not schedule
+
+### Replies
+- `gmail_messages_reply(message_id=..., body=..., reply_all=False)` sends a reply at once
+- `gmail_drafts_create(reply_to_message_id=..., mode="reply", body=...)` drafts a reply; `mode` is also `"reply_all"`, or `"forward"` with `to`
 
 ## Email Actions - Important Distinctions
 
@@ -118,7 +123,7 @@ If a tool is not found: in Hyper chat, find its toolkit id with `discover_toolki
 
 ### Attachments
 - `gmail_attachments_get` - Download attachments from received emails
-- When sending emails with attachments, use `file_ids` parameter (requires files to be in the database first)
+- To attach files, pass their workspace file IDs in `file_ids`, not `/files/...` paths (`files_create` returns the `file_id`). An unknown ID is skipped with no error, so check each ID before you send
 
 ## Tool Selection Quick Reference
 
@@ -130,4 +135,6 @@ If a tool is not found: in Hyper chat, find its toolkit id with `discover_toolki
 | Archive email | `gmail_messages_archive` (preferred for cleanup) |
 | Delete/trash email | `gmail_messages_trash` |
 | Send email now | `gmail_messages_send` |
-| Create email for later | `gmail_drafts_create` + `gmail_drafts_send` |
+| Send email later | `gmail_messages_send` with `scheduled_at="<ISO datetime>"` |
+| Reply now | `gmail_messages_reply` |
+| Draft a reply or forward | `gmail_drafts_create` with `reply_to_message_id` |
