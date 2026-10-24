@@ -39,7 +39,7 @@ WHERE conversion_action.status != 'REMOVED'
 
 - **No enabled conversion actions** → optimization is blind; halt all
   Smart Bidding advice until at least one is configured.
-- **Multiple `PRIMARY_FOR_GOAL` actions in the same category** (e.g. two
+- **Several actions with `conversion_action.primary_for_goal = TRUE` in the same category** (e.g. two
   primary purchase actions) → Smart Bidding double-counts; recommend
   demoting one to secondary.
 - **`PURCHASE` category but `counting_type = MANY_PER_CLICK`** is rare
