@@ -48,8 +48,6 @@ If a tool is not found: in Hyper chat, find its toolkit id with `discover_toolki
 
 ## Core Rule
 
-Never write to Google Sheets from guessed column letters alone.
-
 Always:
 1. inspect the workbook and target worksheet
 2. find the real header row
@@ -70,9 +68,10 @@ Always:
 
 ### Step 1: Inspect workbook structure
 
+If the user gave a link, the `spreadsheet_id` is the part after `/d/` in it. If the user gave only a name, call `google_sheets_list` and take the `id` whose `title` matches.
+
 Start with:
-- `google_sheets_get`
-- `google_sheets_worksheets_list` if needed
+- `google_sheets_get`: it lists every worksheet with its size
 
 Confirm:
 - worksheet title
@@ -111,7 +110,7 @@ Use:
 
 Prefer narrow writes over large blanket writes.
 
-If appending records into a table that already has fixed columns, compute the exact destination columns from the header map first.
+There is no append tool. To add rows, read the key column of the table (for example `Sheet1!B:B`) with `google_sheets_values_get`; the first empty row is the row after the last one it returns. Write from that row with `google_sheets_values_update`, in the mapped columns only. The sheet grows to fit by itself.
 
 ## Write Rules
 
