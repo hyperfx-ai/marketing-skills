@@ -139,9 +139,9 @@ What is the primary goal for this campaign?
 
 The objective determines which campaign workflow to follow. Do not guess.
 
-Once confirmed, proceed to the appropriate campaign file:
-- Sales → [campaigns/sales.md](campaigns/sales.md)
-- Leads → [campaigns/leads.md](campaigns/leads.md)
-- Traffic → [campaigns/traffic.md](campaigns/traffic.md)
-- Awareness/Engagement → [campaigns/awareness-engagement.md](campaigns/awareness-engagement.md)
-- App Promotion → [campaigns/app-promotion.md](campaigns/app-promotion.md)
+Once the user approves the plan, the build reads the campaign file of the objective:
+- Sales → [references/campaigns/sales.md](references/campaigns/sales.md)
+- Leads → [references/campaigns/leads.md](references/campaigns/leads.md)
+- Traffic → [references/campaigns/traffic.md](references/campaigns/traffic.md)
+- Awareness/Engagement → [references/campaigns/awareness-engagement.md](references/campaigns/awareness-engagement.md)
+- App Promotion → [references/campaigns/app-promotion.md](references/campaigns/app-promotion.md)
