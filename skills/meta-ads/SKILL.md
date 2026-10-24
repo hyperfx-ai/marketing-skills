@@ -93,11 +93,11 @@ Every task follows this sequence. Do not skip steps.
 1. **Identify the goal** — creation, analysis, or both?
 2. **Check the routing table** before calling any tools
 3. **Make a written plan** — state campaign type, budget in cents, optimization goal, and sequence of steps; show it before acting
-4. **Execute step by step**, re-checking [references/constraints.md](references/constraints.md) at each creation step
+4. **Execute step by step** by the campaign file, whose rules list the constraints of its type. Read a section of [references/constraints.md](references/constraints.md) only when a step names it
 5. **Show ad previews** before activation
 6. **Activate only when the user approves** using `meta_ads_campaigns_activate()`
 
-**Automated / scheduled runs:** If there is no user present to interact with (e.g. a scheduled task), skip steps 3 and 6. Do not write a plan and wait for confirmation — proceed directly. Do not activate unless activation was explicitly included in the task instructions.
+**Automated / scheduled runs:** If there is no user present to interact with (e.g. a scheduled task), skip steps 3 and 6, and read only the campaign file of the routing row: the task's instructions are its plan. Do not write a plan and wait for confirmation — proceed directly. Do not activate unless activation was explicitly included in the task instructions.
 
 ---
 
@@ -105,12 +105,12 @@ Every task follows this sequence. Do not skip steps.
 
 | The user wants to… | Read these files first |
 |---|---|
-| Create a sales / conversion campaign | [references/discovery.md](references/discovery.md) → [references/campaigns/sales.md](references/campaigns/sales.md) |
-| Create a leads campaign | [references/discovery.md](references/discovery.md) → [references/campaigns/leads.md](references/campaigns/leads.md) |
-| Create a traffic campaign | [references/discovery.md](references/discovery.md) → [references/campaigns/traffic.md](references/campaigns/traffic.md) |
-| Create an awareness or engagement campaign | [references/discovery.md](references/discovery.md) → [references/campaigns/awareness-engagement.md](references/campaigns/awareness-engagement.md) |
-| Create an app promotion campaign | [references/discovery.md](references/discovery.md) → [references/campaigns/app-promotion.md](references/campaigns/app-promotion.md) |
-| Create a campaign (any objective) | [references/discovery.md](references/discovery.md) → the matching `references/campaigns/*.md` above, then build step by step |
+| Create a sales / conversion campaign | Plan: [references/discovery.md](references/discovery.md). Build, after the user approves the plan: [references/campaigns/sales.md](references/campaigns/sales.md) |
+| Create a leads campaign | Plan: [references/discovery.md](references/discovery.md). Build, after the user approves the plan: [references/campaigns/leads.md](references/campaigns/leads.md) |
+| Create a traffic campaign | Plan: [references/discovery.md](references/discovery.md). Build, after the user approves the plan: [references/campaigns/traffic.md](references/campaigns/traffic.md) |
+| Create an awareness or engagement campaign | Plan: [references/discovery.md](references/discovery.md). Build, after the user approves the plan: [references/campaigns/awareness-engagement.md](references/campaigns/awareness-engagement.md) |
+| Create an app promotion campaign | Plan: [references/discovery.md](references/discovery.md). Build, after the user approves the plan: [references/campaigns/app-promotion.md](references/campaigns/app-promotion.md) |
+| Create a campaign (any objective) | Plan: [references/discovery.md](references/discovery.md). Build, after the user approves the plan: the matching `references/campaigns/*.md` above |
 | Analyze performance / query insights | [references/analytics.md](references/analytics.md) |
 | Audit an account / find optimization opportunities | [references/account-audit.md](references/account-audit.md) |
 | Set up automated rules (auto-pause, budget guards, alerts) | [references/automated-rules.md](references/automated-rules.md) |

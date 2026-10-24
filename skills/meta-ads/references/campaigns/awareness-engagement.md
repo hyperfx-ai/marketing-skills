@@ -10,7 +10,7 @@ These are the simplest campaign types. No pixel required. No complex `promoted_o
 
 ## Before starting
 
-Re-read [../constraints.md](../constraints.md). Most relevant:
+The rules of [references/constraints.md](references/constraints.md) that this campaign hits are below. Read a section of that file only when a step names it:
 - Budget in cents (×100)
 - `targeting_automation` inside `targeting`
 - Budget at campaign level for Advantage+
@@ -137,7 +137,7 @@ meta_ads_campaign_create(
 meta_ads_ad_images_upload(account_id="act_123456789", image_url="<url>")
 ```
 
-→ Capture the image hash (section 7 of [../constraints.md](../constraints.md)).
+→ Capture the image hash (section 7 of [references/constraints.md](references/constraints.md)).
 
 ### 4. Create ad
 

@@ -6,7 +6,7 @@ Use for campaigns optimized for website purchases, checkout completions, or any 
 
 ## Before starting
 
-Re-read [../constraints.md](../constraints.md). Every rule there applies here. Most relevant:
+The rules of [references/constraints.md](references/constraints.md) that this campaign hits are below. Read a section of that file only when a step names it:
 - Budget in cents (×100)
 - `promoted_object` required for OUTCOME_SALES
 - `targeting_automation` inside `targeting`
@@ -166,7 +166,7 @@ meta_ads_ad_images_upload(
 )
 ```
 
-→ Capture the image hash (section 7 of [../constraints.md](../constraints.md)).
+→ Capture the image hash (section 7 of [references/constraints.md](references/constraints.md)).
 
 ### 5. Create ad
 
@@ -262,7 +262,7 @@ The single-image `object_story_spec` above is the most common. `meta_ads_ad_crea
 }
 ```
 
-**Dynamic creative** (Meta auto-optimizes combinations) takes two calls (section 19 of [../constraints.md](../constraints.md)):
+**Dynamic creative** (Meta auto-optimizes combinations) takes two calls (section 19 of [references/constraints.md](references/constraints.md)):
 
 ```json
 {
@@ -347,8 +347,8 @@ The single-image `object_story_spec` above is the most common. `meta_ads_ad_crea
 |---|---|---|
 | Cryptic API error on ad set creation | Missing `promoted_object` | Add `pixel_id` + `custom_event_type` to ad set |
 | Budget rejected | Passed dollars not cents | Multiply by 100 |
-| Ad set error: unexpected argument | A misspelled field | See section 14 of [../constraints.md](../constraints.md) |
-| Campaign ACTIVE but nothing serves | Used `meta_ads_campaign_update(campaign_id, body={"status": "ACTIVE"})` | See section 3 of [../constraints.md](../constraints.md) |
+| Ad set error: unexpected argument | A misspelled field | See section 14 of [references/constraints.md](references/constraints.md) |
+| Campaign ACTIVE but nothing serves | Used `meta_ads_campaign_update(campaign_id, body={"status": "ACTIVE"})` | See section 3 of [references/constraints.md](references/constraints.md) |
 | "Bid amount required" | Optimization goal requires explicit bid | Do NOT change goal — ask user |
 | `targeting_automation` error | Placed at ad set top level | Move inside `targeting` object |
 
@@ -356,4 +356,4 @@ The single-image `object_story_spec` above is the most common. `meta_ads_ad_crea
 
 ## Full worked example
 
-See [../examples/sales-ecommerce.md](../examples/sales-ecommerce.md).
+See [references/examples/sales-ecommerce.md](references/examples/sales-ecommerce.md).

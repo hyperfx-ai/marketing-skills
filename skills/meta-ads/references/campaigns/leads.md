@@ -6,7 +6,7 @@ Use for campaigns optimized for lead generation: native Meta lead forms, website
 
 ## Before starting
 
-Re-read [../constraints.md](../constraints.md). Every rule there applies here. Most relevant:
+The rules of [references/constraints.md](references/constraints.md) that this campaign hits are below. Read a section of that file only when a step names it:
 - Budget in cents (×100)
 - `promoted_object` required for OUTCOME_LEADS — missing it, or missing any required field within it, causes a validation error
 - `targeting_automation` inside `targeting`
@@ -140,7 +140,7 @@ Skip if using the native lead form path — `promoted_object` uses only `page_id
 }
 ```
 
-> **CRITICAL**: `promoted_object` for each lead path: section 9 of [../constraints.md](../constraints.md).
+> **CRITICAL**: `promoted_object` for each lead path: section 9 of [references/constraints.md](references/constraints.md).
 
 **Advantage+ — native lead form path:**
 
@@ -207,7 +207,7 @@ Skip if using the native lead form path — `promoted_object` uses only `page_id
 
 #### If the optimization goal is rejected (error 2490408)
 
-See section 14 of [../constraints.md](../constraints.md). Then fix the goal and the destination of the ad set for the lead capture method the user chose.
+See section 14 of [references/constraints.md](references/constraints.md). Then fix the goal and the destination of the ad set for the lead capture method the user chose.
 
 ### 5. (Native lead form path only) List lead forms
 
@@ -231,7 +231,7 @@ meta_ads_ad_images_upload(
 )
 ```
 
-→ Capture the image hash (section 7 of [../constraints.md](../constraints.md)).
+→ Capture the image hash (section 7 of [references/constraints.md](references/constraints.md)).
 
 #### Creating a creative from scratch with `meta_ads_creative_create`
 
@@ -275,7 +275,7 @@ meta_ads_creative_create(
 
 If the user has provided or selected an **existing creative** (`creative_id`), skip the upload — but verify the destination URL first.
 
-Check the destination first (section 15 of [../constraints.md](../constraints.md)):
+Check the destination first (section 15 of [references/constraints.md](references/constraints.md)):
 
 ```python
 meta_ads_creative_get(creative_id="33892633203717215", fields="link_url,object_story_spec,url_tags")
@@ -287,7 +287,7 @@ If the destination doesn't match, tell the user and either select a different cr
 **Selecting among multiple existing creatives:** When `meta_ads_creative_list` returns several options, choose based on:
 1. Body copy alignment with campaign goal (lead-focused language > viral/social tone)
 2. Headline relevance to the offer or CTA
-3. Destination URL (section 15 of [../constraints.md](../constraints.md))
+3. Destination URL (section 15 of [references/constraints.md](references/constraints.md))
 
 If you're unsure, show the user the top 2–3 options (name + body copy) and let them choose.
 
@@ -364,7 +364,7 @@ meta_ads_campaigns_activate(campaign_id="<campaign_id>")
 
 `meta_ads_owned_pages_list` can fail with "No business ID found for this ad account" when the account is not connected to a Business Manager with a recognized business ID.
 
-**If this happens**, follow Step 2 of [../discovery.md](../discovery.md).
+**If this happens**, follow Step 2 of [references/discovery.md](references/discovery.md).
 
 ---
 
@@ -372,16 +372,16 @@ meta_ads_campaigns_activate(campaign_id="<campaign_id>")
 
 | Symptom | Cause | Fix |
 |---|---|---|
-| "No business ID found" from `meta_ads_owned_pages_list` | Account not linked to a Business Manager | Step 2 of [../discovery.md](../discovery.md) |
+| "No business ID found" from `meta_ads_owned_pages_list` | Account not linked to a Business Manager | Step 2 of [references/discovery.md](references/discovery.md) |
 | "Bid amount required" | Account-level bid strategy requires explicit bid | **Stop. Surface to user. Do NOT add bid_amount or change optimization_goal.** |
-| "Performance goal isn't available" (subcode 2490408) | The goal does not fit the objective or the destination | See section 14 of [../constraints.md](../constraints.md). |
+| "Performance goal isn't available" (subcode 2490408) | The goal does not fit the objective or the destination | See section 14 of [references/constraints.md](references/constraints.md). |
 | Cryptic API error on ad set | Missing `promoted_object` entirely | Add promoted_object with all required fields |
 | Budget at wrong level | Set budget on ad set for Advantage+ | Move to campaign level; remove from ad set |
-| Nothing serves after activation | Used `meta_ads_campaign_update(campaign_id, body={"status": "ACTIVE"})` | See section 3 of [../constraints.md](../constraints.md) |
+| Nothing serves after activation | Used `meta_ads_campaign_update(campaign_id, body={"status": "ACTIVE"})` | See section 3 of [references/constraints.md](references/constraints.md) |
 | Creative destination URL wrong | Existing creative linked to different URL | Verify creative destination before attaching |
 
 ---
 
 ## Full worked example
 
-See [../examples/leads-form.md](../examples/leads-form.md).
+See [references/examples/leads-form.md](references/examples/leads-form.md).

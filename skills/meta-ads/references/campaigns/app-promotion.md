@@ -6,7 +6,7 @@ Use for campaigns that drive mobile app installs, in-app events, or app re-engag
 
 ## Before starting
 
-Re-read [../constraints.md](../constraints.md). Most relevant:
+The rules of [references/constraints.md](references/constraints.md) that this campaign hits are below. Read a section of that file only when a step names it:
 - Budget in cents (×100)
 - `promoted_object` required for OUTCOME_APP_PROMOTION — missing it causes a cryptic API error
 - `targeting_automation` inside `targeting`
@@ -176,7 +176,7 @@ meta_ads_campaign_create(
 meta_ads_ad_images_upload(account_id="act_123456789", image_url="<url>")
 ```
 
-→ Capture the image hash (section 7 of [../constraints.md](../constraints.md)).
+→ Capture the image hash (section 7 of [references/constraints.md](references/constraints.md)).
 
 ### 4. Create ad
 
@@ -237,6 +237,6 @@ meta_ads_campaigns_activate(campaign_id="<campaign_id>")  # when user approves
 | "App not found" error | Wrong `application_id` | Verify in Meta App Dashboard, not app store |
 | `object_store_url` invalid | URL format wrong or missing https:// | Use full URL with https:// |
 | Budget rejected | Passed dollars not cents | Multiply by 100 |
-| Ad set error: unexpected argument | A misspelled field | See section 14 of [../constraints.md](../constraints.md) |
-| Campaign ACTIVE but no installs | Used `meta_ads_campaign_update(campaign_id, body={"status": "ACTIVE"})` | See section 3 of [../constraints.md](../constraints.md) |
+| Ad set error: unexpected argument | A misspelled field | See section 14 of [references/constraints.md](references/constraints.md) |
+| Campaign ACTIVE but no installs | Used `meta_ads_campaign_update(campaign_id, body={"status": "ACTIVE"})` | See section 3 of [references/constraints.md](references/constraints.md) |
 | Ad set shows "iOS 13.7 or earlier" / `user_os` reads `iOS_ver_14.0_to_14.4` | Parent **campaign** not created as iOS-14 SKAdNetwork, so Meta clamped the open-ended target | Recreate the campaign as the "iOS 14+ targeting" note of step 2 says. |
