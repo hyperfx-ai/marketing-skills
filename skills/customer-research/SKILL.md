@@ -84,7 +84,7 @@ Read `references/synthesis-templates.md` for the extraction framework, persona t
 
 The user needs intel from online communities, review sites, and social platforms. This is where MCP tools do the heavy lifting.
 
-See `references/source-playbooks.md` for per-source tool call examples and signal extraction tips.
+The steps below name the tool of each source. Read `references/source-playbooks.md` only when a scrape fails or returns nothing.
 
 ---
 
@@ -105,8 +105,6 @@ Before calling anything, decide which sources are worth hitting for this specifi
 | Enterprise | G2 Enterprise filter + X/Twitter | LinkedIn, YouTube |
 
 **Minimum viable run: Reddit + one review site.** Add supplementary sources only when the minimum doesn't produce enough signal, or when the ICP table above calls for them.
-
-For platform-by-platform tool call examples, read `references/source-playbooks.md`.
 
 ### Step 2 — Run targeted scrapes
 

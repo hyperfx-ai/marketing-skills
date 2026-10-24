@@ -96,7 +96,7 @@ The result contains:
 
 Both `logo` and `screenshot` are saved images ready to pass as `reference_images` to image generation tools. SVG logos are automatically converted to PNG, so always include the logo — no need to filter by format.
 
-**For deeper guidance on brand extraction, read `references/brand-extraction.md`.**
+**Read `references/brand-extraction.md` only when the site gives no logo, colors or screenshot.**
 
 ### Phase 2: Ad Copy Generation
 
@@ -112,7 +112,7 @@ brief = cmo_ad_brief(goal="drive conversions", platform="meta", url="https://exa
 Build the copy variants and visual direction on the recommended archetypes
 (`brief.recommendations[n].prompt` is a ready generation prompt; unresolved
 placeholders are listed per recommendation). If the tool is not available,
-work from `references/ad-copy-frameworks.md` instead.
+write the copy from the steps below and the copy rules of the platform file of Phase 4.
 
 Using the brand personality, tone, and value proposition from the extraction, write ad copy variants. Structure copy by what's being tested:
 
@@ -122,7 +122,7 @@ Using the brand personality, tone, and value proposition from the extraction, wr
 
 Change only one element per variant so results can be attributed to specific changes.
 
-**For copy frameworks, hook patterns, and variant strategy, read `references/ad-copy-frameworks.md`.**
+**The platform file of Phase 4 holds the copy rules of its placements. Read `references/ad-copy-frameworks.md` only for copy with no placement.**
 
 ### Phase 3: Visual Creative Generation
 

@@ -73,7 +73,7 @@ Based on the answers, read the appropriate reference file:
 | "Am I visible in AI search?" / "Track my brand in ChatGPT" | [`references/ai-search-optimization.md`](./references/ai-search-optimization.md) |
 | "Audit my site" / "How is my domain doing?" | [`references/site-audit.md`](./references/site-audit.md) |
 
-When the task spans multiple areas (e.g., "help me with SEO for my new site"), start with a site audit, then move to keyword research, then content planning.
+When the task spans multiple areas (e.g., "help me with SEO for my new site"), each area is its own step: run the site audit with `references/site-audit.md` first and give its findings. Read the file of the next area, keyword research and then content planning, only when the user goes on to it.
 
 ## Core SEO Principles
 

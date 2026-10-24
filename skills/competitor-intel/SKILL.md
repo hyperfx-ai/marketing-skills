@@ -117,7 +117,7 @@ Not every source matters for every competitor or every job. Per-competitor, deci
 | **Content-led / publication** | Site, blog (full crawl), backlinks history, AI-search citations, search rank trend |
 | **Local / multi-location** | Site, Google search results for "[brand] near me", Reddit / Twitter sentiment, Google Trends regional |
 
-The full per-source playbook (when to use, what it reveals, quirks) lives in [`references/source-by-source.md`](./references/source-by-source.md).
+The full per-source playbook (when to use, what it reveals, quirks) lives in [`references/source-by-source.md`](./references/source-by-source.md). Read it only when a source call fails or returns nothing; the brief needs only [`references/brief-templates.md`](./references/brief-templates.md).
 
 ### Phase 3 — Pull the data
 
