@@ -22,7 +22,7 @@
    Bidding: [constraints.md](../constraints.md), Bidding. Set `contains_eu_political_advertising` ([constraints.md](../constraints.md), Technical Rules). For Display set `"advertising_channel_type": "DISPLAY"`.
 3. **Locations** — resolve names with `google_ads_locations_search(customer_id, query="...")`. Then call `google_ads_location_targets_add(customer_id, campaign_id="<numeric id>", location_id="1023191")` once for each location. Add `negative=True` to exclude a location.
 4. **Ad group** — `google_ads_ad_groups_create(customer_id, body={"name": "Ad Group 1", "campaign": "customers/{cid}/campaigns/{id}", "status": "PAUSED"})`.
-5. **Keywords** (Search) — `google_ads_keywords_create(customer_id, ad_group_id="<numeric id>", keyword_text="marketing software", match_type="PHRASE")`, one call for each keyword. For a negative, add `negative=True`.
+5. **Keywords** (Search) — `google_ads_keywords_create(customer_id, ad_group_id="<numeric id>", keyword_text="marketing software", match_type="PHRASE", status="PAUSED")`, one call for each keyword. The tool creates a keyword `ENABLED` when `status` is not set. For a negative, add `negative=True`.
 6. **Ads** — `google_ads_ad_group_ads_create(customer_id, body={...})` with exactly ONE typed ad object:
 
 ```json
