@@ -336,7 +336,7 @@ meta_ads_adset_create(
 
 ---
 
-## 17. Geo targeting beyond country (regions, cities, DMAs)
+## 17. Targeting keys: regions, cities, DMAs and interests
 
 `geo_locations.countries` accepts ISO codes directly (`["US", "CA"]`). But regions, cities, and DMAs (`geo_markets`) require Meta's internal **numeric keys** — you **cannot guess them**. Meta refuses a hand-written key like `"US-CA-803"`.
 
@@ -362,6 +362,23 @@ Then pass the returned `key` values:
 ```
 
 Never write geo keys by hand — always resolve them through the search tool first.
+
+### Interests
+
+Interests also need Meta's numeric ids. Search by name:
+
+```python
+meta_ads_targeting_search(search_type="adinterest", q="Running")
+```
+
+Then pass each returned `id` and `name` in the ad set's `targeting`:
+
+```json
+"targeting": {
+  "geo_locations": {"countries": ["US"]},
+  "flexible_spec": [{"interests": [{"id": "<id from search>", "name": "<name from search>"}]}]
+}
+```
 
 ---
 
