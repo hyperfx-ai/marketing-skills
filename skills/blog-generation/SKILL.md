@@ -75,9 +75,9 @@ To run it daily, read the `task-management` skill, then create a Task: `tasks_cr
 
 **Step 3: research.** Run the plan. Validate the target with `hyperseo_search_volume_get`, `hyperseo_keyword_difficulty_get`, `hyperseo_intents_search` and `hyperseo_ai_search_volume_get` (each takes `keywords=[...]`). Study what wins (`hyperseo_serp_results_get(keyword=...)`) and the sources that Google AI Mode cites (`hyperseo_ai_overviews_get(keyword=...)`). Read the top pages and find the angle they all miss. Pull the real facts, stats, and named sources you will cite. Never fabricate.
 
-**Step 4: write the post.** Build to the archetype spec in `references/blog-archetypes.md`, using the answer-first structure and copy-paste blocks in `references/blog-playbook.md`, in the brand's voice per `references/brand-voice-and-quality.md`, with the citation tactics in `references/ai-citation-playbook.md`. On-page and schema per `references/on-page-and-technical.md`.
+**Step 4: write the post.** Build to the archetype spec in `references/blog-archetypes.md`, in the brand's voice from the Brand brief. That one file holds what the post needs: the type's structure, schema and AI-citation lever, the AI tells to strip, and the gate of Step 5.
 
-**Step 5: run the quality gate.** Pass every item in the pre-publish gate in `references/brand-voice-and-quality.md` before the post is done: on-brand voice, no AI tells, no fabrication, answer-first structure, on-page and schema, baseline captured. If anything fails, fix it.
+**Step 5: run the quality gate.** Pass every item in the pre-publish gate at the end of `references/blog-archetypes.md` before the post is done: on-brand voice, no AI tells, no fabrication, answer-first structure, on-page and schema, baseline captured. If anything fails, fix it.
 
 **Step 6: update your memory (append to the log).** Append the finished post as a new row in the **Published log** in `blog-strategy.md` (date, title, slug, archetype, target query, source, link), and save the file back to the same path. Remove the topic from the backlog and add any new ideas the research surfaced. This append is exactly what the next run reads to avoid repeating you. Never finish a run without it.
 
@@ -126,18 +126,18 @@ One Markdown file per brand, saved at a stable path in persistent storage (for e
 
 - **Unique and people-first beats every hack.** If a model could already write the post from common knowledge, or ten pages already say it, do not publish it. Lead with the brand's real angle.
 - **Answer first, then explain.** Open the post and every section with the direct answer. AI extracts it; Google rewards it.
-- **On-brand and human, or it backfires.** Off-brand, AI-tell-ridden, salesy content erodes trust and AI engines deprioritize it. The brand's real voice is the asset. See `references/brand-voice-and-quality.md`.
+- **On-brand and human, or it backfires.** Off-brand, AI-tell-ridden, salesy content erodes trust and AI engines deprioritize it. The brand's real voice is the asset.
 - **Specific and verifiable, never vague or invented.** Numbers, names, dates, real sources. Never fabricate a stat, quote, customer, or credential.
 - **One new post per run, always logged.** The log is what makes the engine an engine instead of a loop.
 
 ## Also handles: optimizing an existing post
 
-The same references cover improving a page that already exists (rewrite a weak title and lead for a high-impression, low-CTR page, add structure and schema, sharpen the brand's recommendation context). Use `references/on-page-and-technical.md` and `references/brand-voice-and-quality.md`, and log the change in the strategy doc.
+The same references cover improving a page that already exists (rewrite a weak title and lead for a high-impression, low-CTR page, add structure and schema, sharpen the brand's recommendation context). Use `references/on-page-and-technical.md`, and log the change in the strategy doc.
 
 ## References
 
-- `references/blog-archetypes.md`: authoritative per-type specs for 10 blog types, each with structure, length, schema, AI-citation lever, and pitfalls. Listicles get the fullest treatment.
+- `references/blog-archetypes.md`: authoritative per-type specs for 10 blog types, each with structure, length, schema, AI-citation lever, and pitfalls. Listicles get the fullest treatment; then the AI tells to strip and the pre-publish quality gate.
 - `references/blog-playbook.md`: answer-first structure; copy-paste content-block templates; the proven GEO writing rules; topic clusters; improving an existing post.
-- `references/brand-voice-and-quality.md`: extract a voice profile from the brand's site; positioning clarity; the anti-AI-tell and anti-cringe rules; the pre-publish quality gate.
+- `references/brand-voice-and-quality.md`: extract a voice profile from the brand's site; positioning clarity; the substance rules.
 - `references/ai-citation-playbook.md`: the Princeton GEO factor order; E-E-A-T and author/entity signals; off-page mentions; per-engine notes; the honest Google stance.
 - `references/on-page-and-technical.md`: on-page checklist; JSON-LD schema and deprecations; crawlability / AI-bot / server-rendering gates; how to measure impact.
