@@ -1,6 +1,6 @@
 # Video, Demand Gen, Shopping, and App campaigns
 
-Same one create tool — `google_ads_campaigns_create` — with the channel type and its required settings. The validators return corrective errors for missing channel requirements. Always: budget first, campaign **PAUSED**, targeting, then the type's ad/asset layer. Follow the approval discipline from [search-display.md](search-display.md).
+Same one create tool — `google_ads_campaigns_create` — with the channel type and its required settings. The validators return corrective errors for missing channel requirements. Always: budget first, campaign **PAUSED**, targeting, then the type's ad/asset layer. Present the full plan and get explicit user approval before the first mutate.
 
 ## Video (YouTube)
 

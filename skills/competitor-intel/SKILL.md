@@ -34,7 +34,7 @@ End-to-end competitor research and monitoring. Define the set, pull from every p
   - **Apify scrapers** — Instagram, TikTok, LinkedIn, Twitter, Reddit, Google search, Google Trends
   - **Image generation** *(optional — only if the brief feeds a comparison-page or battle-card asset downstream)*
 
-If none of those tool prefixes appear in the agent's tool list (`firecrawl_*`, `hyperseo_*`, `instagram_scrape*`, `scrape_tiktok*`, `x_tweets_search`, `reddit_scrape*`, `google_search_results_search`, `google_trends_scrape`, `web_pages_scrape`), stop and tell the user to enable the Hyper MCP and connect at least Firecrawl + one social scraper. The LinkedIn scraper (`scrape_linkedin_profiles`) is only present when that specific integration is enabled — gracefully skip the LinkedIn slice if it's missing rather than failing the whole brief.
+If no tool with those prefixes is found (`firecrawl_*`, `hyperseo_*`, `instagram_scrape*`, `tiktok_*_scrape`, `x_tweets_search`, `reddit_scrape*`, `google_search_results_search`, `google_trends_scrape`, `web_pages_scrape`), the toolkits to enable are Firecrawl and at least one social scraper. The LinkedIn scraper (`scrape_linkedin_profiles`) is only present when that specific integration is enabled — gracefully skip the LinkedIn slice if it's missing rather than failing the whole brief.
 
 ### How to run the tools in this skill
 
@@ -42,10 +42,11 @@ Every tool in this skill is named by its canonical tool name. Run it with the ca
 
 | Surface | Find a tool | Run it |
 | --- | --- | --- |
-| MCP client (Claude, Cursor, Codex, ChatGPT) | `search("<what you want to do>")`, then `describe("<name>")` | `call("<name>", {...})` |
+| Hyper chat | Call the tool by its name; `search_tools(queries=["<provider> <action>"])` shows its parameters | `<name>(...)` |
+| MCP client (Claude, Cursor, Codex, ChatGPT) | `search("<what you want to do>")`, then `describe("<name>")` | `call_read("<name>", {...})`, `call_write` or `call_destructive`: the one that `describe` names in `call_with` |
 | Hyper CLI | `hyperai search "<what you want to do>"`, then `hyperai describe <name>` | `hyperai call <name> --json '{...}'` |
 
-If a tool is not found, its integration is not connected or not enabled for the workspace: stop and tell the user which integration to connect.
+If a tool is not found: in Hyper chat, find its toolkit id with `discover_toolkits` and pass it to `enable_toolkit`. On an MCP client or the CLI, tell the user which integration to connect in Hyper.
 
 ## Tool surface
 
@@ -74,7 +75,7 @@ If a tool is not found, its integration is not connected or not enabled for the 
 7. **Don't over-interpret single data points.** "Competitor X dropped a Reel that got 12K likes" is noise. "Competitor X has averaged 8K likes/post for the last 30 days, up from 2K" is signal. Build comparisons on aggregates, not anecdotes.
 8. **Stay clearly factual.** Use neutral language ("Competitor X published Y on date Z, copy reads as…") not value judgments ("Competitor X's strategy is broken…"). The brief is intel, not opinion.
 9. **Disambiguate brand-name SERPs.** A search for `<competitor>` alone often returns unrelated results that share the brand name (e.g. a search for "hyperfx" returns mostly HyperX headphones, not hyperfx.ai). Always pair the brand with a category modifier — `<competitor> alternative`, `<competitor> reviews`, `<competitor> pricing`, `<competitor> vs <us>` — to get clean SERPs.
-10. **Apify-backed scrapers fail intermittently.** Expect occasional `"fetch failed"` or empty-result responses from `instagram_scrape*`, `scrape_tiktok*`, `reddit_scrape*`, `google_trends_scrape`, `x_tweets_search`, and `google_search_results_search`. Retry once after a short delay before reporting the source as missing — and surface partial results to the user rather than failing the whole brief if a scraper stays down.
+10. **Apify-backed scrapers fail intermittently.** Expect occasional `"fetch failed"` or empty-result responses from `instagram_scrape*`, `tiktok_*_scrape`, `reddit_scrape*`, `google_trends_scrape`, `x_tweets_search`, and `google_search_results_search`. Retry once after a short delay before reporting the source as missing — and surface partial results to the user rather than failing the whole brief if a scraper stays down.
 
 ## Workflow
 
@@ -116,7 +117,7 @@ Not every source matters for every competitor or every job. Per-competitor, deci
 | **Content-led / publication** | Site, blog (full crawl), backlinks history, AI-search citations, search rank trend |
 | **Local / multi-location** | Site, Google search results for "[brand] near me", Reddit / Twitter sentiment, Google Trends regional |
 
-The full per-source playbook (when to use, what it reveals, quirks) lives in [`references/source-by-source.md`](./references/source-by-source.md).
+The full per-source playbook (when to use, what it reveals, quirks) lives in [`references/source-by-source.md`](./references/source-by-source.md). Read it only when a source call fails or returns nothing; the brief needs only [`references/brief-templates.md`](./references/brief-templates.md).
 
 ### Phase 3 — Pull the data
 
@@ -155,7 +156,7 @@ instagram_followers_count_scrape(usernames=["<competitor>"])  # cheap, do it wee
 tiktok_videos_scrape(profiles=["<competitor>"], results_per_page=30)
 x_tweets_search(from_user="<competitor_handle>", max_items=50)
 
-# Only if scrape_linkedin_profiles is in your MCP tool list:
+# Only if scrape_linkedin_profiles is found:
 scrape_linkedin_profiles(urls=["https://www.linkedin.com/company/<competitor>"])
 ```
 

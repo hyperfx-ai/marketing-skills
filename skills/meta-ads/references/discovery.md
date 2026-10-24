@@ -6,7 +6,7 @@ Run this phase before any campaign creation. It establishes account context, ver
 
 ## Step 1: Account selection
 
-Call `meta_ads_adaccount_list` with `{"detail": "id_only"}`.
+In Hyper chat, call `connections_info(toolkit_id="meta_ads")`. It lists the ad accounts and the Pages. Call a list tool only for a field it does not show, or on an MCP client: `meta_ads_adaccount_list(fields="id,name,account_status,currency")`.
 
 - **Multiple accounts returned**: Ask the user to select one before proceeding. Do not assume.
 - **Single account returned**: Inform the user and proceed.
@@ -21,19 +21,17 @@ Call `meta_ads_owned_pages_list` with `{"account_id": "<selected_act_id>", "deta
 
 > `account_id` is REQUIRED — never call this tool without it.
 
-**Capture the returned `page_id` explicitly.** Pass it on every ad set. Do not rely on auto-resolution.
+**Capture the returned `page_id` explicitly.** Where it goes: section 11 of [constraints.md](constraints.md). Do not rely on auto-resolution.
 
 **If the call fails with "No business ID found for this ad account":**
 
-First check if you've already run the health check (step 4). If so, the page_id is available in the health check response under `page_publish_access.values[].id` — use that directly, no extra API call needed.
-
-If you haven't run the health check yet, or if it didn't return a page_id, use this fallback:
+Call `meta_accounts_list()`. The health check fails the same way, so it gives no page id.
 
 ```python
-meta_accounts_list(account_id="act_123456789")
+meta_accounts_list()
 ```
 
-This returns connected pages through an alternate lookup path. Capture `page_id` from the response and continue.
+It takes no account argument; it lists every Page the token can see. Capture `page_id` from the response and continue.
 
 **If no pages are returned at all:**
 1. Run `meta_ads_health_check`.
@@ -65,7 +63,7 @@ If the campaign targets a custom or lookalike audience, call `meta_ads_custom_au
 
 - `operation_status.code` must be `200` (Normal). Code `433` means the audience is broken ("couldn't create, delete and retry").
 - `delivery_status.code` must be `200` (ready). Code `300` means too small to deliver.
-- `approximate_count` should be comfortably above ~1000 for reliable delivery.
+- Read the size with `meta_ads_custom_audience_get(custom_audience_id=...)`: `approximate_count_lower_bound` should be above ~1000.
 
 If a selected audience fails validation, **do not silently substitute a different one.** Surface it to the user:
 > "The lookalike audience you wanted is currently broken (status 433) / too small to deliver. Options: pick a different audience, create a new one, or proceed with [closest alternative]. How would you like to handle it?"
@@ -76,7 +74,7 @@ The same applies to **audience parameters that don't match the brief** — e.g. 
 
 ## Step 4: Health check (recommended)
 
-Call `meta_ads_health_check` before a first campaign on any account.
+Call `meta_ads_health_check` before a first campaign on any account. It takes no account argument; it checks every ad account of the connection.
 
 It verifies: token permissions, ad account access, Page publish access, and pixel access.
 
@@ -141,9 +139,9 @@ What is the primary goal for this campaign?
 
 The objective determines which campaign workflow to follow. Do not guess.
 
-Once confirmed, proceed to the appropriate campaign file:
-- Sales → [campaigns/sales.md](campaigns/sales.md)
-- Leads → [campaigns/leads.md](campaigns/leads.md)
-- Traffic → [campaigns/traffic.md](campaigns/traffic.md)
-- Awareness/Engagement → [campaigns/awareness-engagement.md](campaigns/awareness-engagement.md)
-- App Promotion → [campaigns/app-promotion.md](campaigns/app-promotion.md)
+Once the user approves the plan, the build reads the campaign file of the objective:
+- Sales → [references/campaigns/sales.md](references/campaigns/sales.md)
+- Leads → [references/campaigns/leads.md](references/campaigns/leads.md)
+- Traffic → [references/campaigns/traffic.md](references/campaigns/traffic.md)
+- Awareness/Engagement → [references/campaigns/awareness-engagement.md](references/campaigns/awareness-engagement.md)
+- App Promotion → [references/campaigns/app-promotion.md](references/campaigns/app-promotion.md)

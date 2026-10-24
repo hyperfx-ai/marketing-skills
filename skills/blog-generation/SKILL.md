@@ -3,6 +3,9 @@ name: blog-generation
 description: "Generate one excellent, on-brand blog post per run for any business, built to rank on Google and get cited by AI search (ChatGPT, Claude, Perplexity, AI Overviews). A stateful engine: reads a brand strategy doc, picks a fresh topic (never repeats), researches, writes in the brand's voice, and logs the post back. Use when the user wants to write a blog post, run a daily or recurring blog task, or generate SEO / AEO / blog content. For keyword data and audits, defer to seo-research."
 requires_toolkits:
   - hyperseo
+  - firecrawl_toolkit
+  - web_scraper
+  - google_search_console_toolkit
   - wordpress_toolkit
   - wordpress_org_toolkit
   - ghost_toolkit
@@ -31,19 +34,20 @@ Every tool in this skill is named by its canonical tool name. Run it with the ca
 
 | Surface | Find a tool | Run it |
 | --- | --- | --- |
-| MCP client (Claude, Cursor, Codex, ChatGPT) | `search("<what you want to do>")`, then `describe("<name>")` | `call("<name>", {...})` |
+| Hyper chat | Call the tool by its name; `search_tools(queries=["<provider> <action>"])` shows its parameters | `<name>(...)` |
+| MCP client (Claude, Cursor, Codex, ChatGPT) | `search("<what you want to do>")`, then `describe("<name>")` | `call_read("<name>", {...})`, `call_write` or `call_destructive`: the one that `describe` names in `call_with` |
 | Hyper CLI | `hyperai search "<what you want to do>"`, then `hyperai describe <name>` | `hyperai call <name> --json '{...}'` |
 
-If a tool is not found, its integration is not connected or not enabled for the workspace: stop and tell the user which integration to connect.
+If a tool is not found: in Hyper chat, find its toolkit id with `discover_toolkits` and pass it to `enable_toolkit`. On an MCP client or the CLI, tell the user which integration to connect in Hyper.
 
 ## Tool surface
 
 | Job | Tools |
 | --- | --- |
-| Read and write `blog-strategy.md` and the post draft | your file tools (`read_file`, `create_file`, `edit_file`) |
+| Read and write `blog-strategy.md` and the post draft | `files_read`, `files_create`, `files_edit` (add a log row with `files_edit(path=..., mode="append", new_str="<the new log row>\n")`) |
 | Learn the brand from their site (Step 0) | `firecrawl_urls_scrape`, `web_pages_scrape` |
 | Validate a topic and study the SERP / AI answer | `hyperseo_search_volume_get`, `hyperseo_keyword_difficulty_get`, `hyperseo_intents_search`, `hyperseo_ai_search_volume_get`, `hyperseo_serp_results_get`, `hyperseo_ai_overviews_get` |
-| Mine real-world signal and measure impact | `google_search_console_performance_get` |
+| Mine real-world signal and measure impact | `google_search_console_performance_get(site_url=..., start_date="YYYY-MM-DD", end_date="YYYY-MM-DD", dimensions=["query","page"], row_limit=1000)`. Take `site_url` from `connections_info(toolkit_id="google_search_console_toolkit")`. End the range 3 or more days ago: newer days are not complete. |
 | Check whether AI recommends the brand | `hyperseo_mentions_track` |
 
 ## Out of scope: defer to other skills
@@ -57,7 +61,9 @@ If a tool is not found, its integration is not connected or not enabled for the 
 
 ## The run (do this every time the task fires)
 
-**Step 0 (first run only): build the strategy doc.** If `blog-strategy.md` does not exist, create it before writing anything. Read the brand's site (`firecrawl_urls_scrape` on homepage, about, best existing posts, product/pricing) and fill the **Brand brief** using the method in `references/brand-voice-and-quality.md`. Seed the **Topic backlog** with 8 to 15 candidate topics (validate with HyperSEO where available). Then continue to Step 1. If anything critical is unknown (real proof assets, the brand's actual positioning), ask the user rather than inventing.
+To run it daily, read the `task-management` skill, then create a Task: `tasks_create(name="Daily blog post: <brand>", action={"type": "agent", "instructions": "Run the blog-generation skill for <brand>. The strategy doc is /files/<brand-slug>/blog-strategy.md."}, trigger={"type": "schedule", "schedule": {"kind": "cron", "expression": "0 9 * * *", "timezone": "<the user's time zone>"}}, thread_policy="new_each_run")`.
+
+**Step 0 (first run only): build the strategy doc.** If `blog-strategy.md` does not exist, create it before writing anything. First read `/files/<brand-slug>/brand-context.md` with `files_read`; if it exists, copy its positioning, audience, voice and proof into the **Brand brief**. Only if it does not exist, read the brand's site (`firecrawl_urls_scrape` on homepage, about, best existing posts, product/pricing) and fill the **Brand brief** using the method in `references/brand-voice-and-quality.md`. Seed the **Topic backlog** with 8 to 15 candidate topics (validate with HyperSEO where available). Then continue to Step 1. If anything critical is unknown (real proof assets, the brand's actual positioning): in a chat, ask the user. In a scheduled run, do not ask: skip the claim, write the open question into the strategy doc, and send it with `notify_user` at the end of the run.
 
 **Step 1: load your memory (read the log).** Open the brand's `blog-strategy.md` from its saved file path and read ALL of it into context: the Brand brief (the contract every draft honors) and the entire Published log (everything already written). This happens on every run after the first, with no exceptions. You cannot pick a fresh topic without it.
 
@@ -65,17 +71,17 @@ If a tool is not found, its integration is not connected or not enabled for the 
 - **Title / topic**: the working title and the primary query it targets.
 - **Where it is coming from**: the source or trigger (a backlog item, a GSC gap, a customer question, a keyword gap, a news hook, a piece of the brand's own expertise or data).
 - **What it is going to do**: the archetype (listicle, comparison, how-to, what-is, alternatives, pillar, pain/diagnostic, original research, case study, glossary) from `references/blog-archetypes.md`.
-- **The research it is going to do**: the specific checks for this post (SERP read, AI-Overview check, sources to pull, the brand proof to feature).
+- **The research it is going to do**: the specific checks for this post (SERP read, AI Mode check (`hyperseo_ai_overviews_get`), sources to pull, the brand proof to feature).
 
-**Step 3: research.** Run the plan. Validate the target (`hyperseo_search_volume_get`, `_keyword_difficulty`, `_search_intent`, `_ai_search_volume`). Study what wins (`hyperseo_serp_results_get`) and what AI already cites (`hyperseo_ai_overviews_get`). Read the top pages and find the angle they all miss. Pull the real facts, stats, and named sources you will cite. Never fabricate.
+**Step 3: research.** Run the plan. Validate the target with `hyperseo_search_volume_get`, `hyperseo_keyword_difficulty_get`, `hyperseo_intents_search` and `hyperseo_ai_search_volume_get` (each takes `keywords=[...]`). Study what wins (`hyperseo_serp_results_get(keyword=...)`) and the sources that Google AI Mode cites (`hyperseo_ai_overviews_get(keyword=...)`). Read the top pages and find the angle they all miss. Pull the real facts, stats, and named sources you will cite. Never fabricate.
 
-**Step 4: write the post.** Build to the archetype spec in `references/blog-archetypes.md`, using the answer-first structure and copy-paste blocks in `references/blog-playbook.md`, in the brand's voice per `references/brand-voice-and-quality.md`, with the citation tactics in `references/ai-citation-playbook.md`. On-page and schema per `references/on-page-and-technical.md`.
+**Step 4: write the post.** Build to the archetype spec in `references/blog-archetypes.md`, in the brand's voice from the Brand brief. That one file holds what the post needs: the type's structure, schema and AI-citation lever, the AI tells to strip, and the gate of Step 5.
 
-**Step 5: run the quality gate.** Pass every item in the pre-publish gate in `references/brand-voice-and-quality.md` before the post is done: on-brand voice, no AI tells, no fabrication, answer-first structure, on-page and schema, baseline captured. If anything fails, fix it.
+**Step 5: run the quality gate.** Pass every item in the pre-publish gate at the end of `references/blog-archetypes.md` before the post is done: on-brand voice, no AI tells, no fabrication, answer-first structure, on-page and schema, baseline captured. If anything fails, fix it.
 
 **Step 6: update your memory (append to the log).** Append the finished post as a new row in the **Published log** in `blog-strategy.md` (date, title, slug, archetype, target query, source, link), and save the file back to the same path. Remove the topic from the backlog and add any new ideas the research surfaced. This append is exactly what the next run reads to avoid repeating you. Never finish a run without it.
 
-**Step 7: deliver.** Output the post (and publish it if a publishing path is wired for this brand). Set the expectation that ranking moves in days to weeks and AI citations in weeks.
+**Step 7: deliver.** Save the post to `/files/<brand-slug>/posts/<slug>.md` with `files_create`, and show it with `sandbox_files_display(path="/files/<brand-slug>/posts/<slug>.md")`. To publish, call `connections_info(toolkit_id=<the brand's CMS toolkit>)` for the site, then: WordPress.com `wordpress_posts_create(site=..., title=..., content=..., status="publish")`; self-hosted WordPress `wordpress_org_posts_create(title=..., content=..., status="publish")`; Ghost `ghost_posts_create(title=..., html=..., status="published")`; Wix `wix_posts_create_and_publish(title=..., html=...)`; Webflow `webflow_collection_items_create(collection_id=..., field_data={...})`, then `webflow_publish_site(site_id=...)`. Put the live URL in the log's Link column. Set the expectation that ranking moves in days to weeks and AI citations in weeks.
 
 ## Picking a fresh topic (so it never loops)
 
@@ -104,7 +110,7 @@ One Markdown file per brand, saved at a stable path in persistent storage (for e
 - Proof assets: [real numbers, customers, credentials, data, stories]
 - Primary site: [url]
 - Target topics / seed keywords: [themes]
-- Publishing: [where posts go, cadence]
+- Publishing: [CMS toolkit id, site, cadence]
 
 ## Topic backlog (planned, prioritized)
 | Priority | Working title | Archetype | Target query | Source / angle | Status |
@@ -120,18 +126,18 @@ One Markdown file per brand, saved at a stable path in persistent storage (for e
 
 - **Unique and people-first beats every hack.** If a model could already write the post from common knowledge, or ten pages already say it, do not publish it. Lead with the brand's real angle.
 - **Answer first, then explain.** Open the post and every section with the direct answer. AI extracts it; Google rewards it.
-- **On-brand and human, or it backfires.** Off-brand, AI-tell-ridden, salesy content erodes trust and AI engines deprioritize it. The brand's real voice is the asset. See `references/brand-voice-and-quality.md`.
+- **On-brand and human, or it backfires.** Off-brand, AI-tell-ridden, salesy content erodes trust and AI engines deprioritize it. The brand's real voice is the asset.
 - **Specific and verifiable, never vague or invented.** Numbers, names, dates, real sources. Never fabricate a stat, quote, customer, or credential.
 - **One new post per run, always logged.** The log is what makes the engine an engine instead of a loop.
 
 ## Also handles: optimizing an existing post
 
-The same references cover improving a page that already exists (rewrite a weak title and lead for a high-impression, low-CTR page, add structure and schema, sharpen the brand's recommendation context). Use `references/on-page-and-technical.md` and `references/brand-voice-and-quality.md`, and log the change in the strategy doc.
+The same references cover improving a page that already exists (rewrite a weak title and lead for a high-impression, low-CTR page, add structure and schema, sharpen the brand's recommendation context). Use `references/on-page-and-technical.md`, and log the change in the strategy doc.
 
 ## References
 
-- `references/blog-archetypes.md`: authoritative per-type specs for 10 blog types, each with structure, length, schema, AI-citation lever, and pitfalls. Listicles get the fullest treatment.
+- `references/blog-archetypes.md`: authoritative per-type specs for 10 blog types, each with structure, length, schema, AI-citation lever, and pitfalls. Listicles get the fullest treatment; then the AI tells to strip and the pre-publish quality gate.
 - `references/blog-playbook.md`: answer-first structure; copy-paste content-block templates; the proven GEO writing rules; topic clusters; improving an existing post.
-- `references/brand-voice-and-quality.md`: extract a voice profile from the brand's site; positioning clarity; the anti-AI-tell and anti-cringe rules; the pre-publish quality gate.
+- `references/brand-voice-and-quality.md`: extract a voice profile from the brand's site; positioning clarity; the substance rules.
 - `references/ai-citation-playbook.md`: the Princeton GEO factor order; E-E-A-T and author/entity signals; off-page mentions; per-engine notes; the honest Google stance.
 - `references/on-page-and-technical.md`: on-page checklist; JSON-LD schema and deprecations; crawlability / AI-bot / server-rendering gates; how to measure impact.

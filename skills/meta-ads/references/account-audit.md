@@ -6,7 +6,7 @@ For query mechanics (insights args, date presets, cached data vs live API), see 
 
 ## Step 1: Account overview
 
-1. `meta_ads_adaccount_list` — list all ad accounts.
+1. Read the ad accounts as [discovery.md](discovery.md) Step 1 says. For the audit fields, call `meta_ads_adaccount_list(fields="id,name,account_status,currency,timezone_name,spend_cap,amount_spent")`.
 2. For each account in scope, note spend limits, timezone, and currency.
 3. Check account status and any restrictions. If accounts are missing or errors look like permission problems, run `meta_ads_health_check()` and surface the diagnostics.
 
@@ -37,7 +37,7 @@ Pull performance for the audit window (default: last 30 days — confirm with th
 
 For top-spending campaigns:
 
-1. `meta_ads_adset_list` — get ad set details.
+1. `meta_ads_ad_sets_list(campaign_id=...)` for one campaign. For its fields, use `meta_ads_adset_list` (section 15 of [constraints.md](constraints.md)).
 2. Review targeting settings:
    - Audience sizes (too narrow → high CPM; overlapping → auction competition)
    - Age/gender targeting
@@ -50,10 +50,10 @@ For top-spending campaigns:
 
 For top ad sets:
 
-1. `meta_ads_ad_list` — list ads; `meta_ads_ad_get` for details.
+1. `meta_ads_list(ad_set_id=...)` — list the ads of one ad set; `meta_ads_ad_get(ad_id=..., fields="id,name,status,effective_status,creative")` for details.
 2. Review creative types in use: static images, videos, carousels, dynamic creative.
 3. Check ad fatigue: frequency > 3 over the window is a refresh signal.
-4. Check UTM coverage: creatives driving to a destination without `url_tags` are unmeasurable downstream — flag them.
+4. Check UTM coverage with `meta_ads_creative_list(fields="id,name,url_tags,object_story_spec")`: creatives driving to a destination without `url_tags` are unmeasurable downstream — flag them.
 
 ## Step 6: Recommendations
 
