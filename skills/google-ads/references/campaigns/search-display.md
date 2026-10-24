@@ -1,6 +1,6 @@
 # Search & Display campaigns (granular build)
 
-> **CRITICAL**: Present the full plan and get explicit user approval before the first mutate ([discovery.md](../discovery.md) must be complete and the summary approved). Create everything **PAUSED**, in dependency order.
+> **CRITICAL**: Present the full plan and get explicit user approval before the first mutate ([references/discovery.md](references/discovery.md) must be complete and the summary approved). Create everything **PAUSED**, in dependency order.
 
 ## Build order
 
@@ -19,7 +19,7 @@
 }
 ```
 
-   Bidding: [constraints.md](../constraints.md), Bidding. Set `contains_eu_political_advertising` ([constraints.md](../constraints.md), Technical Rules). For Display set `"advertising_channel_type": "DISPLAY"`.
+   Bidding: [references/constraints.md](references/constraints.md), Bidding. Set `contains_eu_political_advertising` ([references/constraints.md](references/constraints.md), Technical Rules). For Display set `"advertising_channel_type": "DISPLAY"`.
 3. **Locations** — resolve names with `google_ads_locations_search(customer_id, query="...")`. Then call `google_ads_location_targets_add(customer_id, campaign_id="<numeric id>", location_id="1023191")` once for each location. Add `negative=True` to exclude a location.
 4. **Ad group** — `google_ads_ad_groups_create(customer_id, body={"name": "Ad Group 1", "campaign": "customers/{cid}/campaigns/{id}", "status": "PAUSED"})`.
 5. **Keywords** (Search) — `google_ads_keywords_create(customer_id, ad_group_id="<numeric id>", keyword_text="marketing software", match_type="PHRASE", status="PAUSED")`, one call for each keyword. The tool creates a keyword `ENABLED` when `status` is not set. For a negative, add `negative=True`.
@@ -73,4 +73,4 @@ Create assets with `google_ads_assets_create` (`sitelink_asset` / `callout_asset
 
 After building, confirm the tree by GAQL (campaign, ad groups, ads, keywords), present it to the user, then call `google_ads_campaigns_update(customer_id, body={"resource_name": "customers/<cid>/campaigns/<id>", "status": "ENABLED"})` after explicit approval.
 
-Re-check [constraints.md](../constraints.md) (bidding strategies, technical rules) at each creation step.
+Read a section of [references/constraints.md](references/constraints.md) (bidding strategies, technical rules) only when a step names it.

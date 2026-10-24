@@ -76,4 +76,4 @@ Approve to proceed?
 
 Wait for explicit approval. No emojis. No assumptions.
 
-Once approved, continue to the matching campaign file: [campaigns/search-display.md](campaigns/search-display.md) or [campaigns/pmax.md](campaigns/pmax.md).
+Once approved, continue to the matching campaign file: [references/campaigns/search-display.md](references/campaigns/search-display.md) or [references/campaigns/pmax.md](references/campaigns/pmax.md).

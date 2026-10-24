@@ -1,6 +1,6 @@
 # Performance Max campaigns (granular build)
 
-> **CRITICAL**: Present the full plan and get explicit user approval before the first mutate ([discovery.md](../discovery.md) must be complete and the summary approved). PMax campaigns MUST be created **PAUSED** — they need at least one asset group before they can serve, and the create tool enforces this.
+> **CRITICAL**: Present the full plan and get explicit user approval before the first mutate ([references/discovery.md](references/discovery.md) must be complete and the summary approved). PMax campaigns MUST be created **PAUSED** — they need at least one asset group before they can serve, and the create tool enforces this.
 
 ## Build order
 
@@ -18,7 +18,7 @@
 }
 ```
 
-   Do NOT set `network_settings`, `manual_cpc` or `manual_cpm`: the validator rejects them. Bidding: the PMax line of [constraints.md](../constraints.md), Bidding. Set `contains_eu_political_advertising` ([constraints.md](../constraints.md), Technical Rules).
+   Do NOT set `network_settings`, `manual_cpc` or `manual_cpm`: the validator rejects them. Bidding: the PMax line of [references/constraints.md](references/constraints.md), Bidding. Set `contains_eu_political_advertising` ([references/constraints.md](references/constraints.md), Technical Rules).
 3. **Locations** — `google_ads_locations_search` → `google_ads_location_targets_add`.
 4. **Image assets** — `google_ads_image_assets_upload` (prefer `file_id` from the workspace file manager). Required ratios: landscape 1.91:1, square 1:1, logo 1:1 (or 4:1).
 5. **Asset group** — `google_ads_asset_groups_create` (atomic: creates the asset group, its text assets, and all links in ONE API call, which the API requires):
@@ -38,4 +38,4 @@ Optional `"start_date_time": "YYYY-MM-DD 00:00:00"` and `"end_date_time": "YYYY-
 
 Confirm by GAQL (campaign + asset_group + asset_group_asset), present to the user, then call `google_ads_campaigns_update(customer_id, body={"resource_name": "customers/<cid>/campaigns/<id>", "status": "ENABLED"})` after explicit approval.
 
-Re-check [constraints.md](../constraints.md) at each creation step.
+Read a section of [references/constraints.md](references/constraints.md) only when a step names it.
