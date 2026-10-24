@@ -19,7 +19,7 @@ Read the customer's existing site with `firecrawl_urls_scrape` / `web_pages_scra
 - **Proof assets**: the real numbers, customers, credentials, certifications, and stories they can legitimately cite. (For a dentist: years in practice, procedures, real patient outcomes, credentials. For a jeweler: materials, craftsmanship, provenance, guarantees.)
 - **Point of view**: what they believe about their space that a generic competitor would not say.
 
-When in doubt about voice or a factual claim, ask the customer rather than inventing. A wrong fact in their name is worse than a slow draft.
+When in doubt about voice or a factual claim, ask the customer rather than inventing (in a scheduled run, skip the claim and send the question with `notify_user`). A wrong fact in their name is worse than a slow draft.
 
 ---
 
