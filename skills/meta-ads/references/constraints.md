@@ -26,7 +26,7 @@ All budget and bid values are in **cents** (hundredths of the currency unit).
 
 Applies to: `daily_budget`, `lifetime_budget`, `bid_amount`, and any other budget field.
 
-**Wrong field names that will cause Pydantic errors:**
+**Wrong field names that the body schema refuses:**
 - `daily_budget_cents` → use `daily_budget`
 - `budget` → use `daily_budget` or `lifetime_budget`
 
@@ -51,7 +51,7 @@ The moment a campaign is created with a `daily_budget` (or `lifetime_budget`), M
 Cannot set daily_budget/lifetime_budget on ad set when campaign has budget (CBO).
 ```
 
-> The error message suggests `daily_spend_cap` / `lifetime_spend_cap`. **Do not chase that** — those fields are NOT in the `AdSetCreateInput` schema and will fail Pydantic validation. The message is misleading.
+> An ad set under CBO can carry `daily_spend_cap`/`lifetime_spend_cap` (and `daily_min_spend_target`/`lifetime_min_spend_target`) to limit its share.
 
 **Correct build order when you need ad-set-level budgets (manual campaigns):**
 
@@ -60,9 +60,8 @@ Cannot set daily_budget/lifetime_budget on ad set when campaign has budget (CBO)
 
 **Correct build order for Advantage+ (campaign-level budget):**
 
-1. Create the campaign with **no budget**.
-2. Create ad sets with **no budget** (just `bid_amount` if the account's bid strategy requires it).
-3. Add `daily_budget` to the campaign via `meta_ads_campaign_update` **after** the ad sets exist.
+1. Create the campaign WITH `daily_budget` or `lifetime_budget` (`bid_strategy`: section 16).
+2. Create the ad sets with **no budget** (just `bid_amount` if the bid strategy requires it).
 
 Deciding budget placement per campaign *before* creating anything avoids a delete-and-rebuild cycle. This matters most in multi-campaign builds that mix Advantage+ and manual modes — see [multi-campaign-funnel.md](multi-campaign-funnel.md).
 
@@ -78,7 +77,7 @@ meta_ads_campaign_update(campaign_id="...", body={"status": "ACTIVE"})
 meta_ads_campaigns_activate(campaign_id)
 ```
 
-`update_campaign(status="ACTIVE")` creates a silent non-delivery failure: the dashboard shows ACTIVE but nothing is actually serving because ad sets and ads remain PAUSED.
+`meta_ads_campaign_update(campaign_id="...", body={"status": "ACTIVE"})` creates a silent non-delivery failure: the dashboard shows ACTIVE but nothing is actually serving because ad sets and ads remain PAUSED.
 
 ---
 
@@ -86,7 +85,7 @@ meta_ads_campaigns_activate(campaign_id)
 
 Always create campaigns with `status="PAUSED"`. Never launch live without user review.
 
-Omit `status` when creating ads — ads default to PAUSED automatically. Never pass `status="ACTIVE"` on ad creation; always go through `meta_ads_campaigns_activate` as a deliberate launch step.
+Pass `"status": "PAUSED"` in the body of every `meta_ads_ad_create`. Never pass ACTIVE; launch as section 3 says.
 
 ---
 
@@ -137,7 +136,7 @@ For an Advantage+ audience, set `targeting_automation.advantage_audience` inside
 
 ---
 
-## 7. create_ad: fields go in `body`
+## 7. meta_ads_ad_create: fields go in `body`
 
 `meta_ads_ad_create` takes `ad_account_id` plus a `body` dict — do not pass `name`, `adset_id` etc. as separate top-level arguments, and do not pass JSON as a string.
 
@@ -146,6 +145,8 @@ For an Advantage+ audience, set `targeting_automation.advantage_audience` inside
 ❌ WRONG: meta_ads_ad_create(ad_account_id="...", body='{"adset_id": "123"}')  # string not dict
 ✅ RIGHT:  meta_ads_ad_create(ad_account_id="1122334455", body={"adset_id": "123", "name": "My Ad", "creative": {"creative_id": "..."}, "status": "PAUSED"})
 ```
+
+`meta_ads_ad_images_upload` returns the hash as `images[0].hash`. Pass it as `link_data.image_hash` (a carousel card: `child_attachments[].image_hash`; a dynamic creative: `asset_feed_spec.images[].hash`).
 
 ### object_story_spec / link_data fields (applies to every objective)
 
@@ -169,34 +170,35 @@ Common footguns:
 |---|---|---|
 | OUTCOME_SALES | `OFFSITE_CONVERSIONS` | `IMPRESSIONS` |
 | OUTCOME_TRAFFIC | `LINK_CLICKS` | `IMPRESSIONS` |
-| OUTCOME_LEADS | `LEAD_GENERATION` | `IMPRESSIONS` |
+| OUTCOME_LEADS (native form, `destination_type: "ON_AD"`) | `LEAD_GENERATION` | `IMPRESSIONS` |
+| OUTCOME_LEADS (website pixel, `destination_type: "WEBSITE"`) | `OFFSITE_CONVERSIONS` | `IMPRESSIONS` |
 | OUTCOME_ENGAGEMENT | `POST_ENGAGEMENT` | `IMPRESSIONS` |
 | OUTCOME_AWARENESS | `REACH` | `IMPRESSIONS` |
 | OUTCOME_APP_PROMOTION | `APP_INSTALLS` | `IMPRESSIONS` |
 
-`billing_event` is almost always `IMPRESSIONS`. Only change it if you have a specific reason.
+Every `meta_ads_adset_create` body must set `optimization_goal` and `billing_event` (`IMPRESSIONS` unless you have a reason).
 
 ---
 
 ## 9. promoted_object requirements by objective
 
-These objectives **require** `promoted_object` on the ad set. Omitting it causes a cryptic API error.
+These objectives **require** `promoted_object` on the ad set. Meta, not a local check, refuses a missing field.
 
 | Objective | promoted_object | Example |
 |---|---|---|
 | OUTCOME_LEADS (lead form) | **Required** | `{"page_id": "632278516639981"}` |
-| OUTCOME_LEADS (website pixel) | **Required — 3 fields** | `{"pixel_id": "9876543210", "custom_event_type": "LEAD", "page_id": "632278516639981"}` |
+| OUTCOME_LEADS (website pixel) | **Required** | `{"pixel_id": "9876543210", "custom_event_type": "LEAD"}` |
 | OUTCOME_APP_PROMOTION | **Required** | `{"application_id": "APP_ID", "object_store_url": "APP_STORE_URL"}` |
 | OUTCOME_SALES (conversions) | **Required** | `{"pixel_id": "9876543210", "custom_event_type": "PURCHASE"}` |
 | OUTCOME_TRAFFIC | Not required | — |
 | OUTCOME_AWARENESS | Not required | — |
 | OUTCOME_ENGAGEMENT | Optional | `{"page_id": "PAGE_ID"}` |
 
-> **App promotion — the creative link must match `object_store_url`.** For OUTCOME_APP_PROMOTION, the ad's creative CTA destination (`link_data.link`, and `call_to_action.value.link` if set) must equal the ad set's `promoted_object.object_store_url` **exactly**, or Meta rejects the ad with *"Object store URL does not match promoted object"* (code 100). When you didn't just author the ad set yourself, call `meta_ads_adset_get` and copy `promoted_object.object_store_url` verbatim — never guess the store URL.
+> **App promotion:** the creative link must equal the ad set's `object_store_url`. See step 4 of [campaigns/app-promotion.md](campaigns/app-promotion.md).
 
 ### Attribution window (`attribution_spec`)
 
-For conversion ad sets, set the attribution window explicitly with `attribution_spec` rather than relying on Meta's default — the window defines what counts as a conversion and is how the advertiser measures cost-per-result. It's an ad-set field (inside `body` on `meta_ads_adset_create`), and it reads back on `meta_ads_adset_get`.
+For conversion ad sets, set the attribution window explicitly with `attribution_spec` rather than relying on Meta's default — the window defines what counts as a conversion and is how the advertiser measures cost-per-result. It's an ad-set field (inside `body` on `meta_ads_adset_create`), and it reads back on `meta_ads_adset_get(adset_id=..., fields="attribution_spec")`.
 
 ```python
 # 1-day click (common for app installs / FTD / direct-response)
@@ -229,7 +231,7 @@ If you cannot create the campaign as requested due to an API or account constrai
 
 ## 11. page_id must be passed explicitly
 
-Always populate `page_id` on each ad set from `meta_ads_owned_pages_list`. Auto-resolution only works when exactly one Page is linked to the Business Manager. Pass it explicitly.
+Put `page_id` in `object_story_spec.page_id` of every creative or ad, and in `promoted_object.page_id` of a lead-form ad set. Take it from `meta_ads_owned_pages_list`.
 
 ---
 
@@ -252,8 +254,9 @@ Lifetime budget without `end_time` will fail validation.
 `meta_ads_ad_previews_get` requires `creative_ids` (a list). `ad_id` is **not** a valid parameter and will fail.
 
 ```python
-# After meta_ads_ad_create, extract creative_id from the response:
-# response.creative.id
+# After meta_ads_ad_create, read the creative id with
+# meta_ads_ad_get(ad_id=..., fields="creative") (creative.id),
+# or use the id that meta_ads_creative_create returned.
 
 meta_ads_ad_previews_get(creative_ids=["<creative_id>"])
 
@@ -272,26 +275,13 @@ meta_ads_ad_previews_get(creative_ids=["<existing_creative_id>"])
 | Error | Do NOT do this | Do this instead |
 |---|---|---|
 | "Bid amount required" (subcode 1815857) — **and the user did NOT ask for a bid cap** | Change `optimization_goal` or invent a `bid_amount` | **Stop.** Surface to user: "This account requires an explicit bid amount due to its bid strategy. How would you like to proceed?" Do NOT change the optimization goal as a workaround — that silently misconfigures the campaign. (If the user *did* specify a bid strategy/cap, just set it — see section 16.) |
-| "Performance goal isn't available" (subcode 2490408) | Substitute a different `optimization_goal` (e.g. LINK_CLICKS) | **Stop.** See note below — this is caused by an account-level bid strategy incompatibility, not a fixable parameter error. |
+| "Performance goal isn't available" (subcode 2490408) | Substitute a different `optimization_goal` (e.g. LINK_CLICKS) | The goal does not fit the objective or the destination. Read `meta_ads_campaign_get(campaign_id=..., fields="objective,bid_strategy")`. Match `optimization_goal` and `destination_type` to section 8, and `promoted_object` to section 9. Objective: section 10. |
 | "No Facebook Pages found" | Guess a page_id | Run `meta_ads_health_check`, surface results |
-| "No business ID found" from `list_owned_pages` | Skip and ask user | Try `meta_accounts_list` as fallback |
+| "No business ID found" from `meta_ads_owned_pages_list` | Skip and ask user | Step 2 of [discovery.md](discovery.md) |
 | "image_hash is not valid" or "Link data image_hash" | Invalid or wrong-account hash | Call `meta_ads_ad_images_list(account_id)` to find valid hashes in this account, then re-upload if needed |
-| "Cannot set daily_budget on ad set when campaign has budget (CBO)" | Campaign was created with a budget | Recreate the campaign with no budget, OR put budget at ad-set level only. Do NOT use `daily_spend_cap` — not a valid field. See section 2. |
-| Pydantic error on `daily_spend_cap` / `lifetime_spend_cap` | Field not in `AdSetCreateInput` schema | These fields don't exist on the ad set tool. Use the build order in section 2 instead. |
-| `list_ad_images` rejects `detail` value | Invalid enum | `detail` accepts only `"id_only"`, `"core"`, `"summary"`, `"full"`. Not `"minimal"`. |
-| Pydantic "Unexpected keyword argument" | Guess a different field name | Re-read constraints and the relevant campaign workflow |
-
-**OUTCOME_LEADS + LOWEST_COST_WITH_BID_CAP incompatibility (error 2490408):**
-
-When an account's default bid strategy is `LOWEST_COST_WITH_BID_CAP`, the `LEAD_GENERATION` optimization goal is unavailable for `OUTCOME_LEADS` — even if you provide a valid `bid_amount`. This is a Meta platform constraint, not a parameter error. Adding `bid_amount` will not resolve it.
-
-Resolution paths (present to user, get approval before proceeding):
-
-1. **Preferred**: Change the account's default bid strategy to "Lowest Cost" (no cap) in Meta Business Manager → then retry with `LEAD_GENERATION`, no `bid_amount` needed.
-2. **Degraded workaround**: Use `OUTCOME_TRAFFIC` with `optimization_goal: LINK_CLICKS`. This runs the campaign but optimizes for clicks to the page, not lead events. **Must disclose this to the user** — it is not a leads campaign.
-3. **Alternative**: Try the native lead form path (`destination_type: ON_AD`) which may have different bid strategy requirements.
-
-Never choose a resolution path without telling the user what the constraint is and what the tradeoff is.
+| "Cannot set daily_budget on ad set when campaign has budget (CBO)" | Campaign was created with a budget | Recreate the campaign with no budget, OR put budget at ad-set level only. See section 2. |
+| `meta_ads_ad_images_list` rejects `detail` value | Invalid enum | `detail` accepts only `"id_only"`, `"core"`, `"summary"`, `"full"`. Not `"minimal"`. |
+| `Unknown argument(s) for <tool>` or `Request body validation failed for <tool>` | Guess a different field name | A body property sent at the top level moves into `body` by itself. For `Unknown argument(s)`, use a name from its "Valid arguments" list. For `Request body validation failed`, the message names the wrong key (`... was unexpected`) and lists no valid key: read the body's properties with `describe` (MCP) or `search_tools` (Hyper chat), and the example of this skill for the object. |
 
 ---
 
@@ -306,11 +296,15 @@ When the user wants to update, pause, adjust budget, or change targeting on an e
 | Ad status / creative | `meta_ads_ad_update` | `ad_id`, `body` (`status`) |
 | Take everything live at once | `meta_ads_campaigns_activate` | `campaign_id` |
 
-Before updating, fetch current state with `meta_ads_campaign_get` or `meta_ads_adset_get` — do not guess at current values.
+Before updating, fetch current state with `meta_ads_campaign_get(campaign_id=..., fields="name,objective,status,daily_budget,lifetime_budget,bid_strategy")` or `meta_ads_adset_get(adset_id=..., fields="promoted_object,attribution_spec,bid_strategy,bid_amount,targeting")` — do not guess at current values.
+
+What the list reads return:
+- `meta_ads_adset_list` returns every ad set of the account with `campaign_id`, `promoted_object` and `bid_strategy`; filter the rows by `campaign_id`. A `fields` value replaces that list: to read `bid_amount` too, pass `fields="id,name,campaign_id,promoted_object,bid_strategy,bid_amount"`. `meta_ads_ad_sets_list(campaign_id=...)` returns none of `promoted_object`, `bid_strategy` and `bid_amount`.
+- `meta_ads_creative_list` returns no `link_url` unless `fields` names it. Pass `fields="id,name,link_url,object_story_spec,url_tags"`, or read the destination from `object_story_spec.link_data.link` (or `asset_feed_spec.link_urls`) in its rows, or call `meta_ads_creative_get(creative_id=..., fields="link_url,object_story_spec,url_tags")`.
 
 **To pause:** `meta_ads_campaign_update(campaign_id="...", body={"status": "PAUSED"})`
 **To increase budget:** `meta_ads_campaign_update(campaign_id="...", body={"daily_budget": 5000})` (in cents)
-**To go live:** always `meta_ads_campaigns_activate(campaign_id)`, not `update_campaign(status="ACTIVE")`
+**To go live:** section 3.
 
 ---
 
@@ -337,14 +331,14 @@ meta_ads_adset_create(
 ```
 
 - `LOWEST_COST_WITH_BID_CAP` and `COST_CAP` require `bid_amount`.
-- For Advantage+ / CBO, `bid_strategy` belongs on the **campaign** (`meta_ads_campaign_create`) and `bid_amount` on the **ad set**.
+- For Advantage+ / CBO, `bid_strategy` belongs on the **campaign** (`meta_ads_campaign_create`, which then needs its `daily_budget` or `lifetime_budget`) and `bid_amount` on the **ad set**.
 - The "stop and surface" rule in section 14 applies only when a bid-amount error appears that the user did **not** request (an account default strategy you didn't choose). Never invent a cap in that case.
 
 ---
 
-## 17. Geo targeting beyond country (regions, cities, DMAs)
+## 17. Targeting keys: regions, cities, DMAs and interests
 
-`geo_locations.countries` accepts ISO codes directly (`["US", "CA"]`). But regions, cities, and DMAs (`geo_markets`) require Meta's internal **numeric keys** — you **cannot guess them**. The validator rejects hand-written keys like `"US-CA-803"`.
+`geo_locations.countries` accepts ISO codes directly (`["US", "CA"]`). But regions, cities, and DMAs (`geo_markets`) require Meta's internal **numeric keys** — you **cannot guess them**. Meta refuses a hand-written key like `"US-CA-803"`.
 
 Resolve keys first with `meta_ads_targeting_search`:
 
@@ -368,6 +362,23 @@ Then pass the returned `key` values:
 ```
 
 Never write geo keys by hand — always resolve them through the search tool first.
+
+### Interests
+
+Interests also need Meta's numeric ids. Search by name:
+
+```python
+meta_ads_targeting_search(search_type="adinterest", q="Running")
+```
+
+Then pass each returned `id` and `name` in the ad set's `targeting`:
+
+```json
+"targeting": {
+  "geo_locations": {"countries": ["US"]},
+  "flexible_spec": [{"interests": [{"id": "<id from search>", "name": "<name from search>"}]}]
+}
+```
 
 ---
 
@@ -414,7 +425,8 @@ creative = meta_ads_creative_create(
             "titles": [{"text": "Headline 1"}, {"text": "Headline 2"}],
             "images": [{"hash": "<image_hash_1>"}, {"hash": "<image_hash_2>"}],
             "link_urls": [{"website_url": "https://example.com"}],
-            "call_to_action_types": [{"type": "LEARN_MORE"}]
+            "call_to_action_types": ["LEARN_MORE"],
+            "ad_formats": ["SINGLE_IMAGE"]
         }
     }
 )
