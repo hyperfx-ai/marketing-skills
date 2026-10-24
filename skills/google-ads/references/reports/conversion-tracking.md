@@ -67,8 +67,9 @@ result = data_apps_build(
                     "WHERE conversion_action.status != 'REMOVED'"
                 ),
             },
-            "cache_table": "gads_conv_actions",
+            "cache_table": "gads_conv_actions_1234567890",
             "mode": "replace",
+            "rows_path": "results",
         },
     },
     sql_data_sources={
@@ -78,7 +79,7 @@ result = data_apps_build(
                 "SELECT conversion_action_category AS category, "
                 "COUNT(*) AS total_actions, "
                 "SUM(CASE WHEN conversion_action_primary_for_goal THEN 1 ELSE 0 END) AS primary_actions "
-                "FROM gads_conv_actions GROUP BY 1 ORDER BY 1"
+                "FROM gads_conv_actions_1234567890 GROUP BY 1 ORDER BY 1"
             ),
         },
         "actions": {
@@ -87,62 +88,62 @@ result = data_apps_build(
                 "SELECT conversion_action_name AS name, "
                 "conversion_action_category AS category, "
                 "conversion_action_status AS status, "
-                "conversion_action_primary_for_goal AS primary "
-                "FROM gads_conv_actions ORDER BY name"
+                "CASE WHEN conversion_action_primary_for_goal THEN 'Yes' ELSE 'No' END AS is_primary "
+                "FROM gads_conv_actions_1234567890 ORDER BY name"
+            ),
+        },
+        "primary_total": {
+            "shape": "scalar",
+            "sql": (
+                "SELECT COUNT(*) FROM gads_conv_actions_1234567890 "
+                "WHERE conversion_action_primary_for_goal"
             ),
         },
     },
-    prefab_python="""
-from prefab_ui import PrefabApp
-from prefab_ui.components import Card, CardContent, Column, DataTable, DataTableColumn, Grid, Heading, Metric, Muted, Text
-from prefab_ui.components.charts import BarChart, ChartSeries
-
-with PrefabApp(title="Conversion Tracking Audit") as app:
-    primary_actions = sum(row.get("primary_actions", 0) for row in by_category)
-
-    with Column(gap=6, css_class="p-6"):
-        with Column(gap=1):
-            Heading("Conversion Tracking Audit")
-            Muted("Configured actions, primary actions, and status")
-
-        with Grid(columns=4, gap=4):
-            with Card():
-                with CardContent():
-                    Metric(label="Actions", value=f"{len(actions):,}")
-            with Card():
-                with CardContent():
-                    Metric(label="Primary Actions", value=f"{primary_actions:,.0f}")
-
-        with Grid(columns=[2, 1], gap=6):
-            with Card():
-                with CardContent():
-                    Text("Actions by category", css_class="text-sm font-medium text-muted-foreground mb-2")
-                    BarChart(
-                        data=by_category,
-                        x_axis="category",
-                        series=[
-                            ChartSeries(data_key="total_actions", label="Total"),
-                            ChartSeries(data_key="primary_actions", label="Primary"),
-                        ],
-                        show_legend=True,
-                        height=300,
-                    )
-            with Card():
-                with CardContent():
-                    Text("Action inventory", css_class="text-sm font-medium text-muted-foreground mb-2")
-                    DataTable(
-                        columns=[
-                            DataTableColumn(key="name", header="Action"),
-                            DataTableColumn(key="category", header="Category"),
-                            DataTableColumn(key="status", header="Status"),
-                            DataTableColumn(key="primary", header="Primary"),
-                        ],
-                        rows=actions,
-                    )
+    template_html="""
+<div class="grid gap-3" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr));">
+  <div class="card" data-size="sm"><section>
+    <p class="text-xs text-muted-foreground">Actions</p>
+    <p class="text-2xl font-semibold tabular-nums">{{ actions | length }}</p>
+  </section></div>
+  <div class="card" data-size="sm"><section>
+    <p class="text-xs text-muted-foreground">Primary actions</p>
+    <p class="text-2xl font-semibold tabular-nums">{{ primary_total }}</p>
+  </section></div>
+</div>
+<div class="card mt-4">
+  <header><h2>Actions by category</h2><p>Total and primary</p></header>
+  <section><div class="chart h-64"><canvas id="by_category" aria-label="Conversion actions by category"></canvas></div></section>
+</div>
+<div class="card mt-4">
+  <header><h2>Action inventory</h2><p>Every action that is not removed</p></header>
+  <section><div class="table-container"><table class="table">
+    <thead><tr><th>Action</th><th>Category</th><th>Status</th><th>Primary</th></tr></thead>
+    <tbody>
+    {% for row in actions %}
+      <tr><td class="break-words">{{ row.name }}</td><td>{{ row.category }}</td><td>{{ row.status }}</td><td>{{ row.is_primary }}</td></tr>
+    {% endfor %}
+    </tbody>
+  </table></div></section>
+</div>
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  window.basecoat.chart("#by_category", {
+    type: "bar", labelKey: "category", legend: true,
+    data: {{ by_category | tojson }},
+    series: {
+      total_actions: { label: "Total", color: "var(--chart-1)" },
+      primary_actions: { label: "Primary", color: "var(--chart-2)" }
+    }
+  });
+});
+</script>
 """,
-    refresh={"mode": "manual"},
 )
 ```
+
+`data_apps_refresh(data_app_id=...)` runs the GAQL again and re-renders
+the app.
 
 ## Variants
 
