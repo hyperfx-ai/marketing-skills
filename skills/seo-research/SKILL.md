@@ -19,6 +19,8 @@ Data-driven SEO research and analysis. Every recommendation must be backed by re
 | Meta (Facebook / Instagram) ads | `meta-ads` |
 | Competitor *ad* research from the Meta Ads Library | `meta-ads-library` |
 | Pinterest Ads campaign | `pinterest-ads` |
+| Write the blog post itself | `blog-generation` |
+| Competitor monitoring, battle cards, non-SEO surfaces | `competitor-intel` |
 | Organic Instagram / TikTok / LinkedIn publishing | `instagram`, `tiktok`, `linkedin` |
 
 ## Requirements
@@ -45,7 +47,7 @@ If a tool is not found: in Hyper chat, find its toolkit id with `discover_toolki
 | Tool group | Tools |
 | --- | --- |
 | Keyword research | `hyperseo_search_volume_get`, `hyperseo_keyword_difficulty_get`, `hyperseo_keyword_ideas_generate`, `hyperseo_site_keywords_search`, `hyperseo_intents_search` |
-| SERP & AI Overviews | `hyperseo_serp_results_get`, `hyperseo_ai_overviews_get` |
+| SERP & Google AI Mode | `hyperseo_serp_results_get`, `hyperseo_ai_overviews_get` |
 | Competitor analysis | `hyperseo_competitors_search`, `hyperseo_competitor_domains_search`, `hyperseo_domain_intersections_search`, `hyperseo_traffic_get_bulk` |
 | Domain & rankings | `hyperseo_domain_overview_get`, `hyperseo_domain_keywords_get`, `hyperseo_rank_history_get` |
 | Backlinks | `hyperseo_backlinks_history_get` |
@@ -101,11 +103,11 @@ Apply these throughout all analysis.
 | Generate keyword ideas | `hyperseo_keyword_ideas_generate` | Related keywords with metrics. |
 | Find keywords for a site | `hyperseo_site_keywords_search` | Keywords a domain could target. |
 | See who ranks on Google | `hyperseo_serp_results_get` | Top positions, URLs, domains. |
-| Check Google AI Overview | `hyperseo_ai_overviews_get` | AI-generated summary and cited sources. |
+| See Google's AI Mode answer | `hyperseo_ai_overviews_get` | The AI Mode answer and the sources it cites. It does not show whether the normal results page has an AI Overview. |
 | See what a domain ranks for | `hyperseo_domain_keywords_get` | Current rankings and traffic. |
 | Find competing domains (by keywords) | `hyperseo_competitors_search` | Domains ranking for similar keywords. |
 | Find competing domains (by domain) | `hyperseo_competitor_domains_search` | Competitors based on shared organic keywords. |
-| Get domain health metrics | `hyperseo_domain_overview_get` | Authority, traffic, backlinks. |
+| Get domain traffic metrics | `hyperseo_domain_overview_get` | Organic keywords, estimated organic traffic (ETV), traffic cost. For backlinks and rank, use `hyperseo_backlinks_history_get`. |
 | Track backlink trends | `hyperseo_backlinks_history_get` | New / lost backlinks over time. |
 | Check AI chatbot query volume | `hyperseo_ai_search_volume_get` | Monthly queries to ChatGPT, Claude, etc. |
 | Track brand mentions in LLMs | `hyperseo_mentions_track` | Brand citations across AI models. |
@@ -132,7 +134,7 @@ Default is US (`2840`). Common alternatives: UK `2826`, Canada `2124`, Australia
 
 **Sort recommendations by priority.** Quick wins first, long-term bets last.
 
-**When comparing domains**, use side-by-side tables showing organic keywords, traffic, backlinks, and domain rank.
+**When comparing domains**, use side-by-side tables showing organic keywords and traffic (`hyperseo_domain_overview_get`), and backlinks, referring domains and domain rank (the latest row of `hyperseo_backlinks_history_get`).
 
 **For content plans**, include: target keyword, search volume, difficulty, recommended content format, and priority tier.
 

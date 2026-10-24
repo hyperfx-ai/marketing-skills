@@ -33,7 +33,7 @@ Not every idea has search demand. Validate.
 
 For each high-priority keyword, understand what Google rewards.
 
-1. Run `hyperseo_serp_results_get` for the top 10 – 15 keyword targets.
+1. Run `hyperseo_serp_results_get(keyword=...)` once for each of the top 10 – 15 keyword targets.
 2. Note the content format that ranks:
    - Long-form guides (2000+ words)?
    - Listicles ("10 best…")?
@@ -42,13 +42,12 @@ For each high-priority keyword, understand what Google rewards.
    - Reddit / forum threads?
 3. Match your content format recommendation to what actually wins.
 
-### Step 4: Check AI Overviews
+### Step 4: Check Google AI Mode
 
-For informational keywords, check if Google generates an AI Overview.
+For informational keywords, run `hyperseo_ai_overviews_get(keyword=...)` for key terms. It returns the Google AI Mode answer and its cited sources. It does not show whether the normal results page has an AI Overview.
 
-1. Run `hyperseo_ai_overviews_get` for key terms.
-2. Review which sources get cited in the AI overview.
-3. Content that earns AI citations gets visibility even above traditional position 1.
+1. Review which sources get cited.
+2. Content that earns AI citations gets visibility even above traditional position 1.
 
 ### Step 5: Build topic clusters
 
