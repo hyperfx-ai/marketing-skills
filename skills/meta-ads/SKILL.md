@@ -50,7 +50,7 @@ Use the exact tool name that `search_tools` (Hyper chat) or `search` / `describe
 | --- | --- |
 | Discovery | `connections_info` (Hyper chat), `meta_ads_adaccount_list`, `meta_ads_owned_pages_list`, `meta_ads_pages_search`, `meta_accounts_list`, `meta_ads_instagram_accounts_list` |
 | Health & sync | `meta_ads_health_check`, `meta_ads_health_get` |
-| Tracking assets | `meta_ads_ad_pixels_list`, `meta_ads_ad_pixels_get`, `meta_ads_custom_audiences_list`, `meta_ads_lookalike_audiences_list`, `meta_ads_targeting_search` |
+| Tracking assets | `meta_ads_ad_pixels_list`, `meta_ads_ad_pixels_get`, `meta_ads_dataset_quality_get`, `meta_ads_dataset_stats_list`, `meta_ads_custom_audiences_list`, `meta_ads_lookalike_audiences_list`, `meta_ads_targeting_search` |
 | Step-by-step creation (preferred) | `meta_ads_campaign_create`, `meta_ads_adset_create`, `meta_ads_ad_create`, `meta_ads_ad_images_upload`, `meta_ads_creative_create` |
 | Read & preview | `meta_ads_campaign_get`, `meta_ads_campaigns_search`, `meta_ads_adset_list`, `meta_ads_ad_sets_list`, `meta_ads_adset_get`, `meta_ads_ad_list`, `meta_ads_list`, `meta_ads_ad_get`, `meta_ads_creative_list`, `meta_ads_creative_get`, `meta_ads_custom_audience_get`, `meta_ads_ad_previews_get` |
 | Insights & dashboards | `meta_ads_insights_get`, `data_apps_build`, `database_tables_list`, `database_tables_describe`, `database_query` |
@@ -75,6 +75,8 @@ CLI users: translate tool names with the `hyper-cli` skill (`hyperai search "<to
 > **REGULATED ADVERTISERS NEED `special_ad_categories`**: For gambling, financial, housing, employment, credit, or political advertisers, declare the category on `meta_ads_campaign_create` (e.g. `special_ad_categories=["ONLINE_GAMBLING_AND_GAMING"]`). For HOUSING, EMPLOYMENT, FINANCIAL_PRODUCTS_SERVICES or ISSUES_ELECTIONS_POLITICS, also set `special_ad_category_country` (e.g. `["US"]`).
 
 > **FIXED RUN WINDOWS GO ON THE AD SET**: When the user gives a run duration or dates ("run it for 7 days", "through end of month"), set `start_time` AND `end_time` (ISO 8601) on `meta_ads_adset_create`. A daily-budget ad set with no `end_time` runs continuously until manually paused — the requested window is silently lost.
+
+> **PIXEL EVENT COUNTS COME FROM THE DATASET**: For how many events a pixel received (Purchase volume, a drop week over week), call `meta_ads_dataset_stats_list`. Send the pixel id as `dataset_id`, with `start_time` and `end_time`. Make one call per period. For Event Match Quality, call `meta_ads_dataset_quality_get` with the pixel id as `dataset_id`. `meta_ads_insights_get` counts only the conversions that Meta attributes to ads, not every event the pixel received.
 
 > **GROUND COPY IN THE DESTINATION PAGE (RESEARCH FIRST)**: When the brief centers on a URL ("build a campaign for https://..."), fetch that page FIRST (`web_pages_fetch`) — before discovery and before writing any copy — and ground ad copy in what the page actually says (product name, value props, offer). Never invent copy for a page you have not read; even when the user supplies exact copy or headlines, fetch the page to verify the destination matches the offer.
 
