@@ -64,94 +64,95 @@ result = data_apps_build(
                     "SELECT segments.date, campaign.id, campaign.name, "
                     "campaign.advertising_channel_type, "
                     "metrics.impressions, metrics.clicks, metrics.cost_micros, "
-                    "metrics.conversions, metrics.conversions_value, "
-                    "metrics.ctr, metrics.average_cpc "
+                    "metrics.conversions, metrics.conversions_value "
                     "FROM campaign "
                     "WHERE segments.date DURING LAST_30_DAYS "
                     "AND campaign.status != 'REMOVED'"
                 ),
             },
-            "cache_table": "gads_campaign_performance",
+            "cache_table": "gads_campaign_performance_1234567890",
             "mode": "replace",
+            "rows_path": "results",
         },
     },
     sql_data_sources={
+        "kpis": {
+            "shape": "rows",
+            "sql": (
+                "SELECT 'Spend' AS label, '$' || to_char(COALESCE(SUM(metrics_cost_micros::numeric), 0) / 1e6, 'FM999,999,990.00') AS value FROM gads_campaign_performance_1234567890 "
+                "UNION ALL SELECT 'Conversions', to_char(COALESCE(SUM(metrics_conversions::numeric), 0), 'FM999,999,990.0') FROM gads_campaign_performance_1234567890 "
+                "UNION ALL SELECT 'Revenue', '$' || to_char(COALESCE(SUM(metrics_conversions_value::numeric), 0), 'FM999,999,990.00') FROM gads_campaign_performance_1234567890 "
+                "UNION ALL SELECT 'ROAS', COALESCE(to_char(SUM(metrics_conversions_value::numeric) / NULLIF(SUM(metrics_cost_micros::numeric) / 1e6, 0), 'FM990.00') || 'x', '–') FROM gads_campaign_performance_1234567890"
+            ),
+        },
         "daily_totals": {
             "shape": "rows",
             "sql": (
                 "SELECT segments_date AS date, "
-                "SUM(metrics_cost_micros)/1e6 AS spend, "
-                "SUM(metrics_conversions) AS conversions, "
-                "SUM(metrics_conversions_value) AS revenue "
-                "FROM gads_campaign_performance GROUP BY 1 ORDER BY 1"
+                "ROUND(SUM(metrics_cost_micros::numeric) / 1e6, 2) AS spend, "
+                "SUM(metrics_conversions::numeric) AS conversions, "
+                "ROUND(SUM(metrics_conversions_value::numeric), 2) AS revenue "
+                "FROM gads_campaign_performance_1234567890 GROUP BY 1 ORDER BY 1"
             ),
         },
         "by_campaign": {
             "shape": "rows",
             "sql": (
                 "SELECT campaign_name AS campaign, "
-                "SUM(metrics_cost_micros)/1e6 AS spend, "
-                "SUM(metrics_conversions) AS conversions, "
-                "CASE WHEN SUM(metrics_cost_micros) > 0 "
-                "THEN SUM(metrics_conversions_value)/(SUM(metrics_cost_micros)/1e6) "
-                "ELSE 0 END AS roas "
-                "FROM gads_campaign_performance GROUP BY 1 ORDER BY spend DESC LIMIT 25"
+                "campaign_advertising_channel_type AS channel, "
+                "SUM(metrics_cost_micros::numeric) / 1e6 AS spend, "
+                "SUM(metrics_conversions::numeric) AS conversions, "
+                "COALESCE(SUM(metrics_conversions_value::numeric) / NULLIF(SUM(metrics_cost_micros::numeric) / 1e6, 0), 0) AS roas "
+                "FROM gads_campaign_performance_1234567890 GROUP BY 1, 2 ORDER BY spend DESC LIMIT 25"
             ),
         },
     },
-    prefab_python="""
-from prefab_ui import PrefabApp
-from prefab_ui.components import Card, CardContent, Column, DataTable, DataTableColumn, Grid, Heading, Metric, Muted, Text
-from prefab_ui.components.charts import AreaChart, ChartSeries
-
-with PrefabApp(title="Campaign Performance") as app:
-    total_spend = sum(row.get("spend", 0) for row in by_campaign)
-    total_conversions = sum(row.get("conversions", 0) for row in by_campaign)
-
-    with Column(gap=6, css_class="p-6"):
-        with Column(gap=1):
-            Heading("Campaign Performance")
-            Muted("Spend, conversions, revenue, and campaign-level efficiency")
-
-        with Grid(columns=4, gap=4):
-            with Card():
-                with CardContent():
-                    Metric(label="Spend", value=f"${total_spend:,.0f}")
-            with Card():
-                with CardContent():
-                    Metric(label="Conversions", value=f"{total_conversions:,.0f}")
-
-        with Grid(columns=[2, 1], gap=6):
-            with Card():
-                with CardContent():
-                    Text("Daily performance", css_class="text-sm font-medium text-muted-foreground mb-2")
-                    AreaChart(
-                        data=daily_totals,
-                        x_axis="date",
-                        series=[
-                            ChartSeries(data_key="spend", label="Spend"),
-                            ChartSeries(data_key="conversions", label="Conversions"),
-                            ChartSeries(data_key="revenue", label="Revenue"),
-                        ],
-                        show_legend=True,
-                        height=300,
-                    )
-            with Card():
-                with CardContent():
-                    Text("Campaign detail", css_class="text-sm font-medium text-muted-foreground mb-2")
-                    DataTable(
-                        columns=[
-                            DataTableColumn(key="campaign", header="Campaign"),
-                            DataTableColumn(key="spend", header="Spend"),
-                            DataTableColumn(key="conversions", header="Conversions"),
-                            DataTableColumn(key="roas", header="ROAS"),
-                        ],
-                        rows=by_campaign,
-                    )
+    template_html="""
+<div class="grid gap-3" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr));">
+  {% for kpi in kpis %}
+  <div class="card" data-size="sm"><section>
+    <p class="text-xs text-muted-foreground">{{ kpi.label }}</p>
+    <p class="text-2xl font-semibold tabular-nums">{{ kpi.value }}</p>
+  </section></div>
+  {% endfor %}
+</div>
+<div class="card mt-4">
+  <header><h2>Daily performance</h2><p>Last 30 days</p></header>
+  <section><div class="chart h-64"><canvas id="daily" aria-label="Daily spend, conversions and revenue"></canvas></div></section>
+</div>
+<div class="card mt-4">
+  <header><h2>Campaign detail</h2><p>By spend, last 30 days</p></header>
+  <section><div class="table-container"><table class="table">
+    <thead><tr><th>Campaign</th><th>Channel</th><th>Spend</th><th>Conversions</th><th>ROAS</th></tr></thead>
+    <tbody>
+    {% for row in by_campaign %}
+      <tr><td class="break-words">{{ row.campaign }}</td><td>{{ row.channel }}</td>
+        <td class="tabular-nums">${{ "%.2f"|format(row.spend) }}</td>
+        <td class="tabular-nums">{{ "%.1f"|format(row.conversions) }}</td>
+        <td class="tabular-nums">{{ "%.2f"|format(row.roas) }}x</td></tr>
+    {% endfor %}
+    </tbody>
+  </table></div></section>
+</div>
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  window.basecoat.chart("#daily", {
+    type: "line", labelKey: "date", legend: true,
+    data: {{ daily_totals | tojson }},
+    series: {
+      spend: { label: "Spend", color: "var(--chart-1)" },
+      conversions: { label: "Conversions", color: "var(--chart-2)" },
+      revenue: { label: "Revenue", color: "var(--chart-3)" }
+    }
+  });
+});
+</script>
 """,
-    refresh={"mode": "scheduled", "cron": "0 * * * *"},
 )
 ```
+
+`data_apps_refresh(data_app_id=...)` runs the GAQL again and re-renders
+the app; the window stays the last 30 days.
 
 ## Variants
 

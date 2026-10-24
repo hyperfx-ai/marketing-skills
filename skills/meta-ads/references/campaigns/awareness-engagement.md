@@ -10,13 +10,14 @@ These are the simplest campaign types. No pixel required. No complex `promoted_o
 
 ## Before starting
 
-Re-read [../constraints.md](../constraints.md). Most relevant:
+The rules of [references/constraints.md](references/constraints.md) that this campaign hits are below. Read a section of that file only when a step names it:
 - Budget in cents (×100)
 - `targeting_automation` inside `targeting`
 - Budget at campaign level for Advantage+
 - `meta_ads_adset_create` takes `ad_account_id` (numeric, no `act_` prefix) + a `body` dict — all ad set fields inside `body`
 - `meta_ads_ad_create` takes `ad_account_id` + a `body` dict — no separate top-level args
-- Use `meta_ads_campaigns_activate()`, not `update_campaign(status="ACTIVE")`
+- Activation: section 3
+- Ad status: section 4
 
 ---
 
@@ -56,7 +57,7 @@ meta_ads_campaign_create(
         "name": "Awareness - [Brand] - [Date]",
         "objective": "OUTCOME_AWARENESS",
         "status": "PAUSED",
-        "daily_budget": 2000
+        "daily_budget": 2000    # $20/day in cents — Advantage+ only; omit for manual
     }
 )
 ```
@@ -69,7 +70,7 @@ meta_ads_campaign_create(
         "name": "Engagement - [Brand] - [Date]",
         "objective": "OUTCOME_ENGAGEMENT",
         "status": "PAUSED",
-        "daily_budget": 2000
+        "daily_budget": 2000    # $20/day in cents — Advantage+ only; omit for manual
     }
 )
 ```
@@ -136,7 +137,7 @@ meta_ads_campaign_create(
 meta_ads_ad_images_upload(account_id="act_123456789", image_url="<url>")
 ```
 
-→ Capture `image_hash`.
+→ Capture the image hash (section 7 of [references/constraints.md](references/constraints.md)).
 
 ### 4. Create ad
 
@@ -148,6 +149,7 @@ meta_ads_ad_images_upload(account_id="act_123456789", image_url="<url>")
   "body": {
     "name": "Awareness Ad - [Creative]",
     "adset_id": "<adset_id>",
+    "status": "PAUSED",
     "creative": {
       "object_story_spec": {
         "page_id": "<page_id>",
@@ -166,14 +168,12 @@ meta_ads_ad_images_upload(account_id="act_123456789", image_url="<url>")
 }
 ```
 
-> Omit `status` — ads default to PAUSED.
-
 → Capture `ad_id`.
 
 ### 5. Preview and activate
 
 ```python
-# creative_id is in the ad creation response: response.creative.id
+# creative_id: section 13 of ../constraints.md
 meta_ads_ad_previews_get(creative_ids=["<creative_id>"])
 meta_ads_campaigns_activate(campaign_id="<campaign_id>")  # when user approves
 ```

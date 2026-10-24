@@ -23,10 +23,11 @@ Every tool in this skill is named by its canonical tool name. Run it with the ca
 
 | Surface | Find a tool | Run it |
 | --- | --- | --- |
-| MCP client (Claude, Cursor, Codex, ChatGPT) | `search("<what you want to do>")`, then `describe("<name>")` | `call("<name>", {...})` |
+| Hyper chat | Call the tool by its name; `search_tools(queries=["<provider> <action>"])` shows its parameters | `<name>(...)` |
+| MCP client (Claude, Cursor, Codex, ChatGPT) | `search("<what you want to do>")`, then `describe("<name>")` | `call_read("<name>", {...})`, `call_write` or `call_destructive`: the one that `describe` names in `call_with` |
 | Hyper CLI | `hyperai search "<what you want to do>"`, then `hyperai describe <name>` | `hyperai call <name> --json '{...}'` |
 
-If a tool is not found, its integration is not connected or not enabled for the workspace: stop and tell the user which integration to connect.
+If a tool is not found: in Hyper chat, find its toolkit id with `discover_toolkits` and pass it to `enable_toolkit`. On an MCP client or the CLI, tell the user which integration to connect in Hyper.
 
 ## Tool surface
 
@@ -90,7 +91,7 @@ The result contains:
 
 Both `logo` and `screenshot` are saved images ready to pass as `reference_images` to image generation tools. SVG logos are automatically converted to PNG, so always include the logo — no need to filter by format.
 
-**For deeper guidance on brand extraction, read `references/brand-extraction.md`.**
+**Read `references/brand-extraction.md` only when the site gives no logo, colors or screenshot.**
 
 ### Phase 2: Ad Copy Generation
 
@@ -102,7 +103,7 @@ Using the brand personality, tone, and value proposition from the extraction, wr
 
 Change only one element per variant so results can be attributed to specific changes.
 
-**For copy frameworks, hook patterns, and variant strategy, read `references/ad-copy-frameworks.md`.**
+**The platform file of Phase 4 holds the copy rules of its placements. Read `references/ad-copy-frameworks.md` only for copy with no placement.**
 
 ### Phase 3: Visual Creative Generation
 
