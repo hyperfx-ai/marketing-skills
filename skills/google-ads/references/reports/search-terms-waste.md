@@ -37,6 +37,32 @@ FROM search_term_view
 WHERE segments.date BETWEEN '{start}' AND '{end}'
 ```
 
+## Before proposing negatives
+
+Read the negatives the account already has. Run each query through `google_ads_gaql_query`.
+
+```sql
+SELECT shared_set.id, shared_set.name, shared_set.type, shared_criterion.keyword.text, shared_criterion.keyword.match_type
+FROM shared_criterion
+WHERE shared_set.type IN ('NEGATIVE_KEYWORDS', 'ACCOUNT_LEVEL_NEGATIVE_KEYWORDS')
+```
+
+```sql
+SELECT campaign.name, shared_set.name
+FROM campaign_shared_set
+WHERE shared_set.type = 'NEGATIVE_KEYWORDS' AND campaign_shared_set.status = 'ENABLED'
+```
+
+```sql
+SELECT campaign.name, campaign_criterion.keyword.text, campaign_criterion.keyword.match_type
+FROM campaign_criterion
+WHERE campaign_criterion.negative = TRUE AND campaign_criterion.type = 'KEYWORD'
+```
+
+- Propose a negative only for a term that no list and no campaign negative holds.
+- When a list holds the term but the campaign does not use the list, propose attaching the list.
+- Name the lists you read in the answer.
+
 ## How to interpret
 
 - Highest spend with zero conversions over a meaningful window = top

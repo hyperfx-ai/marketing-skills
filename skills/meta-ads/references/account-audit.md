@@ -7,7 +7,7 @@ For query mechanics (insights args, date presets, cached data vs live API), see 
 ## Step 1: Account overview
 
 1. Read the ad accounts as [discovery.md](discovery.md) Step 1 says. For the audit fields, call `meta_ads_adaccount_list(fields="id,name,account_status,currency,timezone_name,spend_cap,amount_spent")`.
-2. For each account in scope, note spend limits, timezone, and currency.
+2. For each account in scope, note spend limits, timezone, and currency (`currency` of `meta_ads_adaccount_list`).
 3. Check account status and any restrictions. If accounts are missing or errors look like permission problems, run `meta_ads_health_check()` and surface the diagnostics.
 
 Confirm with the user which account(s) to audit if more than one is available.
@@ -32,6 +32,7 @@ Pull performance for the audit window (default: last 30 days — confirm with th
    - Cost per result (CPR)
    - Return on ad spend (ROAS) — only when conversion tracking is verified
 3. Identify top and bottom performers by cost per result.
+4. Say "no spend" only when the window's spend is zero. A paused campaign or ad set with spend in the window spent: give its status and its spend.
 
 ## Step 4: Ad set analysis
 

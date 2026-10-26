@@ -66,6 +66,10 @@ CLI users: translate tool names with the `hyper-cli` skill (`hyperai search "<to
 
 > **BUDGETS IN CENTS**: $20.00 = 2000. $5.50 = 550. $100 = 10000. Never pass dollar amounts directly.
 
+> **NAME THE CURRENCY**: Each amount names its account's currency: `account_currency` on each `meta_ads_insights_get` row, or `currency` from `meta_ads_adaccount_list`. Never add amounts of two currencies.
+
+> **SMALL SAMPLES**: A cost per result from fewer than 10 conversions gets one line that the sample is too small to judge. Do not rank or cut a campaign on that cost alone.
+
 > **ACTIVATE, DON'T UPDATE**: Use `meta_ads_campaigns_activate(campaign_id)` to go live. Never `meta_ads_campaign_update(status="ACTIVE")` — that silently leaves ad sets and ads PAUSED so nothing serves.
 
 > **ALWAYS START PAUSED**: Create campaigns with `status="PAUSED"`. Never launch live without user review.
