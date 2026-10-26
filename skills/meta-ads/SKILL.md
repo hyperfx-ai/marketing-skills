@@ -70,6 +70,8 @@ CLI users: translate tool names with the `hyper-cli` skill (`hyperai search "<to
 
 > **SMALL SAMPLES**: A cost per result from fewer than 10 conversions gets one line that the sample is too small to judge. Do not rank or cut a campaign on that cost alone.
 
+> **DERIVED NUMBERS SHOW THEIR INPUTS**: A total, difference or rate that you compute names the tool values it comes from: "312 carts with no purchase (414 add-to-carts − 102 purchases)".
+
 > **ACTIVATE, DON'T UPDATE**: Use `meta_ads_campaigns_activate(campaign_id)` to go live. Never `meta_ads_campaign_update(status="ACTIVE")` — that silently leaves ad sets and ads PAUSED so nothing serves.
 
 > **ALWAYS START PAUSED**: Create campaigns with `status="PAUSED"`. Never launch live without user review.

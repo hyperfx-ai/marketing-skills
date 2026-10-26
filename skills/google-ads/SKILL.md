@@ -72,6 +72,8 @@ Reads are GAQL (`google_ads_gaql_query` covers every resource). Writes are one t
 
 > **SMALL SAMPLES**: A cost per result from fewer than 10 conversions gets one line that the sample is too small to judge. Do not rank or cut a campaign on that cost alone.
 
+> **DERIVED NUMBERS SHOW THEIR INPUTS**: A total, difference or rate that you compute names the tool values it comes from: "312 carts with no purchase (414 add-to-carts − 102 purchases)".
+
 > **GAQL GUARDRAILS**: Never join `ad_group_criterion` with `search_term_view`. Never query more than 5 sub-accounts in a single batch.
 
 See [references/constraints.md](references/constraints.md) for the full constraint set.
