@@ -50,6 +50,7 @@ Reads are GAQL (`google_ads_gaql_query` covers every resource). Writes are one t
 | `google_ads_ad_group_ads_create` / `_update` / `_remove` | Ads (typed: `responsive_search_ad`, `responsive_display_ad`, video / demand-gen ad types). |
 | `google_ads_keywords_create` / `_update` / `_delete` / `_list` | Keywords (positive and negative). |
 | `google_ads_locations_search`, `google_ads_location_targets_add` | Resolve location names, target them. |
+| `google_ads_location_targets_list` | A campaign's locations, each with its place name (`canonical_name`). |
 | `google_ads_image_assets_upload` | Image assets — accepts `file_id` from the workspace file manager, `image_url`, or base64. |
 | `google_ads_video_assets_link` | Register a YouTube video ID as a video asset (the Ads API cannot host video files — videos must be on YouTube). |
 | `google_ads_asset_groups_create` | PMax asset group (atomic: text + image assets in one call). |
@@ -66,6 +67,12 @@ Reads are GAQL (`google_ads_gaql_query` covers every resource). Writes are one t
 > **SUMMARIZE BEFORE CREATE**: Present the full build plan (budget, campaign settings, targeting, ad groups, ads/assets) and get explicit user approval before the first mutate. Create in dependency order. Generated bodies take the full `resource_name` that the mutate returns (e.g. `"campaign": "customers/<cid>/campaigns/<id>"`). The flat tools (`google_ads_location_targets_add`, `google_ads_keywords_create`, `google_ads_asset_groups_create`, `google_ads_asset_group_assets_link`, `google_ads_campaign_assets_link`) take the bare id: the last part of that resource name. The tools validate bodies against the real API schema (writable fields, enum values) plus channel-type rules and return corrective errors — fix and retry rather than guessing.
 
 > **NEVER INVENT**: Don't assume URLs, budgets, or location IDs. Don't skip research. Don't invent keywords or copy — creative comes only from the actual site. Don't build without user buy-in.
+
+> **PLACES COME FROM THE ID**: Name a targeted place only from its `canonical_name` (`google_ads_location_targets_list`, or `geo_target_constant.canonical_name` in GAQL). A campaign name or the user's words is not a location.
+
+> **SMALL SAMPLES**: A cost per result from fewer than 10 conversions gets one line that the sample is too small to judge. Do not rank or cut a campaign on that cost alone.
+
+> **DERIVED NUMBERS SHOW THEIR INPUTS**: A total, difference or rate that you compute names the tool values it comes from: "312 carts with no purchase (414 add-to-carts − 102 purchases)".
 
 > **GAQL GUARDRAILS**: Never join `ad_group_criterion` with `search_term_view`. Never query more than 5 sub-accounts in a single batch.
 
