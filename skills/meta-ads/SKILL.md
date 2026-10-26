@@ -3,7 +3,6 @@ name: meta-ads
 description: Plan and create Meta (Facebook + Instagram) advertising campaigns end-to-end via the Hyper MCP, defaulting to Advantage+ automation. Use when the user wants to launch Meta ads, Facebook ads, Instagram ads, Advantage+ campaigns, carousel ads, dynamic creative ads, set up Meta conversion tracking, analyze performance, audit a Meta ads account, or build Meta performance dashboards. Also triggers on phrases like meta campaign, facebook campaign, advantage+, or meta account audit.
 requires_toolkits:
   - meta_ads
-  - meta_business
 icon: meta_ads
 short_description: Plan and create Meta ad campaigns with Advantage+ defaults, audits, and dashboards.
 ---
@@ -24,10 +23,10 @@ Strategic guide for creating and managing Meta advertising campaigns, analyzing 
 ## Requirements
 
 - **Hyper MCP installed and connected.** [https://app.hyperfx.ai/mcp](https://app.hyperfx.ai/mcp)
-- **Meta Business integration connected** (Facebook + Instagram, with at least one ad account and one Page) at [https://app.hyperfx.ai/apps](https://app.hyperfx.ai/apps).
-- **Firecrawl integration connected** for site research and screenshot grounding (discovery phase).
+- **Meta Ads integration connected** (Facebook + Instagram, with at least one ad account and one Page) at [https://app.hyperfx.ai/apps](https://app.hyperfx.ai/apps).
+- **Firecrawl toolkit enabled** for site research and screenshot grounding (discovery phase).
 
-If `search("meta_ads_adaccount_list")` does not find `meta_ads_adaccount_list`, stop and tell the user to enable Hyper MCP and connect Meta Business.
+If `meta_ads_adaccount_list` is not found, the integration to connect is Meta Ads.
 
 If you suspect a connection issue (missing ad accounts, page publishing failures, or permission errors), call `meta_ads_health_check()` and report the diagnostics before proceeding.
 
@@ -37,23 +36,24 @@ Every tool in this skill is named by its canonical tool name. Run it with the ca
 
 | Surface | Find a tool | Run it |
 | --- | --- | --- |
-| MCP client (Claude, Cursor, Codex, ChatGPT) | `search("<what you want to do>")`, then `describe("<name>")` | `call("<name>", {...})` |
+| Hyper chat | Call the tool by its name; `search_tools(queries=["<provider> <action>"])` shows its parameters | `<name>(...)` |
+| MCP client (Claude, Cursor, Codex, ChatGPT) | `search("<what you want to do>")`, then `describe("<name>")` | `call_read("<name>", {...})`, `call_write` or `call_destructive`: the one that `describe` names in `call_with` |
 | Hyper CLI | `hyperai search "<what you want to do>"`, then `hyperai describe <name>` | `hyperai call <name> --json '{...}'` |
 
-If a tool is not found, its integration is not connected or not enabled for the workspace: stop and tell the user which integration to connect.
+If a tool is not found: in Hyper chat, find its toolkit id with `discover_toolkits` and pass it to `enable_toolkit`. On an MCP client or the CLI, tell the user which integration to connect in Hyper.
 
 ## Tool names
 
-Use the **exact tool name from your connected tool list**. Canonical names are `meta_ads_*` (listed below). On Hyper platform chat, legacy `meta_business_*` names (e.g. `meta_ads_adaccount_list`) and the retired plural names (e.g. `meta_ads_campaign_create`) resolve to the same tools via aliases — if a call fails with "tool not found", search the live catalog for the canonical name.
+Use the exact tool name that `search_tools` (Hyper chat) or `search` / `describe` (MCP) returns. Canonical names are `meta_ads_*` (listed below). An older name resolves to its canonical tool through an alias.
 
 | Group | Tools |
 | --- | --- |
-| Discovery | `meta_ads_adaccount_list`, `meta_ads_owned_pages_list`, `meta_ads_pages_search`, `meta_accounts_list`, `meta_ads_instagram_accounts_list` |
+| Discovery | `connections_info` (Hyper chat), `meta_ads_adaccount_list`, `meta_ads_owned_pages_list`, `meta_ads_pages_search`, `meta_accounts_list`, `meta_ads_instagram_accounts_list` |
 | Health & sync | `meta_ads_health_check`, `meta_ads_health_get` |
-| Tracking assets | `meta_ads_ad_pixels_list`, `meta_ads_ad_pixels_get`, `meta_ads_custom_audiences_list`, `meta_ads_lookalike_audiences_list`, `meta_ads_targeting_search` |
+| Tracking assets | `meta_ads_ad_pixels_list`, `meta_ads_ad_pixels_get`, `meta_ads_dataset_quality_get`, `meta_ads_dataset_stats_list`, `meta_ads_custom_audiences_list`, `meta_ads_lookalike_audiences_list`, `meta_ads_targeting_search` |
 | Step-by-step creation (preferred) | `meta_ads_campaign_create`, `meta_ads_adset_create`, `meta_ads_ad_create`, `meta_ads_ad_images_upload`, `meta_ads_creative_create` |
-| Read & preview | `meta_ads_campaign_get`, `meta_ads_campaigns_search`, `meta_ads_adset_list`, `meta_ads_ad_list`, `meta_ads_ad_get`, `meta_ads_ad_previews_get` |
-| Insights & dashboards | `meta_ads_insights_get`, `data_apps_build`, `database_query` |
+| Read & preview | `meta_ads_campaign_get`, `meta_ads_campaigns_search`, `meta_ads_adset_list`, `meta_ads_ad_sets_list`, `meta_ads_adset_get`, `meta_ads_ad_list`, `meta_ads_list`, `meta_ads_ad_get`, `meta_ads_creative_list`, `meta_ads_creative_get`, `meta_ads_custom_audience_get`, `meta_ads_ad_previews_get` |
+| Insights & dashboards | `meta_ads_insights_get`, `data_apps_build`, `database_tables_list`, `database_tables_describe`, `database_query` |
 | Launch & edits | `meta_ads_campaigns_activate`, `meta_ads_campaign_update`, `meta_ads_adset_update`, `meta_ads_ad_update` |
 | Automated rules | `meta_ads_adrule_create`, `meta_ads_adrule_list`, `meta_ads_adrule_get`, `meta_ads_adrule_update`, `meta_ads_adrule_delete`, `meta_ads_adrule_history_list` |
 | Site research | `firecrawl_branding_extract`, `firecrawl_screenshots_create` |
@@ -66,15 +66,23 @@ CLI users: translate tool names with the `hyper-cli` skill (`hyperai search "<to
 
 > **BUDGETS IN CENTS**: $20.00 = 2000. $5.50 = 550. $100 = 10000. Never pass dollar amounts directly.
 
+> **NAME THE CURRENCY**: Each amount names its account's currency: `account_currency` on each `meta_ads_insights_get` row, or `currency` from `meta_ads_adaccount_list`. Never add amounts of two currencies.
+
+> **SMALL SAMPLES**: A cost per result from fewer than 10 conversions gets one line that the sample is too small to judge. Do not rank or cut a campaign on that cost alone.
+
+> **DERIVED NUMBERS SHOW THEIR INPUTS**: A total, difference or rate that you compute names the tool values it comes from: "312 carts with no purchase (414 add-to-carts − 102 purchases)".
+
 > **ACTIVATE, DON'T UPDATE**: Use `meta_ads_campaigns_activate(campaign_id)` to go live. Never `meta_ads_campaign_update(status="ACTIVE")` — that silently leaves ad sets and ads PAUSED so nothing serves.
 
 > **ALWAYS START PAUSED**: Create campaigns with `status="PAUSED"`. Never launch live without user review.
 
 > **BUILD STEP BY STEP**: Create campaigns with the individual tools — `meta_ads_campaign_create` → `meta_ads_adset_create` → `meta_ads_creative_create` → `meta_ads_ad_create`, capturing each id from the previous response. (The old blueprint tools were removed.) The tools validate requests before sending — campaign objective rules, bid-strategy/bid-amount pairing, billing-event/optimization-goal compatibility, budget coherence — but objective-specific ad-set fields (`optimization_goal`, `promoted_object`) are YOUR responsibility: match them to the campaign objective using the reference file for the campaign type.
 
-> **REGULATED ADVERTISERS NEED `special_ad_categories`**: For gambling, financial, housing, employment, credit, or political advertisers, declare the category on `meta_ads_campaign_create` (e.g. `special_ad_categories=["ONLINE_GAMBLING_AND_GAMING"]`).
+> **REGULATED ADVERTISERS NEED `special_ad_categories`**: For gambling, financial, housing, employment, credit, or political advertisers, declare the category on `meta_ads_campaign_create` (e.g. `special_ad_categories=["ONLINE_GAMBLING_AND_GAMING"]`). For HOUSING, EMPLOYMENT, FINANCIAL_PRODUCTS_SERVICES or ISSUES_ELECTIONS_POLITICS, also set `special_ad_category_country` (e.g. `["US"]`).
 
 > **FIXED RUN WINDOWS GO ON THE AD SET**: When the user gives a run duration or dates ("run it for 7 days", "through end of month"), set `start_time` AND `end_time` (ISO 8601) on `meta_ads_adset_create`. A daily-budget ad set with no `end_time` runs continuously until manually paused — the requested window is silently lost.
+
+> **PIXEL EVENT COUNTS COME FROM THE DATASET**: For how many events a pixel received (Purchase volume, a drop week over week), call `meta_ads_dataset_stats_list`. Send the pixel id as `dataset_id`, with `start_time` and `end_time`. Make one call per period. For Event Match Quality, call `meta_ads_dataset_quality_get` with the pixel id as `dataset_id`. `meta_ads_insights_get` counts only the conversions that Meta attributes to ads, not every event the pixel received.
 
 > **GROUND COPY IN THE DESTINATION PAGE (RESEARCH FIRST)**: When the brief centers on a URL ("build a campaign for https://..."), fetch that page FIRST (`web_pages_fetch`) — before discovery and before writing any copy — and ground ad copy in what the page actually says (product name, value props, offer). Never invent copy for a page you have not read; even when the user supplies exact copy or headlines, fetch the page to verify the destination matches the offer.
 
@@ -84,8 +92,6 @@ CLI users: translate tool names with the `hyper-cli` skill (`hyperai search "<to
 
 See [references/constraints.md](references/constraints.md) for the full constraint set.
 
-> **All reference files live in `references/`.** Read them at `references/<file>` (e.g. `references/discovery.md`). They are not in the same directory as this SKILL.md.
-
 ---
 
 ## Core process
@@ -93,13 +99,13 @@ See [references/constraints.md](references/constraints.md) for the full constrai
 Every task follows this sequence. Do not skip steps.
 
 1. **Identify the goal** — creation, analysis, or both?
-2. **Check the routing table** and read the referenced files before calling any tools
+2. **Check the routing table** before calling any tools
 3. **Make a written plan** — state campaign type, budget in cents, optimization goal, and sequence of steps; show it before acting
-4. **Execute step by step**, re-checking [references/constraints.md](references/constraints.md) at each creation step
+4. **Execute step by step** by the campaign file, whose rules list the constraints of its type. Read a section of [references/constraints.md](references/constraints.md) only when a step names it
 5. **Show ad previews** before activation
 6. **Activate only when the user approves** using `meta_ads_campaigns_activate()`
 
-**Automated / scheduled runs:** If there is no user present to interact with (e.g. a scheduled task), skip steps 3 and 6. Do not write a plan and wait for confirmation — proceed directly. Do not activate unless activation was explicitly included in the task instructions.
+**Automated / scheduled runs:** If there is no user present to interact with (e.g. a scheduled task), skip steps 3 and 6, and read only the campaign file of the routing row: the task's instructions are its plan. Do not write a plan and wait for confirmation — proceed directly. Do not activate unless activation was explicitly included in the task instructions.
 
 ---
 
@@ -107,12 +113,12 @@ Every task follows this sequence. Do not skip steps.
 
 | The user wants to… | Read these files first |
 |---|---|
-| Create a sales / conversion campaign | [references/discovery.md](references/discovery.md) → [references/campaigns/sales.md](references/campaigns/sales.md) |
-| Create a leads campaign | [references/discovery.md](references/discovery.md) → [references/campaigns/leads.md](references/campaigns/leads.md) |
-| Create a traffic campaign | [references/discovery.md](references/discovery.md) → [references/campaigns/traffic.md](references/campaigns/traffic.md) |
-| Create an awareness or engagement campaign | [references/discovery.md](references/discovery.md) → [references/campaigns/awareness-engagement.md](references/campaigns/awareness-engagement.md) |
-| Create an app promotion campaign | [references/discovery.md](references/discovery.md) → [references/campaigns/app-promotion.md](references/campaigns/app-promotion.md) |
-| Create a campaign (any objective) | [references/discovery.md](references/discovery.md) → the matching `references/campaigns/*.md` above, then build step by step |
+| Create a sales / conversion campaign | Plan: [references/discovery.md](references/discovery.md). Build, after the user approves the plan: [references/campaigns/sales.md](references/campaigns/sales.md) |
+| Create a leads campaign | Plan: [references/discovery.md](references/discovery.md). Build, after the user approves the plan: [references/campaigns/leads.md](references/campaigns/leads.md) |
+| Create a traffic campaign | Plan: [references/discovery.md](references/discovery.md). Build, after the user approves the plan: [references/campaigns/traffic.md](references/campaigns/traffic.md) |
+| Create an awareness or engagement campaign | Plan: [references/discovery.md](references/discovery.md). Build, after the user approves the plan: [references/campaigns/awareness-engagement.md](references/campaigns/awareness-engagement.md) |
+| Create an app promotion campaign | Plan: [references/discovery.md](references/discovery.md). Build, after the user approves the plan: [references/campaigns/app-promotion.md](references/campaigns/app-promotion.md) |
+| Create a campaign (any objective) | Plan: [references/discovery.md](references/discovery.md). Build, after the user approves the plan: the matching `references/campaigns/*.md` above |
 | Analyze performance / query insights | [references/analytics.md](references/analytics.md) |
 | Audit an account / find optimization opportunities | [references/account-audit.md](references/account-audit.md) |
 | Set up automated rules (auto-pause, budget guards, alerts) | [references/automated-rules.md](references/automated-rules.md) |

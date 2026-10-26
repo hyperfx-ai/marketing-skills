@@ -37,6 +37,32 @@ FROM search_term_view
 WHERE segments.date BETWEEN '{start}' AND '{end}'
 ```
 
+## Before proposing negatives
+
+Read the negatives the account already has. Run each query through `google_ads_gaql_query`.
+
+```sql
+SELECT shared_set.id, shared_set.name, shared_set.type, shared_criterion.keyword.text, shared_criterion.keyword.match_type
+FROM shared_criterion
+WHERE shared_set.type IN ('NEGATIVE_KEYWORDS', 'ACCOUNT_LEVEL_NEGATIVE_KEYWORDS')
+```
+
+```sql
+SELECT campaign.name, shared_set.name
+FROM campaign_shared_set
+WHERE shared_set.type = 'NEGATIVE_KEYWORDS' AND campaign_shared_set.status = 'ENABLED'
+```
+
+```sql
+SELECT campaign.name, campaign_criterion.keyword.text, campaign_criterion.keyword.match_type
+FROM campaign_criterion
+WHERE campaign_criterion.negative = TRUE AND campaign_criterion.type = 'KEYWORD'
+```
+
+- Propose a negative only for a term that no list and no campaign negative holds.
+- When a list holds the term but the campaign does not use the list, propose attaching the list.
+- Name the lists you read in the answer.
+
 ## How to interpret
 
 - Highest spend with zero conversions over a meaningful window = top
@@ -63,11 +89,14 @@ result = data_apps_build(
                     "metrics.cost_micros, metrics.clicks, "
                     "metrics.conversions, metrics.conversions_value "
                     "FROM search_term_view "
-                    "WHERE segments.date DURING LAST_30_DAYS"
+                    "WHERE segments.date DURING LAST_30_DAYS "
+                    "AND metrics.cost_micros > 0 "
+                    "ORDER BY metrics.cost_micros DESC LIMIT 10000"
                 ),
             },
-            "cache_table": "gads_search_terms",
+            "cache_table": "gads_search_terms_1234567890",
             "mode": "replace",
+            "rows_path": "results",
         },
     },
     sql_data_sources={
@@ -76,52 +105,48 @@ result = data_apps_build(
             "sql": (
                 "SELECT search_term_view_search_term AS term, "
                 "campaign_name AS campaign, "
-                "SUM(metrics_cost_micros)/1e6 AS spend, "
-                "SUM(metrics_clicks) AS clicks "
-                "FROM gads_search_terms "
+                "SUM(metrics_cost_micros::numeric) / 1e6 AS spend, "
+                "SUM(metrics_clicks::numeric) AS clicks, "
+                "COUNT(*) OVER () AS flagged_terms, "
+                "'$' || to_char(SUM(SUM(metrics_cost_micros::numeric)) OVER () / 1e6, 'FM999,999,990.00') AS flagged_spend "
+                "FROM gads_search_terms_1234567890 "
                 "GROUP BY 1, 2 "
-                "HAVING SUM(metrics_conversions) = 0 "
-                "AND SUM(metrics_cost_micros) > 10000000 "
+                "HAVING SUM(metrics_conversions::numeric) = 0 "
+                "AND SUM(metrics_cost_micros::numeric) > 10000000 "
                 "ORDER BY spend DESC LIMIT 50"
             ),
         },
     },
-    prefab_python="""
-from prefab_ui import PrefabApp
-from prefab_ui.components import Card, CardContent, Column, DataTable, DataTableColumn, Grid, Heading, Metric, Muted, Text
-
-with PrefabApp(title="Search Terms Waste") as app:
-    wasted_spend = sum(row.get("spend", 0) for row in top_waste)
-
-    with Column(gap=6, css_class="p-6"):
-        with Column(gap=1):
-            Heading("Search Terms Waste")
-            Muted("Highest-spend terms with weak or missing conversion value")
-
-        with Grid(columns=4, gap=4):
-            with Card():
-                with CardContent():
-                    Metric(label="Flagged Terms", value=f"{len(top_waste):,}")
-            with Card():
-                with CardContent():
-                    Metric(label="Flagged Spend", value=f"${wasted_spend:,.0f}")
-
-        with Card():
-            with CardContent():
-                Text("Waste candidates", css_class="text-sm font-medium text-muted-foreground mb-2")
-                DataTable(
-                    columns=[
-                        DataTableColumn(key="term", header="Search Term"),
-                        DataTableColumn(key="campaign", header="Campaign"),
-                        DataTableColumn(key="spend", header="Spend"),
-                        DataTableColumn(key="clicks", header="Clicks"),
-                    ],
-                    rows=top_waste,
-                )
+    template_html="""
+<div class="grid gap-3" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr));">
+  <div class="card" data-size="sm"><section>
+    <p class="text-xs text-muted-foreground">Flagged terms</p>
+    <p class="text-2xl font-semibold tabular-nums">{{ top_waste[0].flagged_terms if top_waste else 0 }}</p>
+  </section></div>
+  <div class="card" data-size="sm"><section>
+    <p class="text-xs text-muted-foreground">Flagged spend</p>
+    <p class="text-2xl font-semibold tabular-nums">{{ top_waste[0].flagged_spend if top_waste else "$0.00" }}</p>
+  </section></div>
+</div>
+<div class="card mt-4">
+  <header><h2>Waste candidates</h2><p>The 50 costliest terms with over $10 and no conversion, last 30 days</p></header>
+  <section><div class="table-container"><table class="table">
+    <thead><tr><th>Search term</th><th>Campaign</th><th>Spend</th><th>Clicks</th></tr></thead>
+    <tbody>
+    {% for row in top_waste %}
+      <tr><td class="break-words">{{ row.term }}</td><td class="break-words">{{ row.campaign }}</td>
+        <td class="tabular-nums">${{ "%.2f"|format(row.spend) }}</td>
+        <td class="tabular-nums">{{ "%.0f"|format(row.clicks) }}</td></tr>
+    {% endfor %}
+    </tbody>
+  </table></div></section>
+</div>
 """,
-    refresh={"mode": "scheduled", "cron": "0 */6 * * *"},
 )
 ```
+
+`data_apps_refresh(data_app_id=...)` runs the GAQL again and re-renders
+the app; the window stays the last 30 days.
 
 ## Variants
 

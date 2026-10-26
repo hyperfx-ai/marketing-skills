@@ -19,6 +19,8 @@ Data-driven SEO research and analysis. Every recommendation must be backed by re
 | Meta (Facebook / Instagram) ads | `meta-ads` |
 | Competitor *ad* research from the Meta Ads Library | `meta-ads-library` |
 | Pinterest Ads campaign | `pinterest-ads` |
+| Write the blog post itself | `blog-generation` |
+| Competitor monitoring, battle cards, non-SEO surfaces | `competitor-intel` |
 | Organic Instagram / TikTok / LinkedIn publishing | `instagram`, `tiktok`, `linkedin` |
 
 ## Requirements
@@ -26,7 +28,7 @@ Data-driven SEO research and analysis. Every recommendation must be backed by re
 - **Hyper MCP installed and connected.** [https://app.hyperfx.ai/mcp](https://app.hyperfx.ai/mcp)
 - **HyperSEO toolkit enabled** at [https://app.hyperfx.ai/apps](https://app.hyperfx.ai/apps) — provides the `hyperseo_*` tool surface that wraps DataForSEO and AI search query data.
 
-If `search("hyperseo_search_volume_get")` does not find `hyperseo_search_volume_get`, stop and tell the user to enable the Hyper MCP and turn on the HyperSEO toolkit.
+If `hyperseo_search_volume_get` is not found, the toolkit to enable is HyperSEO (`hyperseo`).
 
 ### How to run the tools in this skill
 
@@ -34,17 +36,18 @@ Every tool in this skill is named by its canonical tool name. Run it with the ca
 
 | Surface | Find a tool | Run it |
 | --- | --- | --- |
-| MCP client (Claude, Cursor, Codex, ChatGPT) | `search("<what you want to do>")`, then `describe("<name>")` | `call("<name>", {...})` |
+| Hyper chat | Call the tool by its name; `search_tools(queries=["<provider> <action>"])` shows its parameters | `<name>(...)` |
+| MCP client (Claude, Cursor, Codex, ChatGPT) | `search("<what you want to do>")`, then `describe("<name>")` | `call_read("<name>", {...})`, `call_write` or `call_destructive`: the one that `describe` names in `call_with` |
 | Hyper CLI | `hyperai search "<what you want to do>"`, then `hyperai describe <name>` | `hyperai call <name> --json '{...}'` |
 
-If a tool is not found, its integration is not connected or not enabled for the workspace: stop and tell the user which integration to connect.
+If a tool is not found: in Hyper chat, find its toolkit id with `discover_toolkits` and pass it to `enable_toolkit`. On an MCP client or the CLI, tell the user which integration to connect in Hyper.
 
 ## Tool surface
 
 | Tool group | Tools |
 | --- | --- |
 | Keyword research | `hyperseo_search_volume_get`, `hyperseo_keyword_difficulty_get`, `hyperseo_keyword_ideas_generate`, `hyperseo_site_keywords_search`, `hyperseo_intents_search` |
-| SERP & AI Overviews | `hyperseo_serp_results_get`, `hyperseo_ai_overviews_get` |
+| SERP & Google AI Mode | `hyperseo_serp_results_get`, `hyperseo_ai_overviews_get` |
 | Competitor analysis | `hyperseo_competitors_search`, `hyperseo_competitor_domains_search`, `hyperseo_domain_intersections_search`, `hyperseo_traffic_get_bulk` |
 | Domain & rankings | `hyperseo_domain_overview_get`, `hyperseo_domain_keywords_get`, `hyperseo_rank_history_get` |
 | Backlinks | `hyperseo_backlinks_history_get` |
@@ -70,7 +73,7 @@ Based on the answers, read the appropriate reference file:
 | "Am I visible in AI search?" / "Track my brand in ChatGPT" | [`references/ai-search-optimization.md`](./references/ai-search-optimization.md) |
 | "Audit my site" / "How is my domain doing?" | [`references/site-audit.md`](./references/site-audit.md) |
 
-When the task spans multiple areas (e.g., "help me with SEO for my new site"), start with a site audit, then move to keyword research, then content planning.
+When the task spans multiple areas (e.g., "help me with SEO for my new site"), each area is its own step: run the site audit with `references/site-audit.md` first and give its findings. Read the file of the next area, keyword research and then content planning, only when the user goes on to it.
 
 ## Core SEO Principles
 
@@ -100,11 +103,11 @@ Apply these throughout all analysis.
 | Generate keyword ideas | `hyperseo_keyword_ideas_generate` | Related keywords with metrics. |
 | Find keywords for a site | `hyperseo_site_keywords_search` | Keywords a domain could target. |
 | See who ranks on Google | `hyperseo_serp_results_get` | Top positions, URLs, domains. |
-| Check Google AI Overview | `hyperseo_ai_overviews_get` | AI-generated summary and cited sources. |
+| See Google's AI Mode answer | `hyperseo_ai_overviews_get` | The AI Mode answer and the sources it cites. It does not show whether the normal results page has an AI Overview. |
 | See what a domain ranks for | `hyperseo_domain_keywords_get` | Current rankings and traffic. |
 | Find competing domains (by keywords) | `hyperseo_competitors_search` | Domains ranking for similar keywords. |
 | Find competing domains (by domain) | `hyperseo_competitor_domains_search` | Competitors based on shared organic keywords. |
-| Get domain health metrics | `hyperseo_domain_overview_get` | Authority, traffic, backlinks. |
+| Get domain traffic metrics | `hyperseo_domain_overview_get` | Organic keywords, estimated organic traffic (ETV), traffic cost. For backlinks and rank, use `hyperseo_backlinks_history_get`. |
 | Track backlink trends | `hyperseo_backlinks_history_get` | New / lost backlinks over time. |
 | Check AI chatbot query volume | `hyperseo_ai_search_volume_get` | Monthly queries to ChatGPT, Claude, etc. |
 | Track brand mentions in LLMs | `hyperseo_mentions_track` | Brand citations across AI models. |
@@ -131,7 +134,7 @@ Default is US (`2840`). Common alternatives: UK `2826`, Canada `2124`, Australia
 
 **Sort recommendations by priority.** Quick wins first, long-term bets last.
 
-**When comparing domains**, use side-by-side tables showing organic keywords, traffic, backlinks, and domain rank.
+**When comparing domains**, use side-by-side tables showing organic keywords and traffic (`hyperseo_domain_overview_get`), and backlinks, referring domains and domain rank (the latest row of `hyperseo_backlinks_history_get`).
 
 **For content plans**, include: target keyword, search volume, difficulty, recommended content format, and priority tier.
 
