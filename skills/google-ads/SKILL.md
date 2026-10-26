@@ -85,7 +85,7 @@ See [references/constraints.md](references/constraints.md) for the full constrai
 Every campaign build follows this sequence. Do not skip steps.
 
 1. **Identify the goal** — new campaign, reporting/analysis, or both?
-2. **Check the routing table** and read the referenced files before calling any tools
+2. **Check the routing table** and read the files of your row only, before calling any tools. The other reference files are for other tasks
 3. **Discovery is mandatory for creation** ([references/discovery.md](references/discovery.md)) — account setup, site scan, conversion tracking check, market research, consultation
 4. **Present the pre-creation summary** and wait for explicit approval
 5. **Build in dependency order (budget → campaign PAUSED → targeting → ad groups → ads/assets)** after approval, by the campaign file; read a section of [references/constraints.md](references/constraints.md) only when a step names it

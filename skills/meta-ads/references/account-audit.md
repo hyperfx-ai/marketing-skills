@@ -2,8 +2,6 @@
 
 Comprehensive audit of a Meta Ads account: structure, performance, and optimization opportunities. This is a read-only workflow — it produces findings and recommendations, never applies changes. If the user approves a recommendation, route the change through the normal update tools with per-change approval.
 
-For query mechanics (insights args, date presets, cached data vs live API), see [analytics.md](analytics.md).
-
 ## Step 1: Account overview
 
 1. Read the ad accounts as [discovery.md](discovery.md) Step 1 says. For the audit fields, call `meta_ads_adaccount_list(fields="id,name,account_status,currency,timezone_name,spend_cap,amount_spent")`.
@@ -16,7 +14,7 @@ Confirm with the user which account(s) to audit if more than one is available.
 
 For each account:
 
-1. `meta_ads_campaigns_search` — list campaigns (filter to active, or include paused if the user wants a full audit).
+1. `meta_ads_campaigns_search(account_id="act_<id>", status_filter=["ACTIVE"])` lists the active campaigns. For a full audit, pass `status_filter=["ACTIVE", "PAUSED"]`.
 2. Group campaigns by objective (awareness, traffic, conversions/sales, leads, app promotion).
 3. Note naming conventions, duplicates, and organization — inconsistent naming and overlapping objectives are audit findings in themselves.
 
@@ -24,7 +22,7 @@ For each account:
 
 Pull performance for the audit window (default: last 30 days — confirm with the user):
 
-1. `meta_ads_insights_get` at account level (see [analytics.md](analytics.md) for args and valid `date_preset` values; prefer cached data for long windows).
+1. `meta_ads_insights_get(object_id="act_<id>", object_type="account", level="campaign", date_preset="last_30d", include_actions=true)`. For a window that no preset covers, pass `time_range={"since": "YYYY-MM-DD", "until": "YYYY-MM-DD"}` in place of `date_preset`. Name the date range in the report.
 2. Key metrics to capture:
    - Total spend
    - Impressions and reach
