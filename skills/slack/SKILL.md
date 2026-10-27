@@ -84,8 +84,7 @@ Do NOT just say "Here's your image" without uploading it. The user will see noth
 ### Sharing Other Files
 
 For any file you want to share (documents, CSVs, etc.), use `slack_files_upload` with either:
-- `file_id`: For files already in the system
-- `file_path`: For local files
+- `file_id`: For files already in the system. The tool takes no file path.
 - `content`: For text content to upload as a file
 
 ## Message Formatting
