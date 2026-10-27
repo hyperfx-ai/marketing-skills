@@ -202,6 +202,16 @@ Available styles: `bold`, `italic`, `strike`, `code`
 | Add a reaction | `slack_reactions_add` |
 | Pin a message | `slack_messages_pin` |
 | Search messages | `slack_messages_search` |
+| Schedule a message | `slack_messages_schedule` |
+| List scheduled messages | `slack_scheduled_messages_list` |
+| Delete a scheduled message | `slack_scheduled_messages_delete` |
+| Open a DM or group DM | `slack_conversations_open` |
+
+### Scheduled Messages and DMs
+
+- Schedule with `slack_messages_schedule`. Pass `post_at` as a time with the user's timezone offset, for example `2026-10-06T09:00:00+02:00`. If you do not know the user's timezone, ask before you schedule. Slack schedules at most 120 days ahead.
+- Before you delete a scheduled message, list them with `slack_scheduled_messages_list` and confirm the message with the user. A deleted scheduled message cannot come back.
+- To message one person or a small group privately, open the conversation with `slack_conversations_open` (1 to 8 user IDs), then post with `slack_messages_send` to the returned channel ID.
 
 ## Channel Management Quick Reference
 
