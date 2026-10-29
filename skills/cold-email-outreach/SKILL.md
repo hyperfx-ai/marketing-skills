@@ -48,7 +48,7 @@ If a tool is not found: in Hyper chat, find its toolkit id with `discover_toolki
 | Phase | Tools |
 | --- | --- |
 | Prospect research | `apollo_people_search`, `apollo_companies_search`, `apollo_people_match_bulk` (preferred for 2+ enrich), `apollo_people_match` (single only) |
-| Per-prospect signals | `firecrawl_urls_scrape`, `firecrawl_urls_scrape_batch`, `firecrawl_branding_extract`, `firecrawl_screenshots_create` |
+| Per-prospect signals | `firecrawl_urls_scrape`, `firecrawl_urls_scrape_batch`, `firecrawl_branding_extract`, `firecrawl_screenshots_create`, `scrape_linkedin_profiles` *(conditional — requires LinkedIn Apify integration)* |
 | Drafting | `gmail_drafts_create`, `gmail_drafts_update`, `gmail_drafts_get`, `gmail_drafts_list` |
 | Sending | `gmail_messages_send`, `gmail_drafts_send`, `gmail_messages_reply` |
 | Reply routing | `gmail_messages_list`, `gmail_messages_get`, `gmail_labels_create`, `gmail_labels_add`, `gmail_labels_remove`, `gmail_messages_move_to_label` *(takes `label_id` string, not `label_ids` array)* |
@@ -118,6 +118,7 @@ For each prospect, gather one *specific* observation that connects to the proble
 | Cheap | `firecrawl_urls_scrape` of the careers / pricing / blog page | "You're hiring 4 SDRs", "Pricing pages says enterprise plan launching", "Latest blog post is about X" |
 | Cheap (multi-page) | `firecrawl_urls_scrape_batch` | Same observation across many sites in one call |
 | Medium | `firecrawl_branding_extract` | Brand voice for the email tone, brand colors if you'll send a follow-up image |
+| Higher *(conditional)* | `scrape_linkedin_profiles(profile_urls=[...])` *(requires LinkedIn Apify integration — skip if not connected)* | Recent post, mutual connection, recent job change, school/employer overlap |
 
 Personalization tiers (use the highest tier you can afford for *this* campaign):
 
