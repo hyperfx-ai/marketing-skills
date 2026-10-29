@@ -88,17 +88,15 @@ The Apify-backed scrapers each handle one platform. Use the right one for each p
 
 **Pitfalls:** TikTok aggressively rate-limits. Don't run more than ~3 username scrapes per minute — pace.
 
-### LinkedIn *(conditional — integration must be enabled)*
+### LinkedIn *(needs a LinkedIn connection)*
 
 | Tool | What it pulls |
 | --- | --- |
-| `scrape_linkedin_profiles(urls=[...])` | Profile-level data for personal *or* company URLs — title, headline, company info, recent posts |
+| `linkedin_pages_get_by_vanity(vanity_name=...)` | Company page details: name, description, size, industry, website |
 
-**Useful for:** company-page positioning shifts, exec hires (a new VP of Marketing usually signals strategy change), thought-leadership content from execs. Pulled per-URL, so for a competitor org grab the company URL plus 2–3 key exec URLs.
+**Useful for:** company-page positioning shifts and team size. The vanity name is the last part of the page URL, `linkedin.com/company/<vanity_name>`.
 
-**Important:** this tool is only present in the agent's tool list when the LinkedIn-scraper integration is enabled in the workspace. If you don't see `scrape_linkedin_profiles` in the tool inventory, skip the LinkedIn slice entirely — don't fail the whole brief.
-
-**Pitfalls:** LinkedIn aggressively detects + blocks scraping. Even with the integration enabled, expect occasional empty results. Don't pull more than a handful at a time.
+**Important:** no tool reads a competitor's LinkedIn posts or people. Without a LinkedIn connection, skip the LinkedIn slice — don't fail the whole brief.
 
 ### Twitter / X
 
@@ -176,7 +174,7 @@ These are stronger than `firecrawl_urls_scrape` on a PDP because they normalize 
 | "What's the conversation about them online?" | Reddit + Twitter + Google reviews search |
 | "Who shows up in AI Overviews for our category?" | `hyperseo_ai_overviews_get(keyword=..., location_code=...)` per keyword |
 | "Who do LLMs cite when asked about our category?" | `hyperseo_mentions_track(query="best [category] tools", brands=[...])` |
-| "Are they hiring?" | LinkedIn (`scrape_linkedin_profiles` on the company URL) — check team size + recent posts about hiring |
+| "Are they hiring?" | The careers page (`firecrawl_urls_scrape`) + team size on the LinkedIn page (`linkedin_pages_get_by_vanity`) |
 | "Did they just raise / launch / pivot?" | Twitter (`x_tweets_search(from_user=...)`) + News via `google_search_results_search` |
 
 ## Cost & rate-limit discipline

@@ -200,10 +200,10 @@ LIMIT 100;
 
 This unlocks questions GA4 can never answer alone: *"What's the LTV of users who hit our pricing page in the last 30 days?"*
 
-## Running queries through the MCP
+## Running queries through the database toolkit
 
 ```
-bigquery_execute_query(
+database_query(
   query="""
     SELECT event_date, COUNT(DISTINCT user_pseudo_id) AS dau
     FROM `your-project.analytics_123456789.events_*`
@@ -211,21 +211,10 @@ bigquery_execute_query(
     GROUP BY event_date
     ORDER BY event_date
   """,
-  # Optional: project_id, location, etc. — depends on Pipedream proxy config
 )
 ```
 
-For inserting rows back into BigQuery (e.g., writing a derived metrics table):
-
-```
-bigquery_insert_rows(
-  table_id="your-project.your_dataset.daily_metrics",
-  rows=[
-    {"date": "2026-04-30", "metric_name": "dau", "value": 12400},
-    ...
-  ],
-)
-```
+The query runs on the workspace's saved BigQuery connection; save one first with `database_connections_create`. No tool writes rows into BigQuery.
 
 ## Performance + cost rules
 

@@ -34,7 +34,7 @@ End-to-end competitor research and monitoring. Define the set, pull from every p
   - **Apify scrapers** — Instagram, TikTok, LinkedIn, Twitter, Reddit, Google search, Google Trends
   - **Image generation** *(optional — only if the brief feeds a comparison-page or battle-card asset downstream)*
 
-If no tool with those prefixes is found (`firecrawl_*`, `hyperseo_*`, `instagram_scrape*`, `tiktok_*_scrape`, `x_tweets_search`, `reddit_scrape*`, `google_search_results_search`, `google_trends_scrape`, `web_pages_scrape`), the toolkits to enable are Firecrawl and at least one social scraper. The LinkedIn scraper (`scrape_linkedin_profiles`) is only present when that specific integration is enabled — gracefully skip the LinkedIn slice if it's missing rather than failing the whole brief.
+If no tool with those prefixes is found (`firecrawl_*`, `hyperseo_*`, `instagram_scrape*`, `tiktok_*_scrape`, `x_tweets_search`, `reddit_scrape*`, `google_search_results_search`, `google_trends_scrape`, `web_pages_scrape`), the toolkits to enable are Firecrawl and at least one social scraper. The LinkedIn page tool (`linkedin_pages_get_by_vanity`) needs a LinkedIn connection — skip the LinkedIn slice if it's missing rather than failing the whole brief.
 
 ### How to run the tools in this skill
 
@@ -57,7 +57,7 @@ If a tool is not found: in Hyper chat, find its toolkit id with `discover_toolki
 | Brand mentions in AI search & SERPs | `hyperseo_ai_overviews_get`, `hyperseo_ai_search_volume_get`, `hyperseo_mentions_track`, `google_search_results_search`, `web_search` |
 | Organic social — Instagram | `instagram_scrape`, `instagram_posts_scrape`, `instagram_followers_count_scrape` |
 | Organic social — TikTok | `tiktok_videos_scrape`, `tiktok_comments_scrape` |
-| Organic social — LinkedIn | `scrape_linkedin_profiles` *(conditional — only available when the LinkedIn-scraper integration is enabled in your Hyper workspace)* |
+| Organic social — LinkedIn | `linkedin_pages_get_by_vanity` *(company page details; needs a LinkedIn connection)*. No tool reads a competitor's LinkedIn posts. |
 | Organic social — Twitter / X | `x_tweets_search` |
 | Community / sentiment — Reddit | `reddit_scrape`, `reddit_leads_scrape` |
 | Ecommerce competitor specifics | `ecommerce_products_scrape`, `ecommerce_reviews_scrape` |
@@ -156,8 +156,8 @@ instagram_followers_count_scrape(usernames=["<competitor>"])  # cheap, do it wee
 tiktok_videos_scrape(profiles=["<competitor>"], results_per_page=30)
 x_tweets_search(from_user="<competitor_handle>", max_items=50)
 
-# Only if scrape_linkedin_profiles is found:
-scrape_linkedin_profiles(urls=["https://www.linkedin.com/company/<competitor>"])
+# Only with a LinkedIn connection: the company page, by the name in its URL
+linkedin_pages_get_by_vanity(vanity_name="<competitor>")
 ```
 
 4. **Sentiment & demand:**

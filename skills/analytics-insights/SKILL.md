@@ -55,7 +55,7 @@ If a tool is not found: in Hyper chat, find its toolkit id with `discover_toolki
 | GA4 — custom metrics / dimensions | `google_analytics_custom_metrics_create`, `google_analytics_custom_metrics_list`, `google_analytics_custom_metrics_get`, `google_analytics_custom_metrics_update`, `google_analytics_custom_metrics_archive`, `google_analytics_custom_dimensions_create`, `google_analytics_custom_dimensions_list`, `google_analytics_custom_dimensions_get`, `google_analytics_custom_dimensions_update`, `google_analytics_custom_dimensions_archive` |
 | GTM | `google_tag_manager_accounts_manage`, `google_tag_manager_containers_manage`, `google_tag_manager_workspaces_manage`, `google_tag_manager_tags_manage`, `google_tag_manager_triggers_manage`, `google_tag_manager_variables_manage`, `google_tag_manager_built_in_variables_manage`, `google_tag_manager_folders_manage`, `google_tag_manager_environments_manage`, `google_tag_manager_versions_manage`, `google_tag_manager_version_headers_manage`, `google_tag_manager_user_permissions_manage`, `google_tag_manager_clients_manage`, `google_tag_manager_templates_manage`, `google_tag_manager_transformations_manage`, `google_tag_manager_zones_manage`, `google_tag_manager_destinations_manage` |
 | Google Search Console | `google_search_console_performance_get`, `google_search_console_sites_list`, `google_search_console_sitemaps_list`, `google_search_console_sitemaps_get`, `google_search_console_sitemaps_submit`, `google_search_console_sitemaps_delete`, `google_search_console_urls_submit` |
-| BigQuery | `bigquery_execute_query`, `bigquery_insert_rows` |
+| BigQuery | `database_query` on a saved BigQuery connection (`database_connections_create`) |
 
 ## Critical rules
 
@@ -166,7 +166,7 @@ Detailed audit walkthrough in [`references/gtm-audit.md`](./references/gtm-audit
 For unsampled data, custom attribution, joining GA4 with order-DB / CRM data, or cohort analysis. Requires the GA4 → BigQuery export to be turned on in the GA4 admin (free for standard properties since 2023).
 
 ```
-bigquery_execute_query(
+database_query(
   query="""
     SELECT
       event_date,
