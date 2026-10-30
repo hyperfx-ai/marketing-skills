@@ -28,7 +28,7 @@ Firecrawl is the backbone for any web-content slice. Use it whenever the questio
 
 ### Pitfalls
 
-- **JS-heavy SPAs may not render fully.** If the page comes back near-empty, fall back to `web_pages_scrape` (stealth-proxy + JS render). Bonus: `web_pages_scrape` accepts an `ai_query` argument that extracts targeted info from the page in one call (e.g. `ai_query="extract the pricing tier names and monthly prices"`).
+- **JS-heavy SPAs may not render fully.** If the page comes back near-empty, retry with `firecrawl_urls_scrape(url=..., proxy="auto")`, or open the page with `browser_navigate(url=...)` and read it with `browser_get_text`, which renders JavaScript.
 - **`firecrawl_websites_crawl` can be slow + credit-heavy.** Cap with `max_pages` for first run. A 200-post blog archive easily becomes a 10-minute job.
 - **Pricing pages with toggles (monthly / annual).** A single scrape captures the default state. Run twice — once for monthly, once for annual — by including the URL parameter or hash in the URL.
 - **Geo-fenced pages.** Firecrawl scrapes from a default region; pricing in EUR vs USD vs GBP varies. Note the apparent locale of the result in the brief.
@@ -143,16 +143,16 @@ The Apify-backed scrapers each handle one platform. Use the right one for each p
 For sites Firecrawl can't render (heavy SPA, JS-locked, anti-bot):
 
 ```
-web_pages_scrape(url=..., use_proxy=true, stealth_proxy=true, ai_query="extract the pricing tier names and monthly prices")
+firecrawl_urls_scrape(url=..., proxy="auto")
+browser_navigate(url=...)
+browser_get_text()
 ```
 
-The `ai_query` argument turns one scrape call into a one-shot extraction — no follow-up parsing needed for well-defined fields. Use it whenever you know in advance what slice of the page matters.
-
 Lighter-weight alternatives:
-- `web_pages_fetch(url=...)` — straight HTTP fetch, no JS render
-- `web_pages_load(url=...)` — quick text extraction, less overhead than `web_pages_scrape`
+- `web_pages_fetch(urls=[...])` — the live text of each page (Exa), no JS render
+- `web_pages_load(urls=[...])` — loads the pages into a searchable collection
 
-Order of fallback when Firecrawl is empty: `web_pages_scrape` (with `ai_query`) → `web_pages_fetch` → `web_pages_load`.
+Order of fallback when Firecrawl is empty: `firecrawl_urls_scrape` with `proxy="auto"` → `web_pages_fetch` → `browser_navigate` + `browser_get_text`.
 
 ## Ecommerce competitor specifics
 
