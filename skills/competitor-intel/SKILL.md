@@ -224,7 +224,7 @@ Output standards (apply to every brief):
 
 If the user wants ongoing monitoring rather than a one-shot:
 
-1. Save the source matrix and competitor set somewhere durable (`bigquery_*`, Notion, a Sheets tab, or just inline in the user's prompt template).
+1. Save the source matrix and competitor set somewhere durable (Notion, a Sheets tab, or just inline in the user's prompt template).
 2. Schedule the agent to re-run the pull on a cadence — weekly is the sweet spot. Daily produces too much noise; monthly misses fast moves.
 3. The brief shape becomes the *weekly digest* by default, with the option to escalate to a deep brief when something significant changes.
 

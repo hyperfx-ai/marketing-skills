@@ -65,7 +65,7 @@ For the ecom events, GA4 expects specific parameter names — `currency`, `value
 
 GA4 distinguishes:
 
-- **Event parameters** — data attached to a single event. Available in the API as `event_params.<name>` in the BigQuery export.
+- **Event parameters** — data attached to a single event.
 - **User properties** — attached to a user, persist across sessions. Use for plan tier, signup cohort, account type.
 - **Custom dimensions** — *register* an event parameter or user property as a dimension you can group by in GA4 reports. **Until you register it, you can't use it as a dimension in the GA4 UI or `run_ga4_report`.**
 - **Custom metrics** — *register* a numeric event parameter as a metric you can sum / average. Same deal: unregistered = unreportable.

@@ -1,15 +1,15 @@
 ---
 name: analytics-insights
-description: Drive Google Analytics (GA4), Google Tag Manager, Google Search Console, and BigQuery from chat — tracking plans, GA4 reports, key-event (conversion) setup, custom dimensions and metrics, GTM audits, GSC performance, and GA4 BigQuery export queries. Use when the user wants an analytics audit, a GA4 report, a tracking plan, conversion setup, GTM cleanup, search-performance data, or asks "how is the site performing?" or "are my conversions firing?".
+description: Drive Google Analytics (GA4), Google Tag Manager and Google Search Console from chat — tracking plans, GA4 reports, key-event (conversion) setup, custom dimensions and metrics, GTM audits and GSC performance. Use when the user wants an analytics audit, a GA4 report, a tracking plan, conversion setup, GTM cleanup, search-performance data, or asks "how is the site performing?" or "are my conversions firing?".
 requires_toolkits:
   - google_analytics_toolkit
 icon: google_analytics
-short_description: Drive GA4, GTM, Search Console, and BigQuery from chat for reports and tracking.
+short_description: Drive GA4, GTM and Search Console from chat for reports and tracking.
 ---
 
 # Analytics Insights
 
-Operator skill for the Google measurement stack — GA4, GTM, Search Console, and BigQuery — driven directly from chat. Build a tracking plan, run reports, mark conversions, audit existing setup, and query the warehouse without leaving the conversation.
+Operator skill for the Google measurement stack — GA4, GTM and Search Console — driven directly from chat. Build a tracking plan, run reports, mark conversions and audit existing setup without leaving the conversation.
 
 ## Out of scope — defer to other skills
 
@@ -29,9 +29,8 @@ GSC and HyperSEO overlap on search-performance data. Rule of thumb: use GSC here
   - **Google Analytics** — GA4 reports, custom metrics / dimensions, key-event (conversion) management.
   - **Google Tag Manager** — tag / trigger / variable / workspace / version management.
   - **Google Search Console** — search-performance data, sitemaps, URL inspection.
-  - **BigQuery** — SQL queries against the GA4 export (or any other dataset).
 
-If `google_analytics_ga4_reports_run`, `google_tag_manager_tags_manage`, `google_search_console_performance_get` and `database_query` are all not found, the integration to connect is one of Google Analytics, Google Tag Manager, Google Search Console or Database (a BigQuery connection).
+If `google_analytics_ga4_reports_run`, `google_tag_manager_tags_manage` and `google_search_console_performance_get` are all not found, the integration to connect is one of Google Analytics, Google Tag Manager or Google Search Console.
 
 ### How to run the tools in this skill
 
@@ -55,13 +54,12 @@ If a tool is not found: in Hyper chat, find its toolkit id with `discover_toolki
 | GA4 — custom metrics / dimensions | `google_analytics_custom_metrics_create`, `google_analytics_custom_metrics_list`, `google_analytics_custom_metrics_get`, `google_analytics_custom_metrics_update`, `google_analytics_custom_metrics_archive`, `google_analytics_custom_dimensions_create`, `google_analytics_custom_dimensions_list`, `google_analytics_custom_dimensions_get`, `google_analytics_custom_dimensions_update`, `google_analytics_custom_dimensions_archive` |
 | GTM | `google_tag_manager_accounts_manage`, `google_tag_manager_containers_manage`, `google_tag_manager_workspaces_manage`, `google_tag_manager_tags_manage`, `google_tag_manager_triggers_manage`, `google_tag_manager_variables_manage`, `google_tag_manager_built_in_variables_manage`, `google_tag_manager_folders_manage`, `google_tag_manager_environments_manage`, `google_tag_manager_versions_manage`, `google_tag_manager_version_headers_manage`, `google_tag_manager_user_permissions_manage`, `google_tag_manager_clients_manage`, `google_tag_manager_templates_manage`, `google_tag_manager_transformations_manage`, `google_tag_manager_zones_manage`, `google_tag_manager_destinations_manage` |
 | Google Search Console | `google_search_console_performance_get`, `google_search_console_sites_list`, `google_search_console_sitemaps_list`, `google_search_console_sitemaps_get`, `google_search_console_sitemaps_submit`, `google_search_console_sitemaps_delete`, `google_search_console_urls_submit` |
-| BigQuery | `database_query` on a saved BigQuery connection (`database_connections_create`) |
 
 ## Critical rules
 
 1. **GA4 property IDs — arg name differs by tool.** Three patterns: (a) Reporting tools (`run_ga4_report`, `get_property`) take `property_id="properties/123456789"`. (b) Create and list tools (`create_key_event`, `list_key_events`, `create_custom_dimension`, `list_custom_dimensions`, etc.) take `parent="properties/123456789"`. (c) Get/update/delete tools operate on a specific resource and take `name=` with the full resource path (e.g. `"properties/123456789/keyEvents/12345"`). All three need the `properties/` prefix in some form — passing a bare numeric ID silently fails. When in doubt, check the tool's schema for which arg is marked `required`.
 2. **Date ranges are inclusive on both ends.** `start_date="2026-04-01"` and `end_date="2026-04-30"` returns 30 days, not 29. Same for relative dates: `7daysAgo` to `today` is 8 days, not 7.
-3. **GA4 sampling kicks in above ~10M events.** For high-volume properties, the GA4 API silently samples results. If precision matters (board reporting, financial attribution), use the **BigQuery GA4 export** instead — see [`references/bigquery-ga4-export.md`](./references/bigquery-ga4-export.md).
+3. **GA4 sampling kicks in above ~10M events.** For high-volume properties, the GA4 API silently samples results. If precision matters (board reporting, financial attribution), say that the numbers are sampled.
 4. **Conversions in GA4 are "key events".** GA4 renamed "conversions" to "key events" in 2024. The tools reflect this — use `google_analytics_key_events_create` to mark an event as a conversion. Don't get confused by older docs.
 5. **GTM changes need a workspace + version + publish.** Tags / triggers / variables created in a workspace are *not live* until the workspace is committed to a new version and that version is published. Use `google_tag_manager_workspaces_manage` → modify → `google_tag_manager_versions_manage` (create) → publish.
 6. **GSC data has a 2–3 day lag.** Don't query "yesterday" in GSC and expect data — query 3+ days back for stable numbers. GA4 has a 24-48h lag for some metrics.
@@ -69,14 +67,13 @@ If a tool is not found: in Hyper chat, find its toolkit id with `discover_toolki
 
 ## Workflow — pick the right path
 
-The skill covers four distinct jobs. Pick first; the workflows are different.
+The skill covers three distinct jobs. Pick first; the workflows are different.
 
 | The user wants… | Path | Reference |
 | --- | --- | --- |
 | A report ("how did we do last month?") | Phase R | — |
 | To set up tracking ("we need to measure X") | Phase T | [`references/ga4-tracking-plan.md`](./references/ga4-tracking-plan.md) |
 | To audit existing GTM / GA4 ("why is conversion data wonky?") | Phase A | [`references/gtm-audit.md`](./references/gtm-audit.md) |
-| Precise / unsampled / cross-source analysis | Phase B | [`references/bigquery-ga4-export.md`](./references/bigquery-ga4-export.md) |
 
 ### Phase R — Run a report (most common path)
 
@@ -161,28 +158,6 @@ Most "our analytics is wrong" complaints are one of:
 
 Detailed audit walkthrough in [`references/gtm-audit.md`](./references/gtm-audit.md).
 
-### Phase B — BigQuery GA4 export (precision / cross-source analysis)
-
-For unsampled data, custom attribution, joining GA4 with order-DB / CRM data, or cohort analysis. Requires the GA4 → BigQuery export to be turned on in the GA4 admin (free for standard properties since 2023).
-
-```
-database_query(
-  query="""
-    SELECT
-      event_date,
-      COUNT(DISTINCT user_pseudo_id) AS users,
-      COUNTIF(event_name = 'purchase') AS purchases,
-      SUM(IF(event_name = 'purchase', ecommerce.purchase_revenue, 0)) AS revenue
-    FROM `your-project.analytics_123456789.events_*`
-    WHERE _TABLE_SUFFIX BETWEEN '20260401' AND '20260430'
-    GROUP BY event_date
-    ORDER BY event_date
-  """
-)
-```
-
-Schema, common queries, and the full attribution-modeling workflow in [`references/bigquery-ga4-export.md`](./references/bigquery-ga4-export.md).
-
 ## Output standards
 
 - **Always present numbers as tables**, not prose. "12,400 sessions, 8.2% bounce, 1.4% conversion" → markdown table.
@@ -197,4 +172,3 @@ Schema, common queries, and the full attribution-modeling workflow in [`referenc
 | --- | --- |
 | [`references/ga4-tracking-plan.md`](./references/ga4-tracking-plan.md) | Designing what to track — recommended event schema, custom dimensions / metrics, key-event mapping, naming conventions |
 | [`references/gtm-audit.md`](./references/gtm-audit.md) | Auditing an existing GTM container — finding duplicate tags, broken triggers, unused variables, missing consent gates |
-| [`references/bigquery-ga4-export.md`](./references/bigquery-ga4-export.md) | Querying the GA4 BigQuery export — schema, common queries (DAU, funnel, attribution, cohort, retention), join patterns |

@@ -20,7 +20,7 @@ Create, customize, and connect your MCP at [app.hyperfx.ai/mcp](https://app.hype
 
 What's in it:
 
-- **100+ direct integrations** — ad platforms (Google Ads, Meta, TikTok, LinkedIn, Amazon, Pinterest), social (Instagram, Reddit, Twitter, YouTube), email (Gmail, Klaviyo, Resend, Beehiiv), analytics (GA4, Search Console, BigQuery), CRM (HubSpot, Apollo), commerce (Shopify), and more.
+- **100+ direct integrations** — ad platforms (Google Ads, Meta, TikTok, LinkedIn, Amazon, Pinterest), social (Instagram, Reddit, Twitter, YouTube), email (Gmail, Klaviyo, Resend, Beehiiv), analytics (GA4, Search Console), CRM (HubSpot, Apollo), commerce (Shopify), and more.
 - **Built-in tools** — Meta Ads Library scraper, Reddit and Twitter scrapers, image generation (OpenAI, Nano Banana, Seedream), video generation (Veo, Seedance), browser automation, transcription.
 - **Guardrails and permissions** — every action can require approval before it runs, so your agent can't delete a campaign or send a DM without your green light.
 - **The Hyper platform** — build and manage Hyper agents, tasks, and skills directly.
@@ -119,7 +119,7 @@ That's `meta-ads` + `google-ads` + `tiktok-ads` + `ad-creative-generation` + `vi
 | [`cold-email-outreach`](skills/cold-email-outreach) | Run end-to-end B2B cold outreach — prospect, enrich, personalize, send, follow up, route replies. | Gmail + Apollo (Firecrawl + LinkedIn scraper bundled) |
 | [`email-lifecycle`](skills/email-lifecycle) | Build welcome, nurture, re-engagement, win-back, and abandoned-cart email programs. | At least one of Klaviyo, Resend, Beehiiv, or Gmail |
 | **Analytics** | | |
-| [`analytics-insights`](skills/analytics-insights) | Drive GA4, Google Tag Manager, Search Console, and BigQuery from chat — tracking plans, reports, conversions, container audits, BigQuery export queries. | At least one of GA4, GTM, GSC, or BigQuery |
+| [`analytics-insights`](skills/analytics-insights) | Drive GA4, Google Tag Manager and Search Console from chat — tracking plans, reports, conversions, container audits. | At least one of GA4, GTM or GSC |
 | **Execution** | | |
 | [`hyper-cli`](skills/hyper-cli) | Run these marketing skills through the Hyper CLI (beta), translating raw MCP tool names into CLI aliases or raw toolkit calls. | Hyper CLI + the integrations required by the sibling skill |
 

@@ -4,7 +4,7 @@ This file gives Claude Code guidance for working in this repository. The content
 
 ## What this repo is
 
-A public collection of marketing-domain Agent Skills that wrap the **Hyper MCP** tool surface. Each skill in [`skills/`](./skills) teaches an agent how to drive Hyper's MCP-exposed tools (Google Ads, Meta, Amazon, TikTok, Pinterest, LinkedIn, HyperSEO, Apify scrapers, image / video generation, Gmail, Apollo, Klaviyo, Resend, Beehiiv, GA4, GTM, Search Console, BigQuery, etc.) for a specific marketing job.
+A public collection of marketing-domain Agent Skills that wrap the **Hyper MCP** tool surface. Each skill in [`skills/`](./skills) teaches an agent how to drive Hyper's MCP-exposed tools (Google Ads, Meta, Amazon, TikTok, Pinterest, LinkedIn, HyperSEO, Apify scrapers, image / video generation, Gmail, Apollo, Klaviyo, Resend, Beehiiv, GA4, GTM, Search Console, etc.) for a specific marketing job.
 
 Skills are NOT tools. They are markdown instructions plus optional reference files. The actual tool calls come from the connected Hyper MCP at [https://app.hyperfx.ai/mcp](https://app.hyperfx.ai/mcp). The MCP descriptor for each tool is the only source of truth for tool names, arg names, and arg types — never trust skill content over the live MCP catalog when they disagree.
 
@@ -68,7 +68,7 @@ Skills are NOT tools. They are markdown instructions plus optional reference fil
 
 | Skill | What it does |
 | --- | --- |
-| [`analytics-insights`](./skills/analytics-insights) | Drive Google Analytics (GA4), Google Tag Manager, Google Search Console, and BigQuery from chat — tracking-plan design, key-event (conversion) management, custom dimensions / metrics, GA4 reports, GTM container audits, GSC search performance, and queries against the GA4 BigQuery export. Ships with three references under `references/` (GA4 tracking plan, GTM audit, BigQuery GA4 export). |
+| [`analytics-insights`](./skills/analytics-insights) | Drive Google Analytics (GA4), Google Tag Manager and Google Search Console from chat — tracking-plan design, key-event (conversion) management, custom dimensions / metrics, GA4 reports, GTM container audits and GSC search performance. Ships with two references under `references/` (GA4 tracking plan, GTM audit). |
 
 ### Apps & channels
 
