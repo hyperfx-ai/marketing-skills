@@ -4,7 +4,6 @@ description: "Generate one excellent, on-brand blog post per run for any busines
 requires_toolkits:
   - hyperseo
   - firecrawl_toolkit
-  - web_scraper
   - google_search_console_toolkit
   - wordpress_toolkit
   - wordpress_org_toolkit
@@ -45,7 +44,7 @@ If a tool is not found: in Hyper chat, find its toolkit id with `discover_toolki
 | Job | Tools |
 | --- | --- |
 | Read and write `blog-strategy.md` and the post draft | `files_read`, `files_create`, `files_edit` (add a log row with `files_edit(path=..., mode="append", new_str="<the new log row>\n")`) |
-| Learn the brand from their site (Step 0) | `firecrawl_urls_scrape`, `web_pages_scrape` |
+| Learn the brand from their site (Step 0) | `firecrawl_urls_scrape`, `web_pages_fetch` |
 | Validate a topic and study the SERP / AI answer | `hyperseo_search_volume_get`, `hyperseo_keyword_difficulty_get`, `hyperseo_intents_search`, `hyperseo_ai_search_volume_get`, `hyperseo_serp_results_get`, `hyperseo_ai_overviews_get` |
 | Mine real-world signal and measure impact | `google_search_console_performance_get(site_url=..., start_date="YYYY-MM-DD", end_date="YYYY-MM-DD", dimensions=["query","page"], row_limit=1000)`. Take `site_url` from `connections_info(toolkit_id="google_search_console_toolkit")`. End the range 3 or more days ago: newer days are not complete. |
 | Check whether AI recommends the brand | `hyperseo_mentions_track` |

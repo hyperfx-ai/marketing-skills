@@ -177,37 +177,33 @@ Review sites are goldmines for structured pain/benefit language. 1–3 star revi
 
 ```python
 # Product reviews
-web_pages_scrape(
+firecrawl_urls_scrape(
     url="https://www.g2.com/products/[product-slug]/reviews",
-    ai_query="Extract verbatim customer quotes about: (1) biggest pain points, (2) what they wish the product did differently, (3) what convinced them to buy. Include the star rating context.",
-    use_proxy=True
+    proxy="auto"
 )
 
 # Competitor reviews (what do their customers complain about?)
-web_pages_scrape(
+firecrawl_urls_scrape(
     url="https://www.g2.com/products/[competitor-slug]/reviews?filters%5Bnps_score%5D%5B%5D=3&filters%5Bnps_score%5D%5B%5D=2&filters%5Bnps_score%5D%5B%5D=1",
-    ai_query="What are the most common complaints about this product? Extract verbatim quotes.",
-    use_proxy=True
+    proxy="auto"
 )
 ```
 
 **Capterra:**
 
 ```python
-web_pages_scrape(
+firecrawl_urls_scrape(
     url="https://www.capterra.com/p/[id]/[product-name]/",
-    ai_query="Extract the top pros and cons in customers' own words. Pull verbatim quotes from negative reviews.",
-    use_proxy=True
+    proxy="auto"
 )
 ```
 
 **Trustpilot (B2C products):**
 
 ```python
-web_pages_scrape(
+firecrawl_urls_scrape(
     url="https://www.trustpilot.com/review/[domain.com]",
-    ai_query="Extract the most common complaint themes from low-rated reviews. Include verbatim quotes.",
-    use_proxy=True
+    proxy="auto"
 )
 ```
 
@@ -215,20 +211,18 @@ web_pages_scrape(
 
 ```python
 # iOS
-web_pages_scrape(
+firecrawl_urls_scrape(
     url="https://apps.apple.com/us/app/[app-name]/id[app-id]",
-    ai_query="Extract the most common pain points from 1-3 star reviews. Include exact customer quotes.",
-    use_proxy=True
+    proxy="auto"
 )
 ```
 
-**Tip:** If `web_pages_scrape` returns JavaScript-blocked content, try `firecrawl_urls_scrape` instead:
+**Tip:** If Firecrawl returns a blocked or empty page, open it in the browser, which renders JavaScript:
 
 ```python
-firecrawl_urls_scrape(
-    url="https://www.g2.com/products/[product-slug]/reviews",
-    only_main_content=True
-)
+browser_sessions_create()
+browser_navigate(url="https://www.g2.com/products/[product-slug]/reviews")
+browser_a11y_tree()
 ```
 
 ---
@@ -289,7 +283,7 @@ google_search_results_search(
 )
 ```
 
-Then use `firecrawl_urls_scrape` or `web_pages_scrape` to read the most relevant URLs.
+Then use `firecrawl_urls_scrape` or `web_pages_fetch` to read the most relevant URLs.
 
 ---
 
@@ -321,6 +315,6 @@ Note: `instagram_posts_scrape` returns post captions, engagement, and metadata �
 Some scraper tools are Apify-backed and occasionally return `fetch failed` or timeout:
 
 1. Retry once after a short pause.
-2. If it fails again, try an alternative tool (e.g., `firecrawl_urls_scrape` instead of `web_pages_scrape`).
+2. If it fails again, try an alternative tool (e.g., `browser_sessions_create`, `browser_navigate` and `browser_a11y_tree` instead of `firecrawl_urls_scrape`).
 3. If still failing, note the source as unavailable and continue with remaining sources. Don't block the entire research on one failed scrape.
 4. Never invent data to fill a gap — mark it as "source not available."

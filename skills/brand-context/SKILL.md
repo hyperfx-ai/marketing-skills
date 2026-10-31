@@ -38,7 +38,7 @@ If a tool is not found: in Hyper chat, find its toolkit id with `discover_toolki
 | Job | Tools |
 | --- | --- |
 | Read, create, update `brand-context.md` | your file tools (`read_file`, `create_file`, `edit_file`) |
-| Auto-draft from the brand's site | `firecrawl_urls_scrape` (homepage, about, pricing, product pages), `web_pages_scrape` fallback |
+| Auto-draft from the brand's site | `firecrawl_urls_scrape` (homepage, about, pricing, product pages), `web_pages_fetch` fallback |
 | Visual identity (colors, logo, typography) | `firecrawl_branding_extract` |
 | Verbatim customer language (optional) | defer to `customer-research` |
 | Competitive landscape (optional) | defer to `competitor-intel`, `seo-research` |

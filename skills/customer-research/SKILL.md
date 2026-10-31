@@ -54,8 +54,7 @@ If a tool is not found: in Hyper chat, find its toolkit id with `discover_toolki
 | `youtube_comments_search` | Pull comments from specific YouTube video URLs |
 | `youtube_video_transcripts_fetch` | Fetch the full transcript of a YouTube video for language/topic extraction |
 | `tiktok_videos_scrape` | Search TikTok by keyword or hashtag — find trending conversations and comments |
-| `web_pages_scrape` | Scrape review pages (G2, Capterra, Trustpilot, app stores) |
-| `firecrawl_urls_scrape` | Cleaner extraction for JS-heavy review pages |
+| `firecrawl_urls_scrape` | Scrape review pages (G2, Capterra, Trustpilot, app stores); `proxy="auto"` for bot-protected sites |
 | `google_search_results_search` | Find discussion threads, forum posts, and `site:` searches |
 | `instagram_posts_scrape` | Pull recent posts from specific brand or community accounts |
 
@@ -164,10 +163,9 @@ x_tweets_search(
 
 ```python
 # G2 reviews for a specific product
-web_pages_scrape(
+firecrawl_urls_scrape(
     url="https://www.g2.com/products/[product-slug]/reviews",
-    ai_query="Extract the top complaints and pain points from customer reviews. Include verbatim quotes.",
-    use_proxy=True
+    proxy="auto"
 )
 ```
 
