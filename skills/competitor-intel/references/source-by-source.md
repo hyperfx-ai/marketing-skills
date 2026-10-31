@@ -28,7 +28,7 @@ Firecrawl is the backbone for any web-content slice. Use it whenever the questio
 
 ### Pitfalls
 
-- **JS-heavy SPAs may not render fully.** If the page comes back near-empty, retry with `firecrawl_urls_scrape(url=..., proxy="auto")`, or open the page with `browser_navigate(url=...)` and read it with `browser_get_text`, which renders JavaScript.
+- **JS-heavy SPAs may not render fully.** If the page comes back near-empty, retry with `firecrawl_urls_scrape(url=..., proxy="auto")`, or open a browser with `browser_sessions_create()`, go to the page with `browser_navigate(url=...)` and read it with `browser_a11y_tree()`. The browser renders JavaScript.
 - **`firecrawl_websites_crawl` can be slow + credit-heavy.** Cap with `max_pages` for first run. A 200-post blog archive easily becomes a 10-minute job.
 - **Pricing pages with toggles (monthly / annual).** A single scrape captures the default state. Run twice — once for monthly, once for annual — by including the URL parameter or hash in the URL.
 - **Geo-fenced pages.** Firecrawl scrapes from a default region; pricing in EUR vs USD vs GBP varies. Note the apparent locale of the result in the brief.
@@ -144,15 +144,16 @@ For sites Firecrawl can't render (heavy SPA, JS-locked, anti-bot):
 
 ```
 firecrawl_urls_scrape(url=..., proxy="auto")
+browser_sessions_create()
 browser_navigate(url=...)
-browser_get_text()
+browser_a11y_tree()
 ```
 
 Lighter-weight alternatives:
 - `web_pages_fetch(urls=[...])` — the live text of each page (Exa), no JS render
 - `web_pages_load(urls=[...])` — loads the pages into a searchable collection
 
-Order of fallback when Firecrawl is empty: `firecrawl_urls_scrape` with `proxy="auto"` → `web_pages_fetch` → `browser_navigate` + `browser_get_text`.
+Order of fallback when Firecrawl is empty: `firecrawl_urls_scrape` with `proxy="auto"` → `web_pages_fetch` → `browser_sessions_create`, `browser_navigate` and `browser_a11y_tree`.
 
 ## Ecommerce competitor specifics
 

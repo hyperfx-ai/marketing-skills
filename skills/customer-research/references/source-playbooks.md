@@ -220,8 +220,9 @@ firecrawl_urls_scrape(
 **Tip:** If Firecrawl returns a blocked or empty page, open it in the browser, which renders JavaScript:
 
 ```python
+browser_sessions_create()
 browser_navigate(url="https://www.g2.com/products/[product-slug]/reviews")
-browser_get_text()
+browser_a11y_tree()
 ```
 
 ---
@@ -314,6 +315,6 @@ Note: `instagram_posts_scrape` returns post captions, engagement, and metadata â
 Some scraper tools are Apify-backed and occasionally return `fetch failed` or timeout:
 
 1. Retry once after a short pause.
-2. If it fails again, try an alternative tool (e.g., `browser_navigate` and `browser_get_text` instead of `firecrawl_urls_scrape`).
+2. If it fails again, try an alternative tool (e.g., `browser_sessions_create`, `browser_navigate` and `browser_a11y_tree` instead of `firecrawl_urls_scrape`).
 3. If still failing, note the source as unavailable and continue with remaining sources. Don't block the entire research on one failed scrape.
 4. Never invent data to fill a gap â€” mark it as "source not available."

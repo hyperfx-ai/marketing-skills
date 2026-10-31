@@ -52,7 +52,7 @@ If a tool is not found: in Hyper chat, find its toolkit id with `discover_toolki
 
 | Phase | Tools |
 | --- | --- |
-| Site & web content | `firecrawl_urls_scrape`, `firecrawl_urls_scrape_batch`, `firecrawl_websites_crawl`, `firecrawl_screenshots_create`, `firecrawl_branding_extract`, `web_pages_fetch`, `web_pages_load`, `browser_navigate` + `browser_get_text` (JS-rendering fallback) |
+| Site & web content | `firecrawl_urls_scrape`, `firecrawl_urls_scrape_batch`, `firecrawl_websites_crawl`, `firecrawl_screenshots_create`, `firecrawl_branding_extract`, `web_pages_fetch`, `web_pages_load`, `browser_sessions_create`, `browser_navigate`, `browser_a11y_tree` (JS-rendering fallback) |
 | Search rankings & backlinks | `hyperseo_competitors_search`, `hyperseo_competitor_domains_search`, `hyperseo_domain_overview_get`, `hyperseo_domain_keywords_get`, `hyperseo_domain_intersections_search`, `hyperseo_site_keywords_search`, `hyperseo_backlinks_history_get`, `hyperseo_rank_history_get`, `hyperseo_mentions_track` |
 | Brand mentions in AI search & SERPs | `hyperseo_ai_overviews_get`, `hyperseo_ai_search_volume_get`, `hyperseo_mentions_track`, `google_search_results_search`, `web_search` |
 | Organic social — Instagram | `instagram_scrape`, `instagram_posts_scrape`, `instagram_followers_count_scrape` |
@@ -146,7 +146,7 @@ firecrawl_urls_scrape(url="https://<competitor>.com/")
 firecrawl_branding_extract(url="https://<competitor>.com")  # logo, colors, voice
 ```
 
-For a full-blog-archive deep dive use `firecrawl_websites_crawl` once and check status with `firecrawl_crawls_status_check`. If Firecrawl returns near-empty for a JS-heavy SPA, open the page with `browser_navigate(url=...)` and read it with `browser_get_text`.
+For a full-blog-archive deep dive use `firecrawl_websites_crawl` once and check status with `firecrawl_crawls_status_check`. If Firecrawl returns near-empty for a JS-heavy SPA, open a browser with `browser_sessions_create()`, go to the page with `browser_navigate(url=...)` and read it with `browser_a11y_tree()`.
 
 3. **Social — sequenced per platform** (note: most scrapers take *arrays* of identifiers, not a single username):
 
