@@ -1,0 +1,11 @@
+Tools of seti staging e9992aa9df, from the five toolkit registries
+webflow_toolkit (9 tools): webflow_collection_fields_get, webflow_collection_items_create, webflow_collection_items_list, webflow_collection_items_update, webflow_collections_create, webflow_collections_get, webflow_collections_list, webflow_sites_get, webflow_sites_list
+webflow_publish_site listed: False
+internal_taskiq (8 tools): internal_taskiq_health_get, internal_taskiq_overview_get, internal_taskiq_queues_list, internal_taskiq_redis_commands_run, internal_taskiq_run_get, internal_taskiq_runs_list, internal_taskiq_schedules_list, internal_taskiq_workers_list
+toolkits named celery: []
+google_ads_preview_blueprint or google_ads_create_from_blueprint listed: False
+
+hyperai admin describe internal_taskiq internal_taskiq_redis_commands_run --signature  (staging, 2026-10-30)
+internal_taskiq_redis_commands_run(command: string) -> object
+hyperai admin describe internal_celery run_redis_command --signature  (staging, 2026-10-30)
+HTTP 404: Toolkit internal_celery not found
