@@ -46,7 +46,6 @@ Filling this table forces the two decisions that prevent rebuilds: **budget mode
 
 For every tier that targets a custom or lookalike audience, run the audience validation from [discovery.md](discovery.md) step 3b **before creating any campaign**:
 
-- `operation_status.code` = 200, `delivery_status.code` = 200, `approximate_count` > ~1000
 - Confirm the audience parameters match the brief (e.g. retention window)
 
 If any audience is broken, too small, or mismatched, **surface it to the user and resolve it before building.** Do not build two campaigns and then silently swap in a customer list for the broken BOF lookalike — the user asked for a specific structure.
@@ -57,7 +56,7 @@ If any audience is broken, too small, or mismatched, **surface it to the user an
 
 | Tier intent | Recommended mode | Budget goes |
 |---|---|---|
-| Advantage+ broad targeting | Advantage+ | Campaign level (added last) |
+| Advantage+ broad targeting | Advantage+ | Campaign level (set when the campaign is made) |
 | Manual / specific audience targeting | Manual | Ad set level |
 
 A funnel commonly mixes both. That's fine — but it dictates the build order below.
@@ -68,12 +67,11 @@ A funnel commonly mixes both. That's fine — but it dictates the build order be
 
 This is the critical sequence. Setting a campaign budget activates CBO and blocks ad-set budgets, so budget timing matters.
 
-1. **Create ALL campaigns first with no budget.** Every campaign, no `daily_budget`.
+1. **Create the manual campaigns with no budget**, and the Advantage+ campaigns WITH their `daily_budget` or `lifetime_budget` (and `bid_strategy`, if any).
 2. **Create the manual ad sets** (MOF, BOF) with their `daily_budget` at the ad set level. With no campaign budget, there's no CBO lock.
-3. **Create the Advantage+ ad sets** (TOF) with no budget (add `bid_amount` only if the account's bid strategy requires it — see below).
-4. **Add `daily_budget` to the Advantage+ campaigns** via `meta_ads_campaign_update`, now that their ad sets exist.
-5. **Create the ads** for each ad set.
-6. **Preview, then leave everything PAUSED** for user review.
+3. **Create the Advantage+ ad sets** (TOF) with no budget (add `bid_amount` only if the bid strategy requires it — see below).
+4. **Create the ads** for each ad set.
+5. **Preview, then leave everything PAUSED** for user review.
 
 See [constraints.md](constraints.md) section 2 for the full CBO explanation.
 
@@ -104,7 +102,7 @@ This is exactly why the plan-first + audience-validation steps above matter: res
 
 | Symptom | Cause | Fix |
 |---|---|---|
-| Ad set rejects `daily_budget` (CBO error) | Campaign created with a budget | Follow the build order above — campaigns first with no budget |
+| Ad set rejects `daily_budget` (CBO error) | A manual campaign was created with a budget | Follow the build order above — a manual campaign has no budget |
 | "Bid Amount Required" on every tier | Account bid strategy is bid-cap | Stop, surface once, resolve before building remaining tiers |
 | Built funnel doesn't match brief | Audience swapped or window mismatched silently | Validate + surface audience issues before building (step 1) |
 | Had to delete and rebuild campaigns | Budget mode decided after creation | Decide budget mode per tier in the plan, before any tool call |

@@ -24,7 +24,7 @@ Every post, regardless of archetype, follows this shape.
 4. **A short key-takeaways / TL;DR block** for anything over ~1,200 words, stating the main answer and 3 to 5 bullets.
 5. **Question-shaped H2s and H3s.** Phrase each heading the way a person asks it: "How does X work?", "How much does X cost?", "Is X worth it?" AI does section-level extraction, so a heading that matches the user's question gets the section cited even when the page is not ranked #1.
 6. **Self-contained sections.** Each section answers its own heading in its first sentence, then expands. No orphan pronouns, no "as mentioned above." A reader (or model) dropped into the middle should understand it.
-7. **An FAQ block** of 4 to 8 real questions (mine "People Also Ask" and `hyperseo_serp_results_get`), each answered in 30 to 50 words, answer first.
+7. **An FAQ block** of 4 to 8 real questions (take the question-form keywords from `hyperseo_keyword_ideas_generate(keywords=[...], limit=50)` and the titles in `hyperseo_serp_results_get`; no tool returns People Also Ask), each answered in 30 to 50 words, answer first.
 8. **One clear call to action** at the end. Exactly one primary next step.
 
 ---
@@ -114,7 +114,7 @@ A single post rarely builds authority. Plan in clusters.
 
 ## 6. Improving an existing post (often higher ROI than a new one)
 
-Before writing something new, check `google_search_console_query_insights` for pages that already get impressions:
+Before writing something new, check `google_search_console_performance_get` for pages that already get impressions:
 
 - **Position 4 to 15, decent impressions, low CTR:** do not write a new post. Rewrite the title and meta to earn the click, and tighten the answer-first lead.
 - **Position 10 to 20 on a relevant query with no dedicated page:** that query is a signal. Write a focused post targeting it, and link to it from related posts.

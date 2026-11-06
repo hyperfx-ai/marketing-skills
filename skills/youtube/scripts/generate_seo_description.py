@@ -125,7 +125,7 @@ async def run(
         payload["cta_link"] = cta_link
 
     res = await call_tool(
-        "ai_function",
+        "ai_functions_run",
         instructions=SEO_DESCRIPTION_PROMPT,
         input=payload,
         output_format="json",
@@ -133,7 +133,16 @@ async def run(
         performance="fast",
     )
 
-    output_json = res["results"][0].get("output_json") or {}
+    if not res.get("success"):
+        raise RuntimeError(
+            res.get("error") or res.get("message") or "AI generation failed"
+        )
+    item = res["results"][0]
+    if not item.get("success") or not isinstance(item.get("output_json"), dict):
+        raise RuntimeError(
+            item.get("error") or "AI generation returned no structured output"
+        )
+    output_json = item["output_json"]
     return {
         "topic": topic,
         "primary_keyword": primary_keyword,

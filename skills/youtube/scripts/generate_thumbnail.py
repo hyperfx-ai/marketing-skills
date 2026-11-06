@@ -1,18 +1,17 @@
 """Generate a single YouTube thumbnail.
 
-Every call goes through the unified ``images_generate`` facade; routing picks
-the backend via ``backend_hint``:
+Every call goes through ``images_generate``; the inputs pick the ``model``:
 
-- ``style_reference_file_id`` set     -> nano-banana backend with the file as a
-                                          reference image (``nano_banana_pro``
-                                          when the prompt has explicit text
-                                          overlay, ``nano_banana`` otherwise).
+- ``style_reference_file_id`` set     -> ``nano-banana`` (``nano-banana-pro``
+                                          when the prompt needs rendered text)
+                                          with that file in ``reference_images``.
 - ``brand_file_ids`` or
-  ``face_file_ids`` set               -> ``openai`` backend with combined
-                                          reference_images (better at composing
-                                          multiple reference assets).
-- otherwise                           -> nano-banana backend, pro/flash chosen
-                                          by prompt text-heaviness.
+  ``face_file_ids`` set               -> ``gpt-image-2.5-sunburst`` with the
+                                          combined ``reference_images`` (best
+                                          at composing several references).
+- otherwise                           -> ``nano-banana-pro`` if the prompt
+                                          has explicit text overlay,
+                                          ``nano-banana`` otherwise.
 
 All tool calls go through the sandbox RPC, so generated images are persisted
 as ``DBFile``s in the conversation thread and metering fires automatically.
@@ -53,6 +52,10 @@ def _normalise_aspect(aspect_ratio: str | None) -> str:
     return aspect_ratio or "16:9"
 
 
+# images_generate takes a quality tier; map the script's resolution knob onto it.
+_QUALITY_BY_SIZE = {"1K": "draft", "2K": "standard", "4K": "high"}
+
+
 async def run(
     prompt: str,
     face_file_ids: list[str] | None = None,
@@ -73,68 +76,45 @@ async def run(
         refs.extend(brand_file_ids)
 
     aspect = _normalise_aspect(aspect_ratio)
-    chosen_model = model
-    used_tool: str
-    result: dict[str, Any]
+    quality = _QUALITY_BY_SIZE[image_size]
 
-    # All paths go through the unified images_generate facade; the backend is
-    # selected via backend_hint (provider-specific tools are no longer
-    # exposed on the MCP surface).
-    used_tool = "images_generate"
+    def gemini_model() -> str:
+        if model == "pro":
+            return "nano-banana-pro"
+        if model == "flash":
+            return "nano-banana"
+        return "nano-banana-pro" if _looks_text_heavy(prompt) else "nano-banana"
+
+    request: dict[str, Any] = {"id": "thumbnail", "prompt": prompt}
     if style_reference_file_id:
-        if chosen_model == "auto":
-            chosen_model = "pro" if _looks_text_heavy(prompt) else "flash"
-        backend = "nano_banana_pro" if chosen_model == "pro" else "nano_banana"
-        result = await call_tool(
-            used_tool,
-            requests=[
-                {
-                    "id": "thumbnail",
-                    "prompt": prompt,
-                    "reference_images": [style_reference_file_id],
-                }
-            ],
-            n=n,
-            backend_hint=backend,
-            aspect_ratio=aspect,
-            quality="high" if image_size == "2K" else "standard",
-        )
-        chosen_model = backend
+        chosen_model = gemini_model()
+        request["reference_images"] = [style_reference_file_id]
     elif refs:
-        # OpenAI composes multiple references best when identity must be
-        # preserved (face + brand + product).
-        result = await call_tool(
-            used_tool,
-            requests=[{"prompt": prompt, "reference_images": refs}],
-            backend_hint="openai",
-            aspect_ratio=aspect,
-            quality="high",
-        )
-        chosen_model = "openai"
+        chosen_model = "gpt-image-2.5-sunburst"
+        request["reference_images"] = refs
     else:
-        if chosen_model == "auto":
-            chosen_model = "pro" if _looks_text_heavy(prompt) else "flash"
-        backend = "nano_banana_pro" if chosen_model == "pro" else "nano_banana"
-        result = await call_tool(
-            used_tool,
-            requests=[{"id": "thumbnail", "prompt": prompt}],
-            n=n,
-            backend_hint=backend,
-            aspect_ratio=aspect,
-            quality="high" if image_size == "2K" else "standard",
-        )
-        chosen_model = backend
+        chosen_model = gemini_model()
+
+    result = await call_tool(
+        "images_generate",
+        requests=[request],
+        n=n,
+        model=chosen_model,
+        aspect_ratio=aspect,
+        quality=quality,
+    )
 
     images = result.get("images", []) if isinstance(result, dict) else []
     if not images:
-        raise RuntimeError(f"{used_tool} returned no images: {result}")
+        raise RuntimeError(f"images_generate returned no images: {result}")
 
     primary = images[0]
     return {
-        "tool_used": used_tool,
+        "tool_used": "images_generate",
         "model": chosen_model,
         "aspect_ratio": aspect,
         "image_size": image_size,
+        "quality": quality,
         "primary": {
             "file_id": primary.get("file_id"),
             "url": primary.get("url"),

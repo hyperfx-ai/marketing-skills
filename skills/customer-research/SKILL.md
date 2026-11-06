@@ -28,24 +28,35 @@ The goal is always the same: surface what customers actually say (in their own w
 ## Requirements
 
 - **Hyper MCP installed.** [https://app.hyperfx.ai/mcp](https://app.hyperfx.ai/mcp)
-- **Apify scrapers toolkit enabled** at [https://app.hyperfx.ai/apps](https://app.hyperfx.ai/apps) — provides Reddit, Twitter, YouTube, TikTok, and Instagram scrapers.
+- **Reddit Scraper, Twitter Scraper, YouTube Scraper, TikTok Scraper and Instagram Scraper toolkits enabled** at [https://app.hyperfx.ai/apps](https://app.hyperfx.ai/apps).
 
-Not all scrapers need to be active for every run — enable the ones relevant to your ICP (Reddit and one review site is the minimum). If a scraper tool is missing from the tool list, skip that source and continue with the others.
+Not all scrapers need to be active for every run — enable the ones relevant to your ICP (Reddit and one review site is the minimum). If a scraper tool is not found, skip that source and continue with the others.
+
+### How to run the tools in this skill
+
+Every tool in this skill is named by its canonical tool name. Run it with the call your surface gives you:
+
+| Surface | Find a tool | Run it |
+| --- | --- | --- |
+| Hyper chat | Call the tool by its name; `search_tools(queries=["<provider> <action>"])` shows its parameters | `<name>(...)` |
+| MCP client (Claude, Cursor, Codex, ChatGPT) | `search("<what you want to do>")`, then `describe("<name>")` | `call_read("<name>", {...})`, `call_write` or `call_destructive`: the one that `describe` names in `call_with` |
+| Hyper CLI | `hyperai search "<what you want to do>"`, then `hyperai describe <name>` | `hyperai call <name> --json '{...}'` |
+
+If a tool is not found: in Hyper chat, find its toolkit id with `discover_toolkits` and pass it to `enable_toolkit`. On an MCP client or the CLI, tell the user which integration to connect in Hyper.
 
 ## Tool surface
 
 | Tool | Purpose |
 | --- | --- |
-| `scrape_reddit` | Mine posts and comments from subreddits or by keyword |
-| `search_tweets` | Search X/Twitter with advanced operators and engagement filters |
+| `reddit_scrape` | Mine posts and comments from subreddits or by keyword |
+| `x_tweets_search` | Search X/Twitter with advanced operators and engagement filters |
 | `youtube_videos_search_top` | Find the top YouTube videos on a topic — use as input for comment mining |
 | `youtube_comments_search` | Pull comments from specific YouTube video URLs |
 | `youtube_video_transcripts_fetch` | Fetch the full transcript of a YouTube video for language/topic extraction |
-| `scrape_tiktok_videos` | Search TikTok by keyword or hashtag — find trending conversations and comments |
-| `web_scrape_page` | Scrape review pages (G2, Capterra, Trustpilot, app stores) |
-| `firecrawl_urls_scrape` | Cleaner extraction for JS-heavy review pages |
-| `search_google_results` | Find discussion threads, forum posts, and `site:` searches |
-| `scrape_instagram_posts` | Pull recent posts from specific brand or community accounts |
+| `tiktok_videos_scrape` | Search TikTok by keyword or hashtag — find trending conversations and comments |
+| `firecrawl_urls_scrape` | Scrape review pages (G2, Capterra, Trustpilot, app stores); `proxy="auto"` for bot-protected sites |
+| `google_search_results_search` | Find discussion threads, forum posts, and `site:` searches |
+| `instagram_posts_scrape` | Pull recent posts from specific brand or community accounts |
 
 ## Critical rules
 
@@ -72,7 +83,7 @@ Read `references/synthesis-templates.md` for the extraction framework, persona t
 
 The user needs intel from online communities, review sites, and social platforms. This is where MCP tools do the heavy lifting.
 
-See `references/source-playbooks.md` for per-source tool call examples and signal extraction tips.
+The steps below name the tool of each source. Read `references/source-playbooks.md` only when a scrape fails or returns nothing.
 
 ---
 
@@ -94,8 +105,6 @@ Before calling anything, decide which sources are worth hitting for this specifi
 
 **Minimum viable run: Reddit + one review site.** Add supplementary sources only when the minimum doesn't produce enough signal, or when the ICP table above calls for them.
 
-For platform-by-platform tool call examples, read `references/source-playbooks.md`.
-
 ### Step 2 — Run targeted scrapes
 
 Pull from at least 2 sources. Single-source findings are low confidence by definition.
@@ -103,7 +112,7 @@ Pull from at least 2 sources. Single-source findings are low confidence by defin
 **Reddit — the highest-signal source for most ICPs:**
 
 ```python
-scrape_reddit(
+reddit_scrape(
     searches=["[product category] frustrations", "[competitor name] problems"],
     sort="top",
     time="year",
@@ -117,7 +126,7 @@ scrape_reddit(
 For specific subreddits, pair with `start_urls`:
 
 ```python
-scrape_reddit(
+reddit_scrape(
     start_urls=["https://www.reddit.com/r/marketing/"],
     searches=["CRM"],
     sort="top",
@@ -143,7 +152,7 @@ youtube_comments_search(
 **X/Twitter — complaints, frustrations, and niche conversations:**
 
 ```python
-search_tweets(
+x_tweets_search(
     search_terms='"[product name]" frustrating OR broken OR switched OR canceled',
     max_items=50,
     min_faves=5
@@ -154,17 +163,16 @@ search_tweets(
 
 ```python
 # G2 reviews for a specific product
-web_scrape_page(
+firecrawl_urls_scrape(
     url="https://www.g2.com/products/[product-slug]/reviews",
-    ai_query="Extract the top complaints and pain points from customer reviews. Include verbatim quotes.",
-    use_proxy=True
+    proxy="auto"
 )
 ```
 
 **TikTok — consumer conversations and trending frustrations:**
 
 ```python
-scrape_tiktok_videos(
+tiktok_videos_scrape(
     search_queries=["[product category] problems", "[competitor name] review"],
     results_per_page=30
 )
@@ -173,7 +181,7 @@ scrape_tiktok_videos(
 **Google discovery — find threads and communities you haven't thought of:**
 
 ```python
-search_google_results(
+google_search_results_search(
     query='site:reddit.com "[product category]" "I switched" OR "I quit" OR "stopped using"',
     num_results=20
 )

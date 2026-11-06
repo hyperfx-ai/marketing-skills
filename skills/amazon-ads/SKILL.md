@@ -16,7 +16,19 @@ Strategic guide for managing Amazon Ads Sponsored Products campaigns. Research f
 - **Hyper MCP installed and connected.** [https://app.hyperfx.ai/mcp](https://app.hyperfx.ai/mcp)
 - **Amazon Ads integration connected** at [https://app.hyperfx.ai/apps](https://app.hyperfx.ai/apps).
 
-If `amazon_ads_list_profiles` is not in the tool list, stop and tell the user to enable Hyper MCP and connect Amazon Ads.
+If `amazon_ads_profiles_list` is not found, the integration to connect is Amazon Ads.
+
+### How to run the tools in this skill
+
+Every tool in this skill is named by its canonical tool name. Run it with the call your surface gives you:
+
+| Surface | Find a tool | Run it |
+| --- | --- | --- |
+| Hyper chat | Call the tool by its name; `search_tools(queries=["<provider> <action>"])` shows its parameters | `<name>(...)` |
+| MCP client (Claude, Cursor, Codex, ChatGPT) | `search("<what you want to do>")`, then `describe("<name>")` | `call_read("<name>", {...})`, `call_write` or `call_destructive`: the one that `describe` names in `call_with` |
+| Hyper CLI | `hyperai search "<what you want to do>"`, then `hyperai describe <name>` | `hyperai call <name> --json '{...}'` |
+
+If a tool is not found: in Hyper chat, find its toolkit id with `discover_toolkits` and pass it to `enable_toolkit`. On an MCP client or the CLI, tell the user which integration to connect in Hyper.
 
 ## Out of scope — defer to other skills
 
@@ -27,14 +39,14 @@ If `amazon_ads_list_profiles` is not in the tool list, stop and tell the user to
 
 | Tool | Purpose |
 | --- | --- |
-| `amazon_ads_list_profiles`, `amazon_ads_run_health_check` | Profile discovery + integration health. |
-| `amazon_ads_list_campaigns`, `amazon_ads_create_campaign`, `amazon_ads_update_campaign` | Campaign lifecycle. |
-| `amazon_ads_create_ad_group`, `amazon_ads_create_product_ad` | Ad group + product ad creation. |
-| `amazon_ads_create_keyword`, `amazon_ads_create_negative_keyword`, `amazon_ads_create_campaign_negative_keyword` | Keyword targeting. |
-| `amazon_ads_create_product_target`, `amazon_ads_create_negative_product_target` | Product (ASIN/category) targeting. |
-| `amazon_ads_create_budget_rule`, `amazon_ads_list_budget_rules` | Budget automation. |
-| `amazon_ads_create_report`, `amazon_ads_get_report_status` | Performance reporting. |
-| `amazon_ads_get_bid_recommendations` | Theme-based bid recommendations. |
+| `amazon_ads_profiles_list`, `amazon_ads_health_check` | Profile discovery + integration health. |
+| `amazon_ads_campaigns_list`, `amazon_ads_campaigns_create`, `amazon_ads_campaigns_update` | Campaign lifecycle. |
+| `amazon_ads_ad_groups_create`, `amazon_ads_product_ads_create` | Ad group + product ad creation. |
+| `amazon_ads_keywords_create`, `amazon_ads_negative_keywords_create`, `amazon_ads_campaign_negative_keywords_create` | Keyword targeting. |
+| `amazon_ads_product_targets_create`, `amazon_ads_negative_product_targets_create` | Product (ASIN/category) targeting. |
+| `amazon_ads_budget_rules_create`, `amazon_ads_budget_rules_list` | Budget automation. |
+| `amazon_ads_reports_create`, `amazon_ads_reports_status_get` | Performance reporting. |
+| `amazon_ads_bid_recommendations_get` | Theme-based bid recommendations. |
 
 ## Critical Rules
 

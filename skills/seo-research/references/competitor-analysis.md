@@ -23,8 +23,8 @@ Don't assume who the competitors are — discover them from data.
 
 For each competitor (and the user's own domain).
 
-1. Run `hyperseo_bulk_traffic` with all domains at once to get a quick traffic comparison across all competitors in a single call.
-2. Run `hyperseo_domain_overview_get` on each domain for detailed metrics (authority, backlinks, referring domains).
+1. Run `hyperseo_traffic_get_bulk` with all domains at once to get a quick traffic comparison across all competitors in a single call.
+2. Run `hyperseo_domain_overview_get(domain=...)` on each domain for organic keywords and traffic, and `hyperseo_backlinks_history_get(target=...)` for backlinks, referring domains and domain rank (use the latest row).
 3. Present as a comparison matrix.
 
 **Comparison matrix format:**
@@ -34,6 +34,8 @@ For each competitor (and the user's own domain).
 |--------|------------|-----------------|-------------|-----------|-------------------|
 ```
 
+Domain Rank, Backlinks and Referring Domains come from the latest row of `hyperseo_backlinks_history_get`.
+
 ### Step 3: Keyword gap analysis
 
 Find what competitors rank for that the user doesn't.
@@ -41,7 +43,7 @@ Find what competitors rank for that the user doesn't.
 1. Run `hyperseo_domain_intersections_search` between the user's domain and each top competitor to find keywords where both appear in SERPs — this reveals direct keyword battlegrounds.
 2. Run `hyperseo_domain_keywords_get` on the top 2 – 3 competitors (limit 50 each) to find keywords the user is missing entirely.
 3. Compare: which high-value keywords do competitors have that the user is missing?
-4. Cross-check the gaps with `hyperseo_keyword_difficulty` to find achievable targets.
+4. Cross-check the gaps with `hyperseo_keyword_difficulty_get` to find achievable targets.
 
 ### Step 4: Backlink comparison
 
@@ -55,7 +57,7 @@ Understand the link-building landscape.
 
 For the user's most important keywords.
 
-1. Run `hyperseo_serp_results_get` to see exactly who holds the top positions.
+1. Run `hyperseo_serp_results_get(keyword=...)` once for each important keyword to see who holds the top positions.
 2. Note the content types that rank (articles, product pages, videos, Reddit threads).
 3. Identify patterns: do certain domains dominate across multiple keywords?
 
@@ -63,10 +65,8 @@ For the user's most important keywords.
 
 **Domain rank**
 
-- 0 – 20: very low authority, new or small site.
-- 20 – 40: growing authority, can compete for low-difficulty keywords.
-- 40 – 60: established site, can compete for medium-difficulty keywords.
-- 60+: high authority, competitive for most keywords.
+- Take `rank` from the latest row of `hyperseo_backlinks_history_get(target=...)`. It is on a 0–1000 scale.
+- Compare the domains with each other. Do not use fixed tiers.
 
 **Keyword gap opportunities**
 

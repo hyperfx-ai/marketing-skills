@@ -16,7 +16,7 @@ Step-by-step guide for building a data-informed content strategy using the Hyper
 Understand what the user's content should cover.
 
 1. Ask for their core topics or business areas (2 – 5 seed themes).
-2. Run `hyperseo_keyword_ideas` for each seed theme (limit 30 – 50).
+2. Run `hyperseo_keyword_ideas_generate` for each seed theme (limit 30 – 50).
 3. This gives a broad view of the keyword landscape around their topics.
 
 ### Step 2: Validate demand and intent
@@ -24,7 +24,7 @@ Understand what the user's content should cover.
 Not every idea has search demand. Validate.
 
 1. Run `hyperseo_search_volume_get` on the most relevant keyword candidates.
-2. Run `hyperseo_keyword_difficulty` on the same set.
+2. Run `hyperseo_keyword_difficulty_get` on the same set.
 3. Run `hyperseo_intents_search` to classify intent at scale — this determines the right content format for each keyword.
 4. Also run `hyperseo_ai_search_volume_get` to check AI channel demand.
 5. Discard keywords with no meaningful volume (< 100 / month) unless strategically important.
@@ -33,7 +33,7 @@ Not every idea has search demand. Validate.
 
 For each high-priority keyword, understand what Google rewards.
 
-1. Run `hyperseo_serp_results_get` for the top 10 – 15 keyword targets.
+1. Run `hyperseo_serp_results_get(keyword=...)` once for each of the top 10 – 15 keyword targets.
 2. Note the content format that ranks:
    - Long-form guides (2000+ words)?
    - Listicles ("10 best…")?
@@ -42,13 +42,12 @@ For each high-priority keyword, understand what Google rewards.
    - Reddit / forum threads?
 3. Match your content format recommendation to what actually wins.
 
-### Step 4: Check AI Overviews
+### Step 4: Check Google AI Mode
 
-For informational keywords, check if Google generates an AI Overview.
+For informational keywords, run `hyperseo_ai_overviews_get(keyword=...)` for key terms. It returns the Google AI Mode answer and its cited sources. It does not show whether the normal results page has an AI Overview.
 
-1. Run `hyperseo_ai_overviews_get` for key terms.
-2. Review which sources get cited in the AI overview.
-3. Content that earns AI citations gets visibility even above traditional position 1.
+1. Review which sources get cited.
+2. Content that earns AI citations gets visibility even above traditional position 1.
 
 ### Step 5: Build topic clusters
 

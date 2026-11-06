@@ -48,7 +48,7 @@ If `product.brand_colors` is set, it's also added as a respect-palette constrain
 ## Example
 
 ```python
-create_product_photoshoot(
+images_product_photoshoots_create(
     product=ProductContext(
         name="Ember Travel Mug",
         category="insulated travel mug",

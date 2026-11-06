@@ -6,13 +6,14 @@ Use for campaigns that send users to a website, landing page, or specific conten
 
 ## Before starting
 
-Re-read [../constraints.md](../constraints.md). Most relevant:
+The rules of [references/constraints.md](references/constraints.md) that this campaign hits are below. Read a section of that file only when a step names it:
 - Budget in cents (×100)
 - `targeting_automation` inside `targeting`
 - Budget at campaign level for Advantage+
 - `meta_ads_adset_create` takes `ad_account_id` (numeric, no `act_` prefix) + a `body` dict — all ad set fields inside `body`
 - `meta_ads_ad_create` takes `ad_account_id` + a `body` dict — no separate top-level args
-- Use `meta_ads_campaigns_activate()`, not `update_campaign(status="ACTIVE")`
+- Activation: section 3
+- Ad status: section 4
 
 `promoted_object` is **not required** for OUTCOME_TRAFFIC. No pixel needed.
 
@@ -126,9 +127,9 @@ meta_ads_campaign_create(
 }
 ```
 
-> **Bid cap requested?** Pass `bid_strategy` and `bid_amount` (cents) inside `body` — the toolkit validates the pairing up front. See [../constraints.md](../constraints.md) section 16.
+> **Bid cap requested?** Pass `bid_strategy` and `bid_amount` (cents) inside `body` — the toolkit validates the pairing up front. See [references/constraints.md](references/constraints.md) section 16.
 
-> **Targeting regions / cities / DMAs (not whole countries)?** Resolve the numeric geo keys with `meta_ads_targeting_search` first — never hand-write them. See [../constraints.md](../constraints.md) section 17.
+> **Targeting regions / cities / DMAs (not whole countries)?** Resolve the numeric geo keys with `meta_ads_targeting_search` first — never hand-write them. See [references/constraints.md](references/constraints.md) section 17.
 
 → Capture `adset_id` from the response.
 
@@ -141,7 +142,7 @@ meta_ads_ad_images_upload(
 )
 ```
 
-→ Capture `image_hash` from the response.
+→ Capture the image hash (section 7 of [references/constraints.md](references/constraints.md)).
 
 ### 4. Create ad
 
@@ -153,6 +154,7 @@ meta_ads_ad_images_upload(
   "body": {
     "name": "Traffic Ad - [Page Name]",
     "adset_id": "<adset_id>",
+    "status": "PAUSED",
     "creative": {
       "object_story_spec": {
         "page_id": "<page_id>",
@@ -172,14 +174,12 @@ meta_ads_ad_images_upload(
 }
 ```
 
-> Omit `status` — ads default to PAUSED.
-
 → Capture `ad_id` from the response.
 
 ### 5. Preview and activate
 
 ```python
-# creative_id is in the ad creation response: response.creative.id
+# creative_id: section 13 of ../constraints.md
 meta_ads_ad_previews_get(creative_ids=["<creative_id>"])
 # Summarize formats to user — never render iframe inline
 
@@ -194,6 +194,6 @@ meta_ads_campaigns_activate(campaign_id="<campaign_id>")
 | Symptom | Cause | Fix |
 |---|---|---|
 | Budget rejected | Passed dollars not cents | Multiply by 100 |
-| Ad set error: unexpected argument | Fields outside `body` | All fields must be inside the `body` dict |
-| Campaign ACTIVE but no traffic | Used `update_campaign(status="ACTIVE")` | Use `meta_ads_campaigns_activate()` |
+| Ad set error: unexpected argument | A misspelled field | See section 14 of [references/constraints.md](references/constraints.md) |
+| Campaign ACTIVE but no traffic | Used `meta_ads_campaign_update(campaign_id, body={"status": "ACTIVE"})` | See section 3 of [references/constraints.md](references/constraints.md) |
 | `targeting_automation` error | Placed at top level of ad set | Move inside `targeting` object |

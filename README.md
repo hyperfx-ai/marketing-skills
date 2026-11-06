@@ -21,13 +21,25 @@ Create, customize, and connect your MCP at [app.hyperfx.ai/mcp](https://app.hype
 What's in it:
 
 - **100+ direct integrations** — ad platforms (Google Ads, Meta, TikTok, LinkedIn, Amazon, Pinterest), social (Instagram, Reddit, Twitter, YouTube), email (Gmail, Klaviyo, Resend, Beehiiv), analytics (GA4, Search Console, BigQuery), CRM (HubSpot, Apollo), commerce (Shopify), and more.
-- **Built-in tools** — Meta Ads Library scraper, Reddit and Twitter scrapers, image generation (OpenAI, Nano Banana, Seedream), video generation (Sora, Veo, Seedance), browser automation, transcription.
+- **Built-in tools** — Meta Ads Library scraper, Reddit and Twitter scrapers, image generation (OpenAI, Nano Banana, Seedream), video generation (Veo, Seedance), browser automation, transcription.
 - **Guardrails and permissions** — every action can require approval before it runs, so your agent can't delete a campaign or send a DM without your green light.
 - **The Hyper platform** — build and manage Hyper agents, tasks, and skills directly.
 
 [Walkthrough video.](https://www.youtube.com/watch?v=NZLAdOL9fP8)
 
 ---
+
+### Running the tools a skill names
+
+Every tool in a skill is named by its canonical tool name, and that one name works on every surface:
+
+| Surface | Find a tool | Run it |
+| --- | --- | --- |
+| Hyper chat | Call the tool by its name; `search_tools(queries=["<provider> <action>"])` shows its parameters | `<name>(...)` |
+| MCP client | `search("<what you want to do>")`, `describe("<name>")` | `call_read("<name>", {...})`, `call_write` or `call_destructive`: the one that `describe` names in `call_with` |
+| Hyper CLI | `hyperai search "..."`, `hyperai describe <name>` | `hyperai call <name> --json '{...}'` |
+
+The Hyper MCP lists `search`, `describe`, `call_read`, `call_write`, `call_destructive`, `result_read` and `info`. The default server also lists `connections_list`, `connections_use`, `skills_search` and `skills_read`. Every other tool runs through the call tool of its access class. A client that sends a tool name directly still works.
 
 ## Install
 
@@ -191,7 +203,7 @@ marketing-skills/
 | Reddit Scraper | Scrape Reddit posts, threads, and comments |
 | TikTok Scraper | Scrape TikTok videos, profiles, and engagement |
 | Twitter Scraper | Scrape tweets, profiles, and threads |
-| Video Generation | Generate AI video (Sora, Veo, Seedance) |
+| Video Generation | Generate AI video (Veo, Seedance) |
 | Web Scraper | Search and scrape web pages |
 | Website Analyzer | Analyze a website's tech stack, pixels, and more |
 | YouTube | Search YouTube and fetch transcripts |

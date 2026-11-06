@@ -30,6 +30,7 @@ skills/<skill-name>/
 
 3. **Body must NOT contain**:
    - Internal infra references (`hyper_cache_*` table names, internal filesystem paths, internal agent template names).
+   - The removed `hyper_data_*` tools (`hyper_data_sql`, `hyper_data_sync*`). Use the `database` toolkit instead — `database_tables_list` to discover tables, `database_tables_describe` for columns, `database_query` to query.
    - Real account IDs, real customer data, or real auth tokens.
    - Any Hyper URL other than `app.hyperfx.ai/mcp` and `app.hyperfx.ai/apps`.
 

@@ -1,17 +1,17 @@
 
 # Thumbnail Creator
 
-Create high click-through YouTube thumbnails and the SEO assets that go with them. This skill orchestrates existing Hyper tools (YouTube research, image generation, AI extraction) through small Python scripts that run in the Hyper sandbox.
+Create high click-through YouTube thumbnails and the SEO assets that go with them. Use sandbox scripts for YouTube research and image generation. Generate titles, descriptions and concepts through `ai_functions_run` in the bundled sandbox scripts.
 
 ## How this skill works
 
-Every workflow is a sandbox script under `scripts/`. The agent reads the matching reference doc, calls the script via the `sandbox` toolkit, and presents the JSON result back to the user. Generated images are persisted as `DBFile`s automatically and shown in chat.
+Research, image and text workflows use the scripts under `scripts/`. Call the selected script through the sandbox toolkit and present its result. Generated images are persisted automatically and shown in chat. For text deliverables, follow the JSON schemas in `references/packaging-schemas.json`.
 
-You do **not** chain individual image-generation or YouTube tools yourself unless the user asks for something the scripts don't cover. The scripts are the contract.
+Fetch transcript content with `youtube_video_transcripts_fetch`; use `youtube_videos_read` when visual context is required. Ground concepts, titles, summaries and timestamps in those results.
 
 ## Routing Table
 
-| User intent | Run this script | Reference |
+| User intent | Action | Reference |
 |-------------|-----------------|-----------|
 | "Make me a thumbnail for X" | `scripts/generate_thumbnail.py` | Direct generation, optional face/brand/style references |
 | "What thumbnails work for `<niche>`?" | `scripts/research_top_thumbnails.py` | Returns top videos + downloaded thumbnails |
@@ -56,9 +56,19 @@ For users prepping to publish. Run sequentially and present each result before m
 3. Don't dump base64 image data or thumbnail URLs into the chat. Pass the `file_id` and let the platform render it.
 4. For style-cloning, always show the user the top thumbnails first and let them pick the rank. Style-cloning a low-ranked or off-topic video produces bad results.
 5. If the user uploads multiple face photos, prefer the most recent and ignore the rest unless they ask you to compose them.
-6. Use `images_generate` for every generation: `backend_hint="nano_banana"` for cheap iteration, `backend_hint="nano_banana_pro"` only when the thumbnail needs strong rendered text inside the image, and `backend_hint="openai"` when composing multiple reference images (face + brand + product).
+6. Use `images_generate` for every generation: `model="nano-banana"` for cheap iteration, `model="nano-banana-pro"` only when the thumbnail needs strong rendered text inside the image, and `model="gpt-image-2.5-sunburst"` when composing multiple reference images (face + brand + product).
 
 ## Reference
 
 - `references/composition-tips.md` — universal composition rules (rule of thirds, contrast, eye-line).
 - `references/youtube-thumbnail-best-practices.md` — YouTube-specific patterns (16:9, mobile-safe text, CTR triggers).
+
+## Structured text deliverables
+
+The text scripts call `ai_functions_run` through the sandbox tool bridge. They return objects matching `references/packaging-schemas.json`:
+
+- `analyze_thumbnail_concepts`: five concepts, each with title, composition, hook, text overlay and ready-to-use prompt. Send the chosen prompt to the image script only after the user selects a concept.
+- `generate_seo_titles`: ten titles, each with a supported style, rationale and character count. Keep titles within 70 characters and include the primary keyword naturally. Do not promise content the video does not contain.
+- `generate_seo_description`: hook, summary, key takeaways, timestamps, pull quotes, CTA, hashtags and a flattened description. Use only real timestamps and supported quotes; keep timestamps empty when the available source has none.
+
+Check required fields and item counts against the schemas before presenting the result. These scripts require `ai_functions_run` in the connected tool catalog. If unavailable, report the missing tool; do not claim the sandbox workflow succeeded. Tool and model failures must remain visible to the caller.

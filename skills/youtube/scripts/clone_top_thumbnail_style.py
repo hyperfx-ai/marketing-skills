@@ -7,10 +7,9 @@ Two-phase script:
   ask which rank to clone.
 
 * Phase 2 (``chosen_rank`` set): looks up the chosen thumbnail's
-  ``thumbnail_file_id`` and runs ``images_generate`` with that file as a
-  reference image (nano-banana-pro backend). If a ``face_file_id`` is
-  provided, the openai backend composites the user's face into the cloned
-  style.
+  ``thumbnail_file_id`` and runs ``images_generate`` with that file as the
+  style reference. If a ``face_file_id`` is provided, the prompt is
+  augmented to composite the user's face into the cloned style.
 """
 
 from __future__ import annotations
@@ -113,36 +112,24 @@ async def run(
         source_title=chosen.get("title"),
     )
 
-    used_tool = "images_generate"
     if face_file_id:
-        # The openai backend composes multiple references better than
-        # nano-banana when a person's identity must be preserved.
-        result = await call_tool(
-            used_tool,
-            requests=[
-                {
-                    "prompt": prompt,
-                    "reference_images": [style_file_id, face_file_id],
-                }
-            ],
-            backend_hint="openai",
-            aspect_ratio="16:9",
-            quality="high",
-        )
+        # Sunburst composes several references while preserving a person's
+        # identity; the Gemini models are better with one style reference.
+        chosen_model = "gpt-image-2.5-sunburst"
+        reference_images = [style_file_id, face_file_id]
     else:
-        result = await call_tool(
-            used_tool,
-            requests=[
-                {
-                    "prompt": prompt,
-                    "reference_images": [style_file_id],
-                }
-            ],
-            n=1,
-            backend_hint="nano_banana_pro",
-            aspect_ratio="16:9",
-            quality="high",
-        )
+        chosen_model = "nano-banana-pro"
+        reference_images = [style_file_id]
+    used_tool = "images_generate"
+    result = await call_tool(
+        used_tool,
+        requests=[
+            {"id": "thumbnail", "prompt": prompt, "reference_images": reference_images}
+        ],
+        model=chosen_model,
+        aspect_ratio="16:9",
+        quality="standard",
+    )
 
     images = result.get("images", []) if isinstance(result, dict) else []
     if not images:

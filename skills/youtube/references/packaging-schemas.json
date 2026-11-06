@@ -1,0 +1,178 @@
+{
+  "analyze_thumbnail_concepts": {
+    "type": "object",
+    "properties": {
+      "concepts": {
+        "type": "array",
+        "minItems": 5,
+        "maxItems": 5,
+        "items": {
+          "type": "object",
+          "properties": {
+            "title": {
+              "type": "string",
+              "description": "Short label for this concept (3-6 words)."
+            },
+            "composition": {
+              "type": "string",
+              "description": "What the viewer sees: subject placement, focal point, background, color palette, mood, lighting."
+            },
+            "hook": {
+              "type": "string",
+              "description": "Emotional or curiosity hook the thumbnail leans on (e.g. shock, transformation, before/after, big number, contrarian claim)."
+            },
+            "text_overlay": {
+              "type": "string",
+              "description": "2-5 word overlay text. Use uppercase if it should render as such. Empty string if no text overlay."
+            },
+            "ready_to_use_prompt": {
+              "type": "string",
+              "description": "Self-contained image-generation prompt that fully describes the thumbnail. Includes composition, subject(s), text overlay, color palette, lighting, and 16:9 framing."
+            }
+          },
+          "required": [
+            "title",
+            "composition",
+            "hook",
+            "text_overlay",
+            "ready_to_use_prompt"
+          ],
+          "additionalProperties": false
+        }
+      }
+    },
+    "required": [
+      "concepts"
+    ],
+    "additionalProperties": false
+  },
+  "generate_seo_titles": {
+    "type": "object",
+    "properties": {
+      "titles": {
+        "type": "array",
+        "minItems": 10,
+        "maxItems": 10,
+        "items": {
+          "type": "object",
+          "properties": {
+            "title": {
+              "type": "string",
+              "description": "YouTube title, <=70 chars, includes the primary keyword naturally, no clickbait that misleads."
+            },
+            "style": {
+              "type": "string",
+              "enum": [
+                "curiosity-gap",
+                "listicle",
+                "contrarian",
+                "big-number",
+                "transformation",
+                "how-to",
+                "news-jack",
+                "question",
+                "before-after",
+                "bold-claim"
+              ]
+            },
+            "rationale": {
+              "type": "string",
+              "description": "One sentence explaining why this title works for SEO and CTR for the given topic."
+            },
+            "char_count": {
+              "type": "integer"
+            }
+          },
+          "required": [
+            "title",
+            "style",
+            "rationale",
+            "char_count"
+          ],
+          "additionalProperties": false
+        }
+      }
+    },
+    "required": [
+      "titles"
+    ],
+    "additionalProperties": false
+  },
+  "generate_seo_description": {
+    "type": "object",
+    "properties": {
+      "hook": {
+        "type": "string",
+        "description": "First line of the description, <=120 chars, hooks the viewer."
+      },
+      "summary": {
+        "type": "string",
+        "description": "2-3 sentence summary including the primary keyword naturally."
+      },
+      "key_takeaways": {
+        "type": "array",
+        "minItems": 3,
+        "maxItems": 7,
+        "items": {
+          "type": "string"
+        }
+      },
+      "timestamps": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "time": {
+              "type": "string",
+              "description": "MM:SS or HH:MM:SS"
+            },
+            "label": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "time",
+            "label"
+          ],
+          "additionalProperties": false
+        },
+        "description": "Empty array if no transcript or chapters were provided."
+      },
+      "pull_quotes": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        },
+        "maxItems": 3
+      },
+      "cta": {
+        "type": "string",
+        "description": "Single call-to-action line, <=140 chars."
+      },
+      "hashtags": {
+        "type": "array",
+        "minItems": 3,
+        "maxItems": 8,
+        "items": {
+          "type": "string",
+          "description": "Hashtag including the leading #."
+        }
+      },
+      "flattened": {
+        "type": "string",
+        "description": "Final description ready to paste into YouTube, combining hook, summary, takeaways, timestamps, CTA, and hashtags with appropriate line breaks."
+      }
+    },
+    "required": [
+      "hook",
+      "summary",
+      "key_takeaways",
+      "timestamps",
+      "pull_quotes",
+      "cta",
+      "hashtags",
+      "flattened"
+    ],
+    "additionalProperties": false
+  }
+}

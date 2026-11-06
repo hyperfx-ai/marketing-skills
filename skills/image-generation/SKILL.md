@@ -1,6 +1,6 @@
 ---
 name: image-generation
-description: Generate images through the Hyper MCP with the unified `images_generate` tool — text-to-image, image-to-image, and branded ad creatives — choosing the model (gpt-image-2, nano-banana, nano-banana-pro, seedream-4.5) per task. Use when the user asks to generate an image, create an ad creative, do an image-to-image edit, render text inside an image, or produce a print-quality poster.
+description: Generate images through the Hyper MCP with the unified `images_generate` tool — text-to-image, image-to-image, and branded ad creatives — choosing the model (gpt-image-2.5-flare, gpt-image-2.5-sunburst, nano-banana, nano-banana-pro, seedream-4.5) per task. Use when the user asks to generate an image, create an ad creative, do an image-to-image edit, render text inside an image, or produce a print-quality poster.
 metadata:
   version: 1.0.0
 requires_toolkits:
@@ -21,12 +21,24 @@ This skill assumes the [Hyper MCP](https://app.hyperfx.ai/mcp) is connected to y
 agent so the `images_generate` tool is available. For brand-consistent ad creative
 work, Firecrawl must also be configured under your Hyper integrations.
 
+### How to run the tools in this skill
+
+Every tool in this skill is named by its canonical tool name. Run it with the call your surface gives you:
+
+| Surface | Find a tool | Run it |
+| --- | --- | --- |
+| Hyper chat | Call the tool by its name; `search_tools(queries=["<provider> <action>"])` shows its parameters | `<name>(...)` |
+| MCP client (Claude, Cursor, Codex, ChatGPT) | `search("<what you want to do>")`, then `describe("<name>")` | `call_read("<name>", {...})`, `call_write` or `call_destructive`: the one that `describe` names in `call_with` |
+| Hyper CLI | `hyperai search "<what you want to do>"`, then `hyperai describe <name>` | `hyperai call <name> --json '{...}'` |
+
+If a tool is not found: in Hyper chat, find its toolkit id with `discover_toolkits` and pass it to `enable_toolkit`. On an MCP client or the CLI, tell the user which integration to connect in Hyper.
+
 ## Call shape
 
 ```python
 images_generate(
     requests=[{"id": "ad1", "prompt": "A polished SaaS ad, clean composition"}],
-    aspect_ratio="16:9",     # "1:1" (default), "9:16", "16:9", "4:5", "2:3", "3:2", "3:4", "4:3", "21:9", ...
+    aspect_ratio="16:9",     # "1:1" (default), "9:16", "16:9", "4:5", "5:4", "2:3", "3:2", "3:4", "4:3", "21:9"
     quality="standard",      # "draft" | "standard" | "high"
     n=1,                      # 1-4 images per request
     model="auto",            # see "Choosing a model" below
@@ -46,8 +58,9 @@ specific model:
 
 | Task | `model` |
 |------|---------|
-| First-pass concepts / quick ad ideation | `gpt-image-2` |
-| Image-to-image with references, high-resolution refinement, broad aspect ratios | `nano-banana` |
+| First-pass concepts / quick ad ideation / everyday generation | `gpt-image-2.5-flare` |
+| Precise edits and branded compositions from reference images, production creative | `gpt-image-2.5-sunburst` |
+| Cheap iteration, image-to-image, the widest aspect ratios (adds 1:4, 1:8, 4:1, 8:1) | `nano-banana` |
 | Readable text inside the image (posters, labels, infographics) or search-grounded scenes | `nano-banana-pro` |
 | Product photography, material/fabric fidelity, accurate spatial depth | `seedream-4.5` |
 

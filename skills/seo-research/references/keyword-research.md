@@ -15,7 +15,7 @@ Step-by-step guide for finding and prioritizing keyword opportunities using the 
 
 Start with the user's seed terms and expand them.
 
-1. Run `hyperseo_keyword_ideas` with their seed keywords (set `limit` to 30–50 for a broad view).
+1. Run `hyperseo_keyword_ideas_generate` with their seed keywords (set `limit` to 30–50 for a broad view).
 2. Review the ideas for relevance — discard anything off-topic.
 3. If the user has a domain, also run `hyperseo_site_keywords_search` to discover terms their site naturally aligns with.
 
@@ -23,7 +23,7 @@ Start with the user's seed terms and expand them.
 
 Take the most promising candidates and check real demand.
 
-1. Run `hyperseo_search_volume_get` on the shortlisted keywords (batch up to 20 at a time).
+1. Run `hyperseo_search_volume_get` once, with the whole shortlist in `keywords` (up to 1,000 keywords in one call).
 2. Note search volume, CPC, and competition level.
 3. High CPC often signals commercial intent — these keywords convert.
 
@@ -31,7 +31,7 @@ Take the most promising candidates and check real demand.
 
 Filter by what's actually achievable and classify intent.
 
-1. Run `hyperseo_keyword_difficulty` on the shortlist.
+1. Run `hyperseo_keyword_difficulty_get` on the shortlist.
 2. Run `hyperseo_intents_search` on the same keywords to classify intent (informational, navigational, commercial, transactional).
 3. Score each keyword against the priority framework below.
 4. Intent classification helps you decide the right content format before you start writing.
@@ -47,8 +47,8 @@ Check if these keywords are also being queried in AI assistants.
 
 For top-priority keywords, check what currently ranks.
 
-1. Run `hyperseo_serp_results_get` for your highest-priority keywords.
-2. Look at: who ranks, what content format they use, whether there are featured snippets or AI overviews.
+1. Run `hyperseo_serp_results_get(keyword=...)` once for each of your highest-priority keywords.
+2. Look at who ranks, the format of each result (`result_type`), and any `featured_snippet` row. This tool does not return AI Overviews or People Also Ask.
 3. This tells you what you need to create to compete.
 
 ## Priority Framework
@@ -85,7 +85,7 @@ Don't present keywords as a flat list. Group them into clusters by intent.
 **Navigational** — "X login", "X website".
 
 - Usually not targetable unless it's your brand.
-- Note: track these with `hyperseo_mentions_track` for brand visibility.
+- Note: see where the brand ranks for these with `hyperseo_domain_keywords_get(domain=...)`, or with Search Console `google_search_console_performance_get(dimensions=["query"])`.
 
 ## Output Format
 

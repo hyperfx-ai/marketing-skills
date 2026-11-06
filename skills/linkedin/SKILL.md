@@ -28,23 +28,35 @@ Skill for publishing to LinkedIn through the LinkedIn integration exposed by the
 - **LinkedIn integration connected** at [https://app.hyperfx.ai/apps](https://app.hyperfx.ai/apps).
 - For company-page posts, the connected member account must have permission to post for that organization.
 
-If `linkedin_create_text_post` is not in the tool list, stop and tell the user to enable Hyper MCP and connect LinkedIn.
+If `linkedin_text_posts_create` is not found, the integration to connect is LinkedIn.
+
+### How to run the tools in this skill
+
+Every tool in this skill is named by its canonical tool name. Run it with the call your surface gives you:
+
+| Surface | Find a tool | Run it |
+| --- | --- | --- |
+| Hyper chat | Call the tool by its name; `search_tools(queries=["<provider> <action>"])` shows its parameters | `<name>(...)` |
+| MCP client (Claude, Cursor, Codex, ChatGPT) | `search("<what you want to do>")`, then `describe("<name>")` | `call_read("<name>", {...})`, `call_write` or `call_destructive`: the one that `describe` names in `call_with` |
+| Hyper CLI | `hyperai search "<what you want to do>"`, then `hyperai describe <name>` | `hyperai call <name> --json '{...}'` |
+
+If a tool is not found: in Hyper chat, find its toolkit id with `discover_toolkits` and pass it to `enable_toolkit`. On an MCP client or the CLI, tell the user which integration to connect in Hyper.
 
 ## Tool surface
 
 | Tool | Purpose |
 | --- | --- |
-| `linkedin_create_text_post` | Standard member or organization text post; also article / link posts via the article fields. |
-| `linkedin_create_organization_post` | Post explicitly as a company page (when you already know `organization_id`). |
-| `linkedin_create_document_post` | PDF / document post — LinkedIn renders pages as a swipeable document. |
-| `linkedin_create_carousel_from_text` | AI text-to-carousel pipeline — generates slides + assembles a PDF + publishes as a document post. |
+| `linkedin_text_posts_create` | Standard member or organization text post; also article / link posts via the article fields. |
+| `linkedin_organization_posts_create` | Post explicitly as a company page (when you already know `organization_id`). |
+| `linkedin_document_posts_create` | PDF / document post — LinkedIn renders pages as a swipeable document. |
+| `linkedin_carousels_create_from_text` | AI text-to-carousel pipeline — generates slides + assembles a PDF + publishes as a document post. |
 
 ## Posting Rules
 
-1. Use `linkedin_create_text_post` for standard member or organization posts.
-2. Use `linkedin_create_organization_post` when the user explicitly wants to post as a company page **and** you already know the `organization_id`.
-3. Use `linkedin_create_document_post` for PDF / document uploads. LinkedIn renders PDF pages as a swipeable document post.
-4. Use `linkedin_create_carousel_from_text` when the user wants a text-to-carousel workflow driven by AI-generated slides.
+1. Use `linkedin_text_posts_create` for standard member or organization posts.
+2. Use `linkedin_organization_posts_create` when the user explicitly wants to post as a company page **and** you already know the `organization_id`.
+3. Use `linkedin_document_posts_create` for PDF / document uploads. LinkedIn renders PDF pages as a swipeable document post.
+4. Use `linkedin_carousels_create_from_text` when the user wants a text-to-carousel workflow driven by AI-generated slides.
 
 ## Article / Link Posts
 
@@ -59,7 +71,7 @@ For reliable article posts:
 Use this shape when editing or preparing a LinkedIn article post:
 
 ```python
-linkedin_create_text_post(
+linkedin_text_posts_create(
     text="Caption text",
     article_url="https://example.com/article",
     article_title="Explicit preview title",
@@ -75,10 +87,10 @@ LinkedIn carousels are implemented as document posts backed by a PDF.
 
 ### Native PDF flow
 
-Use `linkedin_create_document_post` when you already have a PDF URL or stored file ID:
+Use `linkedin_document_posts_create` when you already have a PDF URL or stored file ID:
 
 ```python
-linkedin_create_document_post(
+linkedin_document_posts_create(
     text="Caption text",
     title="Deck title",
     document_url="https://example.com/deck.pdf",
@@ -88,10 +100,10 @@ linkedin_create_document_post(
 
 ### Text-to-carousel flow
 
-Use `linkedin_create_carousel_from_text` when the user wants the system to build the carousel from a block of source text:
+Use `linkedin_carousels_create_from_text` when the user wants the system to build the carousel from a block of source text:
 
 ```python
-linkedin_create_carousel_from_text(
+linkedin_carousels_create_from_text(
     text_content="Source content for the slides",
     title="Carousel title",
     caption="LinkedIn caption",
@@ -121,7 +133,7 @@ If a user wants manual refinement:
 
 1. Generate the carousel assets first.
 2. Review or edit the generated slide images / PDF externally.
-3. Post the final PDF with `linkedin_create_document_post`.
+3. Post the final PDF with `linkedin_document_posts_create`.
 
 Do not promise an in-product editable canvas workflow unless the tool is actually available in the current environment.
 
@@ -129,15 +141,15 @@ Do not promise an in-product editable canvas workflow unless the tool is actuall
 
 When posting to a company page:
 
-- If you don't know the `organization_id`, call `linkedin_get_my_managed_pages()` first — it returns all company pages the connected account can post to, with their IDs.
-- Use `linkedin_get_organization_posts_detailed(organization_id=...)` to preview recent posts before publishing — avoids accidental duplicates.
+- If you don't know the `organization_id`, call `linkedin_managed_pages_list()` first — it returns all company pages the connected account can post to, with their IDs.
+- Use `linkedin_organizations_posts_list_detailed(organization_id=...)` to preview recent posts before publishing — avoids accidental duplicates.
 - Pass `organization_id` to whichever posting tool you're using.
 - Expect LinkedIn org posting permissions to matter.
 - If a post fails with a permissions error, verify that the authenticated account can post to that organization.
 
 ## Failure Modes & Recovery
 
-- **Article preview is empty / wrong.** LinkedIn ignored the scraped metadata. Re-call `linkedin_create_text_post` with explicit `article_title`, `article_description`, and `thumbnail_url`.
+- **Article preview is empty / wrong.** LinkedIn ignored the scraped metadata. Re-call `linkedin_text_posts_create` with explicit `article_title`, `article_description`, and `thumbnail_url`.
 - **Permission error on organization post.** Confirm with the user that their LinkedIn account has page-posting permission for the target `organization_id`.
-- **`linkedin_create_carousel_from_text` returned an unexpected slide count.** Only `num_slides` of `4`, `6`, or `9` are supported.
+- **`linkedin_carousels_create_from_text` returned an unexpected slide count.** Only `num_slides` of `4`, `6`, or `9` are supported.
 - **Document post fails with an invalid URL.** The `document_url` must be a directly-fetchable PDF (no auth, no HTML redirect page).

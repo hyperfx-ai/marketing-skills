@@ -47,10 +47,23 @@ Fetch the full transcript of any YouTube video and turn it into whatever the use
 ## Requirements
 
 - **Hyper MCP installed.** [https://app.hyperfx.ai/mcp](https://app.hyperfx.ai/mcp)
+- **Sandbox text workflows:** require `ai_functions_run` in the connected catalog and the sandbox toolkit. These scripts run inline LLM calls through the sandbox tool bridge.
 - **YouTube toolkit enabled** at [https://app.hyperfx.ai/apps](https://app.hyperfx.ai/apps) — provides `youtube_video_transcripts_fetch` and `youtube_videos_read`.
 - Thumbnail workflows additionally need the image generation and sandbox toolkits.
 
-If `youtube_video_transcripts_fetch` is not in the tool list, stop and tell the user to enable the YouTube toolkit in Hyper.
+If `youtube_video_transcripts_fetch` is not found, the toolkit to enable is YouTube (`youtube_toolkit`).
+
+### How to run the tools in this skill
+
+Every tool in this skill is named by its canonical tool name. Run it with the call your surface gives you:
+
+| Surface | Find a tool | Run it |
+| --- | --- | --- |
+| Hyper chat | Call the tool by its name; `search_tools(queries=["<provider> <action>"])` shows its parameters | `<name>(...)` |
+| MCP client (Claude, Cursor, Codex, ChatGPT) | `search("<what you want to do>")`, then `describe("<name>")` | `call_read("<name>", {...})`, `call_write` or `call_destructive`: the one that `describe` names in `call_with` |
+| Hyper CLI | `hyperai search "<what you want to do>"`, then `hyperai describe <name>` | `hyperai call <name> --json '{...}'` |
+
+If a tool is not found: in Hyper chat, find its toolkit id with `discover_toolkits` and pass it to `enable_toolkit`. On an MCP client or the CLI, tell the user which integration to connect in Hyper.
 
 ## Two tools — pick the right one
 
@@ -128,7 +141,7 @@ Once you have the text, ask the user what they need — or infer it from context
 
 ## Thumbnails and SEO packaging
 
-For making or refreshing thumbnails, cloning the style of top-ranking thumbnails, adding the user's face, and generating SEO titles/descriptions, read `references/thumbnails.md`. Every thumbnail workflow is a sandbox script under `scripts/` (`generate_thumbnail.py`, `research_top_thumbnails.py`, `clone_top_thumbnail_style.py`, `analyze_thumbnail_concepts.py`, `generate_seo_titles.py`, `generate_seo_description.py`) — the reference doc is the routing table and the rules for using them.
+For making or refreshing thumbnails, cloning the style of top-ranking thumbnails, adding the user's face, and generating SEO titles/descriptions, read `references/thumbnails.md`. Every thumbnail workflow is a sandbox script under `scripts/` (`generate_thumbnail.py`, `research_top_thumbnails.py`, `clone_top_thumbnail_style.py`) — the reference doc is the routing table and the rules for using them.
 
 ## Example outputs
 
@@ -160,3 +173,5 @@ For making or refreshing thumbnails, cloning the style of top-ranking thumbnails
 | Mining comments from YouTube videos for customer research | [`customer-research`](../customer-research) |
 | Finding top YouTube videos by topic | Use `youtube_videos_search_top` directly |
 | Generating video content | [`video-generation`](../video-generation) |
+
+For title options, descriptions and thumbnail concepts, run `generate_seo_titles.py`, `generate_seo_description.py` and `analyze_thumbnail_concepts.py` under `scripts/`. They call `ai_functions_run` from the sandbox using fetched transcript and video context. Follow the output contracts in `references/packaging-schemas.json`; the thumbnail reference explains the workflow.

@@ -21,12 +21,24 @@ This is the hub in a hub-and-spoke model. Ad copy, blog posts, cold email, socia
 - **Recommended for auto-draft**, enabled at https://app.hyperfx.ai/apps: **Firecrawl** (read the brand's site and extract visual identity). Without it, skip auto-draft and use the interview path — the skill still works.
 - **Optional enrichment:** the Apify scrapers used by `customer-research` (verbatim customer language) and **HyperSEO** (competitive landscape). Both are nice-to-have; mark any section built without real data as unverified rather than inventing content.
 
+### How to run the tools in this skill
+
+Every tool in this skill is named by its canonical tool name. Run it with the call your surface gives you:
+
+| Surface | Find a tool | Run it |
+| --- | --- | --- |
+| Hyper chat | Call the tool by its name; `search_tools(queries=["<provider> <action>"])` shows its parameters | `<name>(...)` |
+| MCP client (Claude, Cursor, Codex, ChatGPT) | `search("<what you want to do>")`, then `describe("<name>")` | `call_read("<name>", {...})`, `call_write` or `call_destructive`: the one that `describe` names in `call_with` |
+| Hyper CLI | `hyperai search "<what you want to do>"`, then `hyperai describe <name>` | `hyperai call <name> --json '{...}'` |
+
+If a tool is not found: in Hyper chat, find its toolkit id with `discover_toolkits` and pass it to `enable_toolkit`. On an MCP client or the CLI, tell the user which integration to connect in Hyper.
+
 ## Tool surface
 
 | Job | Tools |
 | --- | --- |
 | Read, create, update `brand-context.md` | your file tools (`read_file`, `create_file`, `edit_file`) |
-| Auto-draft from the brand's site | `firecrawl_urls_scrape` (homepage, about, pricing, product pages), `web_scrape_page` fallback |
+| Auto-draft from the brand's site | `firecrawl_urls_scrape` (homepage, about, pricing, product pages), `web_pages_fetch` fallback |
 | Visual identity (colors, logo, typography) | `firecrawl_branding_extract` |
 | Verbatim customer language (optional) | defer to `customer-research` |
 | Competitive landscape (optional) | defer to `competitor-intel`, `seo-research` |

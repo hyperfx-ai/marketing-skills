@@ -5,7 +5,7 @@
 > **CRITICAL**: `match_type` is REQUIRED. Without it, the Pinterest API returns a 500 error.
 
 ```python
-pinterest_ads_create_keyword(
+pinterest_ads_keywords_create(
     ad_account_id="<AD_ACCOUNT_ID>",
     parent_id="<AD_GROUP_ID>",
     value="spring fashion trends",
@@ -25,7 +25,7 @@ pinterest_ads_create_keyword(
 ## Phase 8: Analytics
 
 ```python
-pinterest_ads_get_campaign_analytics(
+pinterest_ads_campaign_analytics_get(
     ad_account_id="<AD_ACCOUNT_ID>",
     campaign_ids=["<CAMPAIGN_ID>"],
     start_date="2026-02-01",
@@ -41,10 +41,10 @@ pinterest_ads_get_campaign_analytics(
 
 ## Update Operations
 
-`pinterest_ads_update_campaign`, `pinterest_ads_update_ad_group`, and `pinterest_ads_update_ad` all follow the same shape — pass `ad_account_id`, the entity ID (`campaign_id` / `ad_group_id` / `ad_id`), and any fields you want to change. Statuses use `ACTIVE`, `PAUSED`, or `ARCHIVED` (cannot be unarchived).
+`pinterest_ads_campaigns_update`, `pinterest_ads_ad_groups_update`, and `pinterest_ads_update` all follow the same shape — pass `ad_account_id`, the entity ID (`campaign_id` / `ad_group_id` / `ad_id`), and any fields you want to change. Statuses use `ACTIVE`, `PAUSED`, or `ARCHIVED` (cannot be unarchived).
 
 ```python
-pinterest_ads_update_campaign(
+pinterest_ads_campaigns_update(
     ad_account_id="<AD_ACCOUNT_ID>",
     campaign_id="<CAMPAIGN_ID>",
     name="Updated Name",

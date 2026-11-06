@@ -20,7 +20,7 @@ Skills are NOT tools. They are markdown instructions plus optional reference fil
 
 | Skill | What it does |
 | --- | --- |
-| [`google-ads`](./skills/google-ads) | Plan and create new Google Ads campaigns (Search, Display, Performance Max) using the blueprint flow, plus GAQL-backed reports and dashboards on existing accounts. |
+| [`google-ads`](./skills/google-ads) | Plan and create new Google Ads campaigns (Search, Display, Performance Max) with the per-resource tools, plus GAQL-backed reports and dashboards on existing accounts. |
 | [`meta-ads`](./skills/meta-ads) | Plan and create Meta (Facebook/Instagram) ad campaigns with Advantage+ as the default; includes an account-audit workflow. |
 | [`meta-ads-library`](./skills/meta-ads-library) | Search the Meta Ads Library for competitor ads, optionally enrich with page contact info, and surface structured ad-intelligence summaries inline in chat. |
 | [`amazon-ads`](./skills/amazon-ads) | Plan and create Amazon Sponsored Products campaigns with strategic targeting and budget rules. |
@@ -53,8 +53,8 @@ Skills are NOT tools. They are markdown instructions plus optional reference fil
 | Skill | What it does |
 | --- | --- |
 | [`ad-creative-generation`](./skills/ad-creative-generation) | End-to-end ad creative pipeline — brand extraction (Firecrawl) → ad copy variants → on-brand images for Google RSAs, Display, Performance Max, Meta feed / story / carousel, and other paid placements. Ships with four reference workflows under `references/`. |
-| [`image-generation`](./skills/image-generation) | Tool-selection guide for the bundled image models — OpenAI (`gpt-image-2`), Nano Banana (Gemini 3 Pro / 2.5 Flash), Seedream (ByteDance via fal.ai) — for ad creatives, branded compositions, photoreal product shots, image-to-image edits, and high-resolution output. |
-| [`video-generation`](./skills/video-generation) | End-to-end AI video — text-to-video / image-to-video (Sora, Veo, Seedance), scene chaining, video analysis, transcription, subtitles, TikTok / karaoke captions, voiceover (TTS), audio mixing, clipping, stitching, and text overlays. |
+| [`image-generation`](./skills/image-generation) | Model-selection guide for `images_generate` — OpenAI GPT Image 2.5 (`gpt-image-2.5-flare`, `gpt-image-2.5-sunburst`), Nano Banana (Gemini 3 Pro / 3.1 Flash), Seedream 4.5 (ByteDance) — for ad creatives, branded compositions, photoreal product shots, image-to-image edits, and high-resolution output. |
+| [`video-generation`](./skills/video-generation) | End-to-end AI video — text-to-video / image-to-video (Veo, Seedance), scene chaining, video analysis, transcription, subtitles, TikTok / karaoke captions, voiceover (TTS), audio mixing, clipping, stitching, and text overlays. |
 | [`blog-generation`](./skills/blog-generation) | Generate one excellent, on-brand blog post per run — a stateful engine (reads a brand strategy doc, never repeats a topic) built to rank on Google and get cited by AI search. Firecrawl / HyperSEO / Search Console recommended. |
 | [`writing`](./skills/writing) | Writing style library and quality gate for all prose — routes each deliverable to a named writing system (BLUF / Minto, PAS, AIDA, Smart Brevity, inverted pyramid, classic style, plain language, Diátaxis) with hard checkable rules, then runs a lint pass that strips AI tells. Ships with five references under `references/` (copywriting, business writing, technical writing, prose style, lint-and-humanize). |
 
@@ -93,9 +93,9 @@ See [`CONTRIBUTING.md`](./CONTRIBUTING.md) for details.
 
 ## Repo conventions
 
-- **Tool names are referenced verbatim from the Hyper MCP.** When citing or editing a tool name in a skill, verify it against the live MCP catalog (the `<tool-name>.json` schema files exposed by the connected MCP server). The MCP descriptor wins over codebase function names, prior skill content, or memory.
+- **One canonical tool name, every surface.** A skill names a tool once, by its canonical name, for example `gmail_messages_send`. That name runs in Hyper chat as a direct call, on MCP with `call_read("<name>", {...})`, `call_write` or `call_destructive` (the one that `describe` names in `call_with`), and on the CLI with `hyperai call <name> --json '{...}'`. Never write a legacy name and never write a CLI alias path such as `gmail messages send`: the live catalog (`search`, `describe`) is the only source of truth, and it wins over codebase function names, prior skill content, or memory.
 - **Allowed Hyper URLs in skill bodies:** only `app.hyperfx.ai/mcp` and `app.hyperfx.ai/apps`. No other Hyper URLs.
-- **No internal infra references.** No `hyper_cache_*` table names hardcoded into skills (the cache table name is workspace-specific — instruct agents to read it from the tool description or error `suggestion` field instead). No internal filesystem paths. No template ids that aren't part of the public MCP surface.
+- **No internal infra references.** No `hyper_cache_*` table names in skills, and no instructions to discover one at runtime — those tables and the `*_insights_query` / `*_sync_*` tools that fed them are being removed. For live data, call the provider's own API tool. For a workspace's own warehouse tables, use the `database` toolkit — it is the single database path in Hyper: `database_tables_list` to discover, `database_tables_describe` for real columns, then `database_query`. Never hardcode or guess a table name. Also no internal filesystem paths and no template ids that aren't part of the public MCP surface.
 - **Conditional integrations.** Some tools only appear when the underlying integration is enabled in the user's Hyper workspace (LinkedIn scraper is the canonical example). Skills citing such tools must mark them conditional and gracefully skip the affected step rather than failing the whole workflow.
 - **Self-contained skills.** If two skills overlap, add an "Out of scope" section pointing at the right sibling rather than duplicating workflow.
 - **Microcurrency.** Pinterest Ads budgets and bids are in microcurrency (`$1.00 = 1,000,000` microdollars). Skills that touch budget fields must convert.
@@ -103,7 +103,7 @@ See [`CONTRIBUTING.md`](./CONTRIBUTING.md) for details.
 ## How an agent should use these skills
 
 1. Read the matching `SKILL.md` from `skills/<name>/SKILL.md`.
-2. Confirm the Hyper MCP is connected — every skill defines a "stop and tell the user" check at the top.
+2. When a tool is not found, follow the skill's not-found line: in Hyper chat, find the toolkit id with `discover_toolkits` and pass it to `enable_toolkit`; on an MCP client or the CLI, tell the user which integration to connect.
 3. Follow the workflow defined in the skill's body.
 4. Cross-reference sibling skills via the "Out of scope" table when relevant.
 5. When a tool call fails with an arg-validation error, re-read the MCP tool descriptor before retrying — don't blindly retry with the same args.

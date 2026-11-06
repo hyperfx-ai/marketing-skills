@@ -2,11 +2,6 @@
 
 Each video backend rewards a different prompt structure. When calling `videos_generate` directly (not via `ugc_videos_create`), shape the prompt to the model you're using.
 
-## Sora (`sora-2`, `sora-2-pro`)
-- Shape: storyboard scene with action beats.
-- Required sections: subject/scene → action beats → camera/framing → lighting/palette → audio/dialogue.
-- Avoid: vague style stacks, asking for duration/aspect in prose, more than ~2 scene changes in one clip.
-
 ## Veo (`veo-3.1-generate-preview`, `veo-3.1-fast-generate-preview`)
 - Shape: a single clear scene.
 - Required sections: shot → scene → character details → action → lighting → style (+ optional dialogue).
@@ -26,6 +21,5 @@ Each video backend rewards a different prompt structure. When calling `videos_ge
 
 ## Universal rules
 
-- Keep model-specific sizing parameters consistent: Sora uses `size` (e.g. `1280x720`), Veo and Seedance use `aspect_ratio` (e.g. `16:9`).
-- Don't pass `aspect_ratio` to Sora or `size` to Veo/Seedance.
+- Veo and Seedance use `aspect_ratio` (e.g. `16:9`).
 - For chained scenes, capture the last frame and pass it as `image_file_id` in the next call.

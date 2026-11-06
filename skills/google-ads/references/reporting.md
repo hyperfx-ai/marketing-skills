@@ -6,14 +6,14 @@ Report on existing Google Ads accounts using GAQL-backed data. Dashboards and da
 
 - Use `google_ads_gaql_query` as the canonical Google Ads data tool.
 - Written GAQL-backed reports are valid outputs. Build a dashboard or data app only when the user asks for one or when an interactive view materially improves the answer.
-- Do not use the alternate GAQL alias (`google_ads_run_gaql`) in new examples — `execute_gaql` works on both manager and sub-accounts.
+- Call `google_ads_gaql_query(customer_id, query)`. Its description gives the GAQL rules. Select the account whose data the report needs.
 - Treat rows as evidence, not as automatic recommendations ([heuristics.md](heuristics.md)).
 - Keep reporting separate from live account changes.
 - Do not mention internal dashboard implementation details to the user unless they explicitly ask how the interface is built.
 
 ## Phase 1: Access and scope
 
-1. Call `google_ads_accounts_list()` before touching account data.
+1. Read the accounts as [discovery.md](discovery.md) Phase 1 says, before touching account data.
 2. Confirm the customer ID if more than one account is available.
 3. Confirm the reporting window if the user has not given one.
 4. If the user did not ask for a dashboard/data app and the best output is unclear, ask whether they want a written report or an interactive view.
@@ -82,61 +82,74 @@ WHERE segments.date DURING LAST_30_DAYS
 Skip this phase for plain written reports. When the user asks for a dashboard or data app, or an interactive view is clearly the best presentation, use the matching report's dashboard section as the implementation recipe.
 
 Before authoring a custom dashboard:
-- Inspect the live `hyper_data_build_dashboard` tool schema first — it documents the accepted data-source shapes and UI components. Do not invent dashboard patterns or component names.
+- Inspect the live `data_apps_build` tool schema first — it documents the accepted data-source shapes and UI components. Do not invent dashboard patterns or component names.
 
 The implementation pattern is:
 
-1. `tool_data_sources` — the report's GAQL runs through `google_ads_gaql_query` and the rows are saved to a cache table (convention: `gads_<report>_<scope>`).
-2. `sql_data_sources` — re-aggregate the cache table into named variables (KPIs, time series, top lists).
-3. Build the interface with cards, KPIs, charts, tables, and a clear visual hierarchy. Bind only SQL output variables inside the dashboard/data app code.
-4. `refresh` — set `{"mode": "scheduled", "cron": "0 * * * *"}` to keep the dashboard live; default is manual.
+1. `tool_data_sources` — the report's GAQL runs live through `google_ads_gaql_query`, and the rows under `results` are saved to a cache table named for the report and the customer (`gads_<report>_<customer id>`), so two accounts never share one table. Pass `"rows_path": "results"`, the key that holds the rows. Run the GAQL once with `google_ads_gaql_query` before the build: when it returns no rows, tell the user and build nothing, because a first build with no rows makes a cache table with no columns and fails.
+2. `sql_data_sources` — re-aggregate the cache table into named variables (KPIs, time series, top lists). Google returns the int64 metrics (`cost_micros`, `clicks`, `impressions`) as strings, so cast every metric with `::numeric`.
+3. The template — `template_name="ads_overview"` for an account view of KPIs, a spend and clicks trend, top campaigns and top ads; else `template_html`, a body with cards, KPIs, charts and tables that binds only the SQL variables.
+   The recipes write amounts with `$`. Select `customer.currency_code` first, and for an account in another currency use its symbol and say the currency in the subtitle.
+4. Refresh is manual: `data_apps_refresh(data_app_id=...)` runs the GAQL again and re-renders the app with no agent run.
 
 ```python
-hyper_data_build_dashboard(
+data_apps_build(
     name="Google Ads Report",
     tool_data_sources={
         "raw": {
             "tool_name": "google_ads_gaql_query",
-            "tool_args": {"customer_id": "...", "query": "..."},
-            "cache_table": "gads_report_raw",
+            "tool_args": {
+                "customer_id": "123-456-7890",
+                "query": (
+                    "SELECT segments.date, metrics.cost_micros, metrics.clicks "
+                    "FROM customer WHERE segments.date DURING LAST_30_DAYS"
+                ),
+            },
+            "cache_table": "gads_report_raw_1234567890",
             "mode": "replace",
+            "rows_path": "results",
         }
     },
-    sql_data_sources={...},
-    prefab_python="...",
+    sql_data_sources={
+        "daily": {
+            "shape": "rows",
+            "sql": (
+                "SELECT segments_date AS date, "
+                "ROUND(SUM(metrics_cost_micros::numeric) / 1e6, 2) AS spend, "
+                "SUM(metrics_clicks::numeric) AS clicks "
+                "FROM gads_report_raw_1234567890 GROUP BY 1 ORDER BY 1"
+            ),
+        },
+    },
+    template_html="""
+<div class="card">
+  <header><h2>Spend and clicks</h2><p>Last 30 days</p></header>
+  <section><div class="chart h-64"><canvas id="daily" aria-label="Daily spend and clicks"></canvas></div></section>
+</div>
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  window.basecoat.chart("#daily", {
+    type: "line", labelKey: "date", legend: true,
+    data: {{ daily | tojson }},
+    series: {
+      spend: { label: "Spend", color: "var(--chart-1)" },
+      clicks: { label: "Clicks", color: "var(--chart-2)" }
+    }
+  });
+});
+</script>
+""",
 )
 ```
 
-The tool source name is not a Python variable. It populates the cache table. SQL sources create the variables used by the interface code. Re-run the same call (or call `hyper_data_refresh_dashboard`) to refresh without re-invoking the agent. Do not inject Google Ads credentials into the dashboard/data app runtime.
+The tool source name is not a template variable. It populates the cache table. SQL sources create the variables used by the template. Do not inject Google Ads credentials into the data app.
 
 ## Phase 5: Response format
 
 Use the template in [report-template.md](report-template.md). State what data was queried, which date range was used, and whether the final output is a written report, dashboard, data app, or published interface.
 
-## Cached Data (optional, when `google_ads_query_insights` is exposed)
+## Warehouse data
 
-If the MCP exposes `google_ads_query_insights`, use it for large multi-account performance queries — it reads from a local cache refreshed hourly and avoids API timeouts entirely.
+When the workspace has a Google Ads warehouse connection, inspect its available tables and columns and query the selected connection through `database_query`. Existing warehouse data remains available independently of native Google Ads API calls.
 
-Call `google_ads_query_insights` — its built-in description includes the exact table name, schema, and example queries. Read the tool description first, then pass a SQL query targeting that table. Typical pattern:
-
-```
-google_ads_query_insights(
-  query="SELECT date, campaign_name, SUM(cost_micros) as spend, SUM(clicks) as clicks
-         FROM <table>
-         WHERE customer_id = '1234567890'
-           AND date >= CURRENT_DATE - INTERVAL '7 days'
-         GROUP BY date, campaign_name ORDER BY date DESC"
-)
-```
-
-Replace `<table>` with the table name shown in the `google_ads_query_insights` tool description. Cache is refreshed hourly — no manual sync needed.
-
-> **If the tool returns a "no data cached" error**, check the `suggestion` field in the response — it will contain the correct workspace-specific table name. Retry the query using that suggested table name instead.
-
-Key columns available (verify in tool description):
-- **Hierarchy:** `date`, `customer_id`, `campaign_id`, `campaign_name`, `campaign_status`
-- **Volume:** `impressions`, `clicks`, `cost_micros` (÷ 1,000,000 for dollars)
-- **Conversions:** `conversions`, `conversions_value`, `conversion_rate`
-- **Efficiency:** `ctr`, `average_cpc`, `average_cpm`
-
-Supports standard SQL aggregations and window functions. For cross-account queries, omit the `customer_id` filter and `GROUP BY` it instead.
+Check Warehouse Data Status for that connection and report its last successful refresh. Name the customer IDs, date boundaries, currency units and metric definitions. Do not assume an hourly cache, fixed table name or fresh rows merely because the connection is healthy. Use `google_ads_gaql_query` when the requested data is not in the configured warehouse.

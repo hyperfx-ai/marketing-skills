@@ -2,7 +2,7 @@
 
 Pipeline:
 1. ``youtube_videos_read`` summarises the video (title, hook, key visuals, mood).
-2. ``ai_function`` coerces that summary into a strict 5-concept JSON schema
+2. ``ai_functions_run`` coerces that summary into a strict 5-concept JSON schema
    where each concept includes a one-line title, the visual composition, the
    emotional hook, and a ``ready_to_use_prompt`` that can be passed straight
    into ``generate_thumbnail.py``.
@@ -105,7 +105,7 @@ async def run(youtube_url: str) -> dict[str, Any]:
     summary_text = summary if isinstance(summary, str) else json.dumps(summary)
 
     concepts_result = await call_tool(
-        "ai_function",
+        "ai_functions_run",
         instructions=CONCEPT_EXTRACTION_PROMPT,
         input={"video_summary": summary_text, "youtube_url": youtube_url},
         output_format="json",
@@ -113,7 +113,18 @@ async def run(youtube_url: str) -> dict[str, Any]:
         performance="fast",
     )
 
-    output_json = concepts_result["results"][0].get("output_json") or {}
+    if not concepts_result.get("success"):
+        raise RuntimeError(
+            concepts_result.get("error")
+            or concepts_result.get("message")
+            or "AI generation failed"
+        )
+    item = concepts_result["results"][0]
+    if not item.get("success") or not isinstance(item.get("output_json"), dict):
+        raise RuntimeError(
+            item.get("error") or "AI generation returned no structured output"
+        )
+    output_json = item["output_json"]
     concepts = output_json.get("concepts", [])
 
     return {

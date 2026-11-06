@@ -5,7 +5,8 @@
 # - SKILL.md is <= 500 lines.
 # - Description includes a "Use when" trigger phrase and is 50-500 chars.
 # - Body contains a Requirements section pointing at app.hyperfx.ai/mcp.
-# - No banned internal references slipped through (hyper_cache_, seti., etc.).
+# - No banned internal references slipped through, in SKILL.md or any reference
+#   file (hyper_cache_, the removed hyper_data_* tools, seti., etc.).
 
 set -euo pipefail
 
@@ -94,20 +95,31 @@ for skill_dir in "${SKILLS_DIR}"/*/; do
     fi
 
     # Banned strings (internal-only references that should never ship).
+    # hyper_cache_ and the removed hyper_data_* tool family are banned because
+    # the cache tables and those tools no longer exist. The `database` toolkit
+    # (database_query / database_tables_list / database_tables_describe) is the
+    # single database path.
     banned_patterns=(
         'hyper_cache_'
+        'hyper_data_sql'
+        'hyper_data_sync'
         '/Users/'
         '~/.cursor/'
         'agent_v6.jinja'
         'seti\.'
         'src/seti/'
     )
-    for pattern in "${banned_patterns[@]}"; do
-        if grep -qE "${pattern}" "${skill_md}"; then
-            echo "FAIL ${skill_name}: contains banned reference '${pattern}'" >&2
-            errors=$((errors + 1))
-        fi
-    done
+    # Scan SKILL.md and every reference file — a hyper_cache_ table name shipped
+    # in references/ once because only SKILL.md was checked.
+    while IFS= read -r skill_file; do
+        for pattern in "${banned_patterns[@]}"; do
+            if grep -qE "${pattern}" "${skill_file}"; then
+                rel_path="${skill_file#"${skill_dir}"}"
+                echo "FAIL ${skill_name}: ${rel_path} contains banned reference '${pattern}'" >&2
+                errors=$((errors + 1))
+            fi
+        done
+    done < <(find "${skill_dir}" -type f -name '*.md')
 done
 
 echo ""

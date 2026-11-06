@@ -7,7 +7,7 @@
 Auto-increase budget on specific dates:
 
 ```
-amazon_ads_create_budget_rule(
+amazon_ads_budget_rules_create(
     profile_id=PROFILE_ID,
     campaign_id=CAMPAIGN_ID,
     rule_type="SCHEDULE",
@@ -23,7 +23,7 @@ amazon_ads_create_budget_rule(
 Auto-increase budget when metrics are met:
 
 ```
-amazon_ads_create_budget_rule(
+amazon_ads_budget_rules_create(
     profile_id=PROFILE_ID,
     campaign_id=CAMPAIGN_ID,
     rule_type="PERFORMANCE",
