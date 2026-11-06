@@ -19,15 +19,27 @@ Two principles run through everything here:
 ## Requirements
 
 - **Hyper MCP connected.** https://app.hyperfx.ai/mcp — this skill needs no specific toolkit. Drafting, editing, and linting use your file tools.
-- **Recommended: a `brand-context.md`** built by the `brand-context` skill. Read it before drafting anything customer-facing. If it does not exist, ask two questions (who is the reader, what should they do after reading) rather than guessing.
+- **Recommended: `/files/<brand-slug>/brand-context.md`**, built by the `brand-context` skill. Read it before drafting anything customer-facing. If it does not exist, ask two questions (who is the reader, what should they do after reading) rather than guessing.
 - **Optional: Firecrawl**, to pull source material or examples the user points at by URL.
+
+### How to run the tools in this skill
+
+Every tool in this skill is named by its canonical tool name. Run it with the call your surface gives you:
+
+| Surface | Find a tool | Run it |
+| --- | --- | --- |
+| Hyper chat | Call the tool by its name; `search_tools(queries=["<provider> <action>"])` shows its parameters | `<name>(...)` |
+| MCP client (Claude, Cursor, Codex, ChatGPT) | `search("<what you want to do>")`, then `describe("<name>")` | `call_read("<name>", {...})`, `call_write` or `call_destructive`: the one that `describe` names in `call_with` |
+| Hyper CLI | `hyperai search "<what you want to do>"`, then `hyperai describe <name>` | `hyperai call <name> --json '{...}'` |
+
+If a tool is not found: in Hyper chat, find its toolkit id with `discover_toolkits` and pass it to `enable_toolkit`. On an MCP client or the CLI, tell the user which integration to connect in Hyper.
 
 ## Tool surface
 
 | Job | Tools |
 | --- | --- |
-| Read and write drafts, read `brand-context.md` | your agent's file tools |
-| Pull source material or examples from URLs | `firecrawl_urls_scrape`, `web_scrape_page` |
+| Read and write drafts, read `/files/<brand-slug>/brand-context.md` | your agent's file tools |
+| Pull source material or examples from URLs | `firecrawl_urls_scrape`, `web_pages_fetch` fallback |
 
 ## Out of scope: defer to other skills
 
@@ -52,7 +64,7 @@ Run these steps in order for every writing or editing request.
 
 **Step 3: Read the reference file for that system.** Each reference holds the hard rules and before/after examples. Do not draft from memory of the system's name.
 
-**Step 4: Read `brand-context.md` if it exists.** Voice, banned words, and proof points come from there. The system's rules never override the brand's banned-word list.
+**Step 4: Read `/files/<brand-slug>/brand-context.md` if it exists.** Voice, banned words, and proof points come from there. The system's rules never override the brand's banned-word list.
 
 **Step 5: Draft to the rules.** Apply the system's hard rules while writing, not as an afterthought.
 
