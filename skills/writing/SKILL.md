@@ -76,6 +76,8 @@ When the request is **edit / tighten / "make this sound human"** rather than wri
 
 ## The style map
 
+The examples in the reference files use a fictional product (Flowmetric) and fictional companies (Acme, ExampleCo). Their numbers are illustrative; never reuse them as facts.
+
 | Deliverable | System | Reference |
 | --- | --- | --- |
 | Cold email, outreach message | PAS | [`copywriting.md`](references/copywriting.md) |

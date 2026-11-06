@@ -22,7 +22,7 @@ Each rule with the failure and the fix:
 
 **4. Every claim is concrete: a number, a name, an example — or it goes.**
 - Fail: "Trusted by leading companies to deliver significant results."
-- Fix: "4,200 finance teams, including Loop Returns, cut reporting time by an average of 3 hours a week." (Only if true. A cut claim is fine; an invented number never is.)
+- Fix: "4,200 finance teams, including ExampleCo, cut reporting time by an average of 3 hours a week." (Only if true. A cut claim is fine; an invented number never is.)
 
 **5. Cut hedges unless the hedge is the point.**
 - "quite," "fairly," "somewhat," "arguably," "in many cases," "to some extent" — delete and reread; the sentence almost always improves. Keep a hedge only when precision requires it ("early data suggests" before real data).

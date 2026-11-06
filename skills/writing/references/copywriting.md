@@ -31,7 +31,7 @@ Confirm you know these four things (from the request, `brand-context.md`, or one
 
 **After:**
 
-> Hi Sam — saw your team posts weekly KPI decks by hand. Most RevOps leads tell us that eats 4–6 hours every Friday, and the numbers are stale by Monday's standup. Flowmetric builds that same deck automatically from your warehouse; Loop Returns cut their reporting time to 20 minutes a week. Worth a look? I can send a 2-minute recording.
+> Hi Sam — saw your team posts weekly KPI decks by hand. Most RevOps leads tell us that eats 4–6 hours every Friday, and the numbers are stale by Monday's standup. Flowmetric builds that same deck automatically from your warehouse; ExampleCo cut their reporting time to 20 minutes a week. Worth a look? I can send a 2-minute recording.
 
 Why it works: problem in the reader's world (line 1), cost in hours (line 2), solve + named proof (line 3), low-friction CTA (line 4).
 
@@ -53,7 +53,7 @@ Why it works: problem in the reader's world (line 1), cost in hours (line 2), so
 
 > Your reports build themselves.
 > Flowmetric syncs your warehouse and writes the Friday KPI deck for you.
-> Teams like Loop Returns save 4+ hours a week.
+> Teams like ExampleCo save 4+ hours a week.
 > Start free →
 
 ---

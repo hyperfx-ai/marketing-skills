@@ -22,7 +22,7 @@ The stance: writing is a window. The writer has seen something, points the reade
 
 **After:**
 
-> Most SaaS companies set their price once, at launch, by copying a competitor — and then never touch it again. Profitwell's data puts the median time between pricing changes at three years. That neglect is expensive: price is the growth lever with the fastest payback and the least code.
+> Most SaaS companies set their price once, at launch, by copying a competitor — and then never touch it again. Across our own customers, the median time between pricing changes is three years. That neglect is expensive: price is the growth lever with the fastest payback and the least code.
 
 ---
 
