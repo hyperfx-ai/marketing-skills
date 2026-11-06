@@ -100,13 +100,13 @@ Set the expectation up front: content changes show up in classic search in days 
 **AI search visibility**
 - `hyperseo_mentions_track`: ask the questions a customer would ("best [category] for [use case]") with the brand and 2 to 3 competitors, and see which models name whom, and what they cite. Run before optimizing (baseline) and monthly after.
 - `hyperseo_ai_search_volume_get`: how much query volume exists in AI channels for the target terms.
-- `hyperseo_ai_overviews_get`: whether Google shows an AI Overview for the term and which sources it cites.
+- `hyperseo_ai_overviews_get`: the Google AI Mode answer for the term and the sources it cites. It does not tell you whether the normal results page shows an AI Overview.
 - Google Search Console now reports AI-feature visibility, but as impressions only, with AI Overviews and AI Mode blended. Useful for trend, not clean click attribution.
 - In GA4, AI assistants increasingly show up as their own referral channel, but a large share of AI-referred visits arrive as Direct, so treat AI referral numbers as a floor.
 
 **What good looks like**
 - Movement in GSC position and CTR on the target query.
 - The brand appearing in `hyperseo_mentions_track` for queries where it was absent, within roughly 90 days of shipping strong content.
-- The page showing up among the cited sources in `hyperseo_ai_overviews_get`.
+- The page showing up among the sources that `hyperseo_ai_overviews_get` (Google AI Mode) cites.
 
 For full audits, competitor benchmarking, and keyword expansion, hand off to the `seo-research` skill.

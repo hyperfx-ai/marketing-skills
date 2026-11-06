@@ -40,14 +40,13 @@ Every tool in this skill is named by its canonical tool name. Run it with the ca
 
 | Surface | Find a tool | Run it |
 | --- | --- | --- |
-| MCP client (Claude, Cursor, Codex, ChatGPT) | `search("<what you want to do>")`, then `describe("<name>")` | `call("<name>", {...})` |
+| Hyper chat | Call the tool by its name; `search_tools(queries=["<provider> <action>"])` shows its parameters | `<name>(...)` |
+| MCP client (Claude, Cursor, Codex, ChatGPT) | `search("<what you want to do>")`, then `describe("<name>")` | `call_read("<name>", {...})`, `call_write` or `call_destructive`: the one that `describe` names in `call_with` |
 | Hyper CLI | `hyperai search "<what you want to do>"`, then `hyperai describe <name>` | `hyperai call <name> --json '{...}'` |
 
-If a tool is not found, its integration is not connected or not enabled for the workspace: stop and tell the user which integration to connect.
+If a tool is not found: in Hyper chat, find its toolkit id with `discover_toolkits` and pass it to `enable_toolkit`. On an MCP client or the CLI, tell the user which integration to connect in Hyper.
 
 ## Core Rule
-
-Never write to Google Sheets from guessed column letters alone.
 
 Always:
 1. inspect the workbook and target worksheet
@@ -69,9 +68,10 @@ Always:
 
 ### Step 1: Inspect workbook structure
 
+If the user gave a link, the `spreadsheet_id` is the part after `/d/` in it. If the user gave only a name, call `google_sheets_list` and take the `id` whose `title` matches.
+
 Start with:
-- `google_sheets_get`
-- `google_sheets_worksheets_list` if needed
+- `google_sheets_get`: it lists every worksheet with its size
 
 Confirm:
 - worksheet title
@@ -110,7 +110,7 @@ Use:
 
 Prefer narrow writes over large blanket writes.
 
-If appending records into a table that already has fixed columns, compute the exact destination columns from the header map first.
+There is no append tool. To add rows, read the key column of the table (for example `Sheet1!B:B`) with `google_sheets_values_get`; the first empty row is the row after the last one it returns. Write from that row with `google_sheets_values_update`, in the mapped columns only. The sheet grows to fit by itself.
 
 ## Write Rules
 

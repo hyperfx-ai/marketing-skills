@@ -24,7 +24,7 @@ Don't assume who the competitors are — discover them from data.
 For each competitor (and the user's own domain).
 
 1. Run `hyperseo_traffic_get_bulk` with all domains at once to get a quick traffic comparison across all competitors in a single call.
-2. Run `hyperseo_domain_overview_get` on each domain for detailed metrics (authority, backlinks, referring domains).
+2. Run `hyperseo_domain_overview_get(domain=...)` on each domain for organic keywords and traffic, and `hyperseo_backlinks_history_get(target=...)` for backlinks, referring domains and domain rank (use the latest row).
 3. Present as a comparison matrix.
 
 **Comparison matrix format:**
@@ -33,6 +33,8 @@ For each competitor (and the user's own domain).
 | Domain | Domain Rank | Organic Keywords | Est. Traffic | Backlinks | Referring Domains |
 |--------|------------|-----------------|-------------|-----------|-------------------|
 ```
+
+Domain Rank, Backlinks and Referring Domains come from the latest row of `hyperseo_backlinks_history_get`.
 
 ### Step 3: Keyword gap analysis
 
@@ -55,7 +57,7 @@ Understand the link-building landscape.
 
 For the user's most important keywords.
 
-1. Run `hyperseo_serp_results_get` to see exactly who holds the top positions.
+1. Run `hyperseo_serp_results_get(keyword=...)` once for each important keyword to see who holds the top positions.
 2. Note the content types that rank (articles, product pages, videos, Reddit threads).
 3. Identify patterns: do certain domains dominate across multiple keywords?
 
@@ -63,10 +65,8 @@ For the user's most important keywords.
 
 **Domain rank**
 
-- 0 – 20: very low authority, new or small site.
-- 20 – 40: growing authority, can compete for low-difficulty keywords.
-- 40 – 60: established site, can compete for medium-difficulty keywords.
-- 60+: high authority, competitive for most keywords.
+- Take `rank` from the latest row of `hyperseo_backlinks_history_get(target=...)`. It is on a 0–1000 scale.
+- Compare the domains with each other. Do not use fixed tiers.
 
 **Keyword gap opportunities**
 

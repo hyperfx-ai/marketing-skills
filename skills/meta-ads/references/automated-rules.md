@@ -10,11 +10,11 @@ one-off actions you can do directly with the update tools.
 | Tool | Purpose |
 | --- | --- |
 | `meta_ads_adrule_create` | Create a rule (`ad_account_id` + `body`) |
-| `meta_ads_adrule_list` | List rules on the account |
+| `meta_ads_adrule_list` | List rules on the account: `meta_ads_adrule_list(ad_account_id=..., fields="id,name,status,evaluation_spec,execution_spec,schedule_spec")` |
 | `meta_ads_adrule_get` | Read one rule (`adrule_id`, `fields`) |
 | `meta_ads_adrule_update` | Change a rule (e.g. `body={"status": "DISABLED"}`) |
 | `meta_ads_adrule_delete` | Permanently remove a rule |
-| `meta_ads_adrule_history_list` | Audit log: what rules changed/paused/notified, and when |
+| `meta_ads_adrule_history_list` | Audit log: what rules changed/paused/notified, and when: `meta_ads_adrule_history_list(ad_account_id=..., fields="timestamp,evaluation_spec,execution_spec,results,exception_message")` |
 
 ## Rule anatomy
 

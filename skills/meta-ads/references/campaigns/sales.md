@@ -6,14 +6,15 @@ Use for campaigns optimized for website purchases, checkout completions, or any 
 
 ## Before starting
 
-Re-read [../constraints.md](../constraints.md). Every rule there applies here. Most relevant:
+The rules of [references/constraints.md](references/constraints.md) that this campaign hits are below. Read a section of that file only when a step names it:
 - Budget in cents (×100)
 - `promoted_object` required for OUTCOME_SALES
 - `targeting_automation` inside `targeting`
 - Budget at campaign level for Advantage+
 - `meta_ads_adset_create` takes `ad_account_id` (numeric, no `act_` prefix) + a `body` dict — all ad set fields inside `body`
 - `meta_ads_ad_create` takes `ad_account_id` + a `body` dict — no separate top-level args
-- Use `meta_ads_campaigns_activate()`, not `update_campaign(status="ACTIVE")`
+- Activation: section 3
+- Ad status: section 4
 
 ---
 
@@ -165,7 +166,7 @@ meta_ads_ad_images_upload(
 )
 ```
 
-→ Capture `image_hash` from the response.
+→ Capture the image hash (section 7 of [references/constraints.md](references/constraints.md)).
 
 ### 5. Create ad
 
@@ -183,6 +184,7 @@ meta_ads_ad_images_upload(
   "body": {
     "name": "Sales Ad - [Creative Name]",
     "adset_id": "<adset_id>",
+    "status": "PAUSED",
     "creative": {
       "object_story_spec": {
         "page_id": "<page_id>",
@@ -202,14 +204,12 @@ meta_ads_ad_images_upload(
 }
 ```
 
-> Omit `status` — ads default to PAUSED. Never pass `status="ACTIVE"` on creation.
-
 → Capture `ad_id` from the response.
 
 ### 6. Preview and activate
 
 ```python
-# creative_id is in the ad creation response: response.creative.id
+# creative_id: section 13 of ../constraints.md
 meta_ads_ad_previews_get(creative_ids=["<creative_id>"])
 # Summarize formats to user — never render iframe inline
 # Wait for explicit user approval
@@ -223,7 +223,7 @@ meta_ads_campaigns_activate(campaign_id="<campaign_id>")
 
 ## Other creative formats (step 5 variations)
 
-The single-image `object_story_spec` above is the most common. `meta_ads_ad_create` also supports carousel and dynamic creative natively — just change the `creative` block.
+The single-image `object_story_spec` above is the most common. `meta_ads_ad_create` also supports a carousel — just change the `creative` block. A dynamic creative takes two calls (below).
 
 **Carousel** (2–10 cards) — use `child_attachments` inside `link_data`:
 
@@ -233,6 +233,7 @@ The single-image `object_story_spec` above is the most common. `meta_ads_ad_crea
   "body": {
     "name": "Sales Carousel Ad",
     "adset_id": "<adset_id>",
+    "status": "PAUSED",
     "creative": {
       "object_story_spec": {
         "page_id": "<page_id>",
@@ -261,7 +262,63 @@ The single-image `object_story_spec` above is the most common. `meta_ads_ad_crea
 }
 ```
 
-**Dynamic creative** (Meta auto-optimizes combinations) — pair `asset_feed_spec` with a minimal `object_story_spec` that carries the `page_id`:
+**Dynamic creative** (Meta auto-optimizes combinations) takes two calls (section 19 of [references/constraints.md](references/constraints.md)):
+
+```json
+{
+  "ad_account_id": "123456789",
+  "body": {
+    "name": "Sales Dynamic Creative",
+    "object_story_spec": {
+      "page_id": "<page_id>"
+    },
+    "asset_feed_spec": {
+      "images": [
+        {
+          "hash": "<hash1>"
+        },
+        {
+          "hash": "<hash2>"
+        }
+      ],
+      "titles": [
+        {
+          "text": "Headline A"
+        },
+        {
+          "text": "Headline B"
+        }
+      ],
+      "bodies": [
+        {
+          "text": "Copy option 1"
+        },
+        {
+          "text": "Copy option 2"
+        }
+      ],
+      "descriptions": [
+        {
+          "text": "Free shipping over $40"
+        }
+      ],
+      "link_urls": [
+        {
+          "website_url": "https://example.com/shop"
+        }
+      ],
+      "call_to_action_types": [
+        "SHOP_NOW"
+      ],
+      "ad_formats": [
+        "SINGLE_IMAGE"
+      ]
+    }
+  }
+}
+```
+
+→ Capture `creative_id`, then:
 
 ```json
 {
@@ -269,53 +326,8 @@ The single-image `object_story_spec` above is the most common. `meta_ads_ad_crea
   "body": {
     "name": "Sales Dynamic Ad",
     "adset_id": "<adset_id>",
-    "creative": {
-      "object_story_spec": {
-        "page_id": "<page_id>"
-      },
-      "asset_feed_spec": {
-        "images": [
-          {
-            "hash": "<hash1>"
-          },
-          {
-            "hash": "<hash2>"
-          }
-        ],
-        "titles": [
-          {
-            "text": "Headline A"
-          },
-          {
-            "text": "Headline B"
-          }
-        ],
-        "bodies": [
-          {
-            "text": "Copy option 1"
-          },
-          {
-            "text": "Copy option 2"
-          }
-        ],
-        "descriptions": [
-          {
-            "text": "Free shipping over $40"
-          }
-        ],
-        "link_urls": [
-          {
-            "website_url": "https://example.com/shop"
-          }
-        ],
-        "call_to_action_types": [
-          "SHOP_NOW"
-        ],
-        "ad_formats": [
-          "SINGLE_IMAGE"
-        ]
-      }
-    }
+    "creative": {"creative_id": "<creative_id>"},
+    "status": "PAUSED"
   }
 }
 ```
@@ -335,9 +347,8 @@ The single-image `object_story_spec` above is the most common. `meta_ads_ad_crea
 |---|---|---|
 | Cryptic API error on ad set creation | Missing `promoted_object` | Add `pixel_id` + `custom_event_type` to ad set |
 | Budget rejected | Passed dollars not cents | Multiply by 100 |
-| Ad set error: unexpected argument | Fields passed outside `body` | All fields must be inside the `body` dict |
-| Ad creation error | Separate top-level args used | Use `ad_account_id` + `body` |
-| Campaign ACTIVE but nothing serves | Used `update_campaign(status="ACTIVE")` | Use `meta_ads_campaigns_activate()` |
+| Ad set error: unexpected argument | A misspelled field | See section 14 of [references/constraints.md](references/constraints.md) |
+| Campaign ACTIVE but nothing serves | Used `meta_ads_campaign_update(campaign_id, body={"status": "ACTIVE"})` | See section 3 of [references/constraints.md](references/constraints.md) |
 | "Bid amount required" | Optimization goal requires explicit bid | Do NOT change goal — ask user |
 | `targeting_automation` error | Placed at ad set top level | Move inside `targeting` object |
 
@@ -345,4 +356,4 @@ The single-image `object_story_spec` above is the most common. `meta_ads_ad_crea
 
 ## Full worked example
 
-See [../examples/sales-ecommerce.md](../examples/sales-ecommerce.md).
+See [references/examples/sales-ecommerce.md](references/examples/sales-ecommerce.md).

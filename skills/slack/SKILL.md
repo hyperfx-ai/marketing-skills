@@ -36,10 +36,11 @@ Every tool in this skill is named by its canonical tool name. Run it with the ca
 
 | Surface | Find a tool | Run it |
 | --- | --- | --- |
-| MCP client (Claude, Cursor, Codex, ChatGPT) | `search("<what you want to do>")`, then `describe("<name>")` | `call("<name>", {...})` |
+| Hyper chat | Call the tool by its name; `search_tools(queries=["<provider> <action>"])` shows its parameters | `<name>(...)` |
+| MCP client (Claude, Cursor, Codex, ChatGPT) | `search("<what you want to do>")`, then `describe("<name>")` | `call_read("<name>", {...})`, `call_write` or `call_destructive`: the one that `describe` names in `call_with` |
 | Hyper CLI | `hyperai search "<what you want to do>"`, then `hyperai describe <name>` | `hyperai call <name> --json '{...}'` |
 
-If a tool is not found, its integration is not connected or not enabled for the workspace: stop and tell the user which integration to connect.
+If a tool is not found: in Hyper chat, find its toolkit id with `discover_toolkits` and pass it to `enable_toolkit`. On an MCP client or the CLI, tell the user which integration to connect in Hyper.
 
 ## When NOT to Respond
 
@@ -87,6 +88,17 @@ For any file you want to share (documents, CSVs, etc.), use `slack_files_upload`
 - `content`: For text content to upload as a file
 
 ## Message Formatting
+
+### Replies inside a Slack conversation
+
+When a Slack direct message or thread runs you, your reply reaches that thread by itself. Hyper streams it while you write, or posts it as one message when you finish.
+
+- Write the reply in standard Markdown. Slack cannot stream Block Kit, and the reply cannot hold it.
+- Never send the reply again with a Slack tool.
+- Show a list of entities (ads, campaigns, channels, tasks) as a Markdown table in the reply: the name, the id, and the numbers asked for, at most 20 rows. Say how many rows you left out.
+- When the user explicitly asks for interactive elements such as buttons, post them with `slack_messages_send_block_kit` in the same thread, with a one-line `text`. Then say in one line that you posted them. Do not repeat their content in the reply.
+
+The rest of this section applies to messages that you send with Slack tools.
 
 ### When to Use Plain Text vs Block Kit
 - **Simple messages**: Use plain markdown text via `slack_messages_send` or `slack_threads_replies_send`

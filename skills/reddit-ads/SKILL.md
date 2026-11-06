@@ -16,7 +16,7 @@ Strategic guide for managing Reddit advertising via the Reddit Ads API v3. The t
 - **Hyper MCP installed and connected.** [https://app.hyperfx.ai/mcp](https://app.hyperfx.ai/mcp)
 - **Reddit Ads integration connected** (a Reddit Ads business account with ad account access) at [https://app.hyperfx.ai/apps](https://app.hyperfx.ai/apps).
 
-If `reddit_ads_get_me` / `reddit_ads_list_businesses` is not found by `search`, stop and tell the user to enable Hyper MCP and connect Reddit Ads. Serving ads also requires an active **funding instrument** on the ad account — campaigns and ad groups can be created without one, but the account must be funded for ads to run.
+If `reddit_ads_get_me` is not found, the integration to connect is Reddit Ads. Serving ads also requires an active **funding instrument** on the ad account — campaigns and ad groups can be created without one, but the account must be funded for ads to run.
 
 ### How to run the tools in this skill
 
@@ -24,10 +24,11 @@ Every tool in this skill is named by its canonical tool name. Run it with the ca
 
 | Surface | Find a tool | Run it |
 | --- | --- | --- |
-| MCP client (Claude, Cursor, Codex, ChatGPT) | `search("<what you want to do>")`, then `describe("<name>")` | `call("<name>", {...})` |
+| Hyper chat | Call the tool by its name; `search_tools(queries=["<provider> <action>"])` shows its parameters | `<name>(...)` |
+| MCP client (Claude, Cursor, Codex, ChatGPT) | `search("<what you want to do>")`, then `describe("<name>")` | `call_read("<name>", {...})`, `call_write` or `call_destructive`: the one that `describe` names in `call_with` |
 | Hyper CLI | `hyperai search "<what you want to do>"`, then `hyperai describe <name>` | `hyperai call <name> --json '{...}'` |
 
-If a tool is not found, its integration is not connected or not enabled for the workspace: stop and tell the user which integration to connect.
+If a tool is not found: in Hyper chat, find its toolkit id with `discover_toolkits` and pass it to `enable_toolkit`. On an MCP client or the CLI, tell the user which integration to connect in Hyper.
 
 ## Out of scope — defer to other skills
 

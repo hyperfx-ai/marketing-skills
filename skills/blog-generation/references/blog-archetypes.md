@@ -1,6 +1,6 @@
 # Blog Archetypes (authoritative per-type specs)
 
-The full playbook for each blog type. Pick one with the table below, then build to that type's exact spec. Every type still obeys the universal rules in `blog-playbook.md` (answer-first lead, question-shaped H2s, self-contained sections, no fabrication) and the voice and quality gate in `brand-voice-and-quality.md`. The schema notes assume the JSON-LD rules in `on-page-and-technical.md`.
+The full playbook for each blog type. Pick one with the table below, then build to that type's exact spec. Every type obeys the AI tells rules and the pre-publish gate at the end of this file: answer-first lead, question-shaped H2s, self-contained sections, no fabrication, JSON-LD.
 
 ## Pick the type
 
@@ -179,4 +179,56 @@ Choosing rule: classify the query intent (`hyperseo_intents_search`), then confi
 - Universal structure, content blocks, GEO writing rules, clusters: `blog-playbook.md`
 - Schema per type, on-page, technical: `on-page-and-technical.md`
 - Getting cited, authority, off-page: `ai-citation-playbook.md`
-- Voice, anti-cringe, pre-publish gate: `brand-voice-and-quality.md`
+- Voice profile, positioning, substance rules: `brand-voice-and-quality.md`
+
+---
+
+## The AI tells (the anti-cringe rules)
+
+The fastest way to make good content look like cheap content. Strip all of these:
+
+- **Throat-clearing intros.** "In today's fast-paced / ever-evolving / digital landscape...", "In the world of...", "As we all know...". Delete and start with the answer.
+- **The AI-essay vocabulary.** delve, unlock, elevate, harness, leverage (as filler), realm, tapestry, landscape, navigate the complexities, testament to, game-changer, supercharge, seamless, robust, cutting-edge, when it comes to. If a word smells like a model's default, cut it.
+- **Empty hedging.** "may help", "can potentially", "might be able to". Make the claim or drop it.
+- **The rule of three on autopilot.** Endless "X, Y, and Z" triads in every sentence. Vary the rhythm.
+- **"It's important to note that...", "It's worth mentioning...", "Needless to say...".** Filler. Cut to the point.
+- **Fake-balanced "conclusion" paragraphs** that restate the intro and say nothing new. End with a real takeaway and one action.
+- **Overuse of em-dashes and emoji-bulleted lists** as a default texture. They are a tell when they appear everywhere. Use normal punctuation and plain bullets unless the brand's real voice does otherwise.
+- **Generic openers and stock phrasing** that could appear on any competitor's site. If you could paste the sentence onto a rival's page unchanged, rewrite it with the brand's specifics.
+
+The test: read it aloud as the founder. If they would be slightly embarrassed to publish it, it is not done.
+
+---
+
+## The pre-publish quality gate
+
+The post is not done until every box is checked.
+
+**Voice and brand**
+- [ ] Reads in the brand's actual voice (tone, vocabulary, reading level from the profile).
+- [ ] No AI tell from the list above.
+- [ ] The category and positioning one-liner are stated clearly and match every other page.
+- [ ] Nothing in it would embarrass the founder.
+
+**Substance**
+- [ ] Every stat, quote, and claim is real and either first-party or sourced. Zero fabrication.
+- [ ] The page says enough specific, verifiable things about the subject to be recommended for the right thing.
+- [ ] It says something a generic competitor or a raw model could not have written.
+
+**Structure**
+- [ ] Answer-first lead; key term defined in the first ~150 words.
+- [ ] Question-shaped H2s; each section self-contained and answer-first.
+- [ ] At least one comparison table or structured block where the topic warrants it.
+- [ ] FAQ block of real questions, each answered in 30 to 50 words.
+
+**On-page and technical**
+- [ ] Title (< ~60 chars, keyword front, click-worthy) and benefit-driven meta.
+- [ ] Internal links into the cluster (siblings + pillar); descriptive anchors; no orphan.
+- [ ] JSON-LD: Article + author Person + Organization, matching visible content.
+- [ ] Visible "Last updated" date and accurate `dateModified`.
+- [ ] The content you want cited is real server-rendered text, on a crawlable, indexable page.
+
+**Measurement**
+- [ ] Baseline captured (GSC position/CTR, `hyperseo_mentions_track`) so impact is provable later.
+
+If any box fails, fix it before publishing.

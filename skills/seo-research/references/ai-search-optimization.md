@@ -46,12 +46,10 @@ Understand how much query volume exists in AI channels.
 - Growing AI volume with stable Google volume suggests users are shifting to AI for that query type.
 - Keywords with high AI volume and low Google difficulty are prime targets.
 
-### Step 3: Analyze Google AI Overviews
+### Step 3: Analyze Google AI Mode answers
 
-Google's AI Overviews appear above traditional search results for many queries.
-
-1. Run `hyperseo_ai_overviews_get` for the user's most important keywords.
-2. Review: which sources does Google AI cite?
+1. Run `hyperseo_ai_overviews_get(keyword=...)` for the user's most important keywords. It returns the Google AI Mode answer and its cited sources. It does not show whether the normal results page has an AI Overview.
+2. Review: which sources does Google AI Mode cite?
 3. Note the domains and content types that get cited.
 4. This reveals what kind of content earns AI citations.
 
@@ -95,7 +93,7 @@ Based on what sources AI models tend to cite:
 
 1. **Brand mention status** — table showing which AI models mention the brand for key queries.
 2. **AI vs traditional volume** — side-by-side comparison for target keywords.
-3. **Google AI Overview sources** — which domains get cited for target keywords.
+3. **Google AI Mode sources** — which domains get cited for target keywords.
 4. **Competitor comparison** — who has better AI visibility and why.
 5. **Recommendations** — specific content improvements to earn AI citations.
 

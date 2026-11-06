@@ -35,10 +35,11 @@ Every tool in a skill is named by its canonical tool name, and that one name wor
 
 | Surface | Find a tool | Run it |
 | --- | --- | --- |
-| MCP client | `search("<what you want to do>")`, `describe("<name>")` | `call("<name>", {...})` |
+| Hyper chat | Call the tool by its name; `search_tools(queries=["<provider> <action>"])` shows its parameters | `<name>(...)` |
+| MCP client | `search("<what you want to do>")`, `describe("<name>")` | `call_read("<name>", {...})`, `call_write` or `call_destructive`: the one that `describe` names in `call_with` |
 | Hyper CLI | `hyperai search "..."`, `hyperai describe <name>` | `hyperai call <name> --json '{...}'` |
 
-The Hyper MCP lists six tools (`search`, `describe`, `call`, `connections_list`, `connections_use`, `info`); every other tool runs through `call`. A client that sends a tool name directly still works.
+The Hyper MCP lists `search`, `describe`, `call_read`, `call_write`, `call_destructive`, `result_read` and `info`. The default server also lists `connections_list`, `connections_use`, `skills_search` and `skills_read`. Every other tool runs through the call tool of its access class. A client that sends a tool name directly still works.
 
 ## Install
 

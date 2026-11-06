@@ -17,13 +17,12 @@ Get a high-level snapshot of domain health.
 
 1. Ask for the exact domain (e.g., `example.com` — don't guess).
 2. Run `hyperseo_domain_overview_get` on the domain.
-3. Review: organic keywords count, estimated traffic, backlinks, referring domains, domain rank.
+3. Review: organic keywords count and estimated traffic. Then run `hyperseo_backlinks_history_get(target=...)` and take backlinks, referring domains and domain rank from its latest row.
 
 **Quick health indicators:**
 
 | Metric | Weak | Developing | Established | Strong |
 | --- | --- | --- | --- | --- |
-| Domain Rank | 0 – 10 | 10 – 30 | 30 – 50 | 50+ |
 | Organic Keywords | < 100 | 100 – 1,000 | 1,000 – 10,000 | 10,000+ |
 | Referring Domains | < 50 | 50 – 500 | 500 – 5,000 | 5,000+ |
 
@@ -31,7 +30,7 @@ Get a high-level snapshot of domain health.
 
 If the user has Google Search Console connected in Hyper:
 
-1. Call `google_search_console_sites_list()` to confirm the domain is verified and get the exact `site_url` as registered in GSC.
+1. In Hyper chat, read the exact verified `site_url` from `connections_info(toolkit_id="google_search_console_toolkit")`. On an MCP client or the CLI, call `google_search_console_sites_list()` for it.
 2. Call `google_search_console_performance_get` for the search analytics. It reads the Search Console API directly, so there is no cache to warm and no sync step:
    ```
    google_search_console_performance_get(
@@ -61,14 +60,14 @@ Understand what the domain already ranks for and how it's trending.
 4. Identify:
    - **Strengths**: keywords in positions 1 – 5 (defend these).
    - **Low-hanging fruit**: keywords in positions 6 – 20 (improve these with content updates).
-   - **Declining**: keywords losing position (investigate and fix).
+   - **Declining**: `hyperseo_rank_history_get` shows the monthly count of lost keywords (`organic_is_lost`) and the drop in `organic_etv`. No HyperSEO tool lists which keyword lost position. With Search Console, compare `position` by query over two date ranges of `google_search_console_performance_get(dimensions=["query"])`.
    - **Trend**: compare recent months to past months — a declining trend requires urgent action.
 
 ### Step 3: Keyword opportunities
 
 Find untapped potential.
 
-1. Run `hyperseo_site_keywords_search` to discover keywords the domain could target but isn't.
+1. Run `hyperseo_site_keywords_search(domain=...)` for keywords that fit the site. It does not drop keywords the domain already ranks for: remove the ones that `hyperseo_domain_keywords_get` returned in Step 2.
 2. Cross-check the best opportunities with `hyperseo_keyword_difficulty_get`.
 3. Focus on keywords where:
    - The domain has topical relevance.
@@ -91,15 +90,15 @@ No audit is complete without context.
 
 1. Run `hyperseo_competitor_domains_search` to find competitors based on shared organic keywords.
 2. Run `hyperseo_traffic_get_bulk` on the user's domain + top 3 – 5 competitors to compare traffic levels quickly.
-3. Run `hyperseo_domain_overview_get` on the top 3 competitors for detailed metrics.
-4. Compare: how does the domain stack up on authority, traffic, and backlinks?
+3. Run `hyperseo_domain_overview_get` and `hyperseo_backlinks_history_get` on the top 3 competitors.
+4. Compare: how does the domain stack up on traffic (`hyperseo_domain_overview_get`), and on backlinks and domain rank (`hyperseo_backlinks_history_get`)?
 5. This frames the audit findings — "you rank for 500 keywords" means different things if competitors rank for 500 vs 50,000.
 
 ### Step 6: Page speed check
 
 Assess Core Web Vitals.
 
-1. Run `hyperseo_pagespeed_get` on the domain's homepage and 2 – 3 key pages (both mobile and desktop).
+1. Run `hyperseo_pagespeed_get(url=..., strategy="mobile")` and again with `strategy="desktop"` on the homepage and 2 – 3 key pages. A score of 0 with an 'Error: ...' text in `first_contentful_paint` means the check did not run. Say so; do not report the page as slow.
 2. Key metrics to evaluate:
    - **Performance score**: 90+ is good, 50 – 89 needs improvement, below 50 is poor.
    - **LCP (Largest Contentful Paint)**: should be under 2.5 s.
@@ -130,7 +129,7 @@ Present findings as a structured report.
 ```
 | Metric | Value | Assessment |
 |--------|-------|-----------|
-| Domain Rank | [X] | [Weak/Developing/Established/Strong] |
+| Domain Rank | [X] | [against the competitors' rank] |
 | Organic Keywords | [X] | ... |
 | Estimated Traffic | [X] | ... |
 | Backlinks | [X] | ... |

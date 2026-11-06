@@ -16,7 +16,7 @@ Strategic guide for building new Google Ads campaigns and reporting on existing 
 - **Hyper MCP installed and connected.** [https://app.hyperfx.ai/mcp](https://app.hyperfx.ai/mcp)
 - **Google Ads integration connected** at [https://app.hyperfx.ai/apps](https://app.hyperfx.ai/apps).
 
-If `search("google_ads_accounts_list")` does not find `google_ads_accounts_list`, stop and tell the user to enable Hyper MCP and connect Google Ads.
+If `google_ads_accounts_list` is not found, the integration to connect is Google Ads.
 
 ### How to run the tools in this skill
 
@@ -24,20 +24,21 @@ Every tool in this skill is named by its canonical tool name. Run it with the ca
 
 | Surface | Find a tool | Run it |
 | --- | --- | --- |
-| MCP client (Claude, Cursor, Codex, ChatGPT) | `search("<what you want to do>")`, then `describe("<name>")` | `call("<name>", {...})` |
+| Hyper chat | Call the tool by its name; `search_tools(queries=["<provider> <action>"])` shows its parameters | `<name>(...)` |
+| MCP client (Claude, Cursor, Codex, ChatGPT) | `search("<what you want to do>")`, then `describe("<name>")` | `call_read("<name>", {...})`, `call_write` or `call_destructive`: the one that `describe` names in `call_with` |
 | Hyper CLI | `hyperai search "<what you want to do>"`, then `hyperai describe <name>` | `hyperai call <name> --json '{...}'` |
 
-If a tool is not found, its integration is not connected or not enabled for the workspace: stop and tell the user which integration to connect.
+If a tool is not found: in Hyper chat, find its toolkit id with `discover_toolkits` and pass it to `enable_toolkit`. On an MCP client or the CLI, tell the user which integration to connect in Hyper.
 
 ## Out of scope
 
 - **Live optimization mutations** (bid adjustments, pausing keywords, restructuring existing campaigns). Reports may *recommend* these changes; applying them needs explicit per-change user approval.
-- **Creative generation** (headlines, descriptions, images) → [`ad-creative-generation`](../ad-creative-generation).
+- **Creative generation** (headlines, descriptions, images) → the `ad-creative-generation` skill.
 - **Cross-platform campaign launches** → use this skill for Google, then invoke `meta-ads` / `tiktok-ads` separately.
 
 ## Tool surface
 
-Reads are GAQL (`google_ads_gaql_query` covers every resource). Writes are one tool per resource operation, named `google_ads_<resource>_<create|update|remove>`; create/update take `(customer_id, body)` where `body` is the bare resource object in snake_case.
+Reads are GAQL (`google_ads_gaql_query` covers every resource). Writes are one tool per resource operation, named `google_ads_<resource>_<create|update|remove>`. Generated create and update tools take `(customer_id, body)`, where `body` is the bare resource object in snake_case. A generated `_remove` takes `body={"resource_name": "customers/<cid>/<collection>/<id>"}`. The keyword, location, asset-group, asset-link, image-upload and `_delete` tools take flat arguments: read them with `describe` or `search_tools`.
 
 | Tool | Purpose |
 | --- | --- |
@@ -49,6 +50,7 @@ Reads are GAQL (`google_ads_gaql_query` covers every resource). Writes are one t
 | `google_ads_ad_group_ads_create` / `_update` / `_remove` | Ads (typed: `responsive_search_ad`, `responsive_display_ad`, video / demand-gen ad types). |
 | `google_ads_keywords_create` / `_update` / `_delete` / `_list` | Keywords (positive and negative). |
 | `google_ads_locations_search`, `google_ads_location_targets_add` | Resolve location names, target them. |
+| `google_ads_location_targets_list` | A campaign's locations, each with its place name (`canonical_name`). |
 | `google_ads_image_assets_upload` | Image assets — accepts `file_id` from the workspace file manager, `image_url`, or base64. |
 | `google_ads_video_assets_link` | Register a YouTube video ID as a video asset (the Ads API cannot host video files — videos must be on YouTube). |
 | `google_ads_asset_groups_create` | PMax asset group (atomic: text + image assets in one call). |
@@ -62,9 +64,15 @@ Reads are GAQL (`google_ads_gaql_query` covers every resource). Writes are one t
 
 > **ALWAYS START PAUSED**: Create campaigns with `status="PAUSED"`. Activate only after explicit user approval.
 
-> **SUMMARIZE BEFORE CREATE**: Present the full build plan (budget, campaign settings, targeting, ad groups, ads/assets) and get explicit user approval before the first mutate. Create in dependency order and reference each created resource by the `resource_name` the mutate returns. The tools validate bodies against the real API schema (writable fields, enum values) plus channel-type rules and return corrective errors — fix and retry rather than guessing.
+> **SUMMARIZE BEFORE CREATE**: Present the full build plan (budget, campaign settings, targeting, ad groups, ads/assets) and get explicit user approval before the first mutate. Create in dependency order. Generated bodies take the full `resource_name` that the mutate returns (e.g. `"campaign": "customers/<cid>/campaigns/<id>"`). The flat tools (`google_ads_location_targets_add`, `google_ads_keywords_create`, `google_ads_asset_groups_create`, `google_ads_asset_group_assets_link`, `google_ads_campaign_assets_link`) take the bare id: the last part of that resource name. The tools validate bodies against the real API schema (writable fields, enum values) plus channel-type rules and return corrective errors — fix and retry rather than guessing.
 
 > **NEVER INVENT**: Don't assume URLs, budgets, or location IDs. Don't skip research. Don't invent keywords or copy — creative comes only from the actual site. Don't build without user buy-in.
+
+> **PLACES COME FROM THE ID**: Name a targeted place only from its `canonical_name` (`google_ads_location_targets_list`, or `geo_target_constant.canonical_name` in GAQL). A campaign name or the user's words is not a location.
+
+> **SMALL SAMPLES**: A cost per result from fewer than 10 conversions gets one line that the sample is too small to judge. Do not rank or cut a campaign on that cost alone.
+
+> **DERIVED NUMBERS SHOW THEIR INPUTS**: A total, difference or rate that you compute names the tool values it comes from: "312 carts with no purchase (414 add-to-carts − 102 purchases)".
 
 > **GAQL GUARDRAILS**: Never join `ad_group_criterion` with `search_term_view`. Never query more than 5 sub-accounts in a single batch.
 
@@ -77,10 +85,10 @@ See [references/constraints.md](references/constraints.md) for the full constrai
 Every campaign build follows this sequence. Do not skip steps.
 
 1. **Identify the goal** — new campaign, reporting/analysis, or both?
-2. **Check the routing table** and read the referenced files before calling any tools
+2. **Check the routing table** and read the files of your row only, before calling any tools. The other reference files are for other tasks
 3. **Discovery is mandatory for creation** ([references/discovery.md](references/discovery.md)) — account setup, site scan, conversion tracking check, market research, consultation
 4. **Present the pre-creation summary** and wait for explicit approval
-5. **Build in dependency order (budget → campaign PAUSED → targeting → ad groups → ads/assets)** after approval, re-checking [references/constraints.md](references/constraints.md) at each step
+5. **Build in dependency order (budget → campaign PAUSED → targeting → ad groups → ads/assets)** after approval, by the campaign file; read a section of [references/constraints.md](references/constraints.md) only when a step names it
 6. **Activate only when the user approves**
 
 Full workflow: Initial Setup → Research (site + GAQL + market) → Analyze (goals, audience, keywords) → Consult (options + trade-offs) → Recommend (structure + bids) → Confirm (summary approved) → Create in dependency order (PAUSED) → Verify by GAQL → Activate (post-approval).
@@ -89,16 +97,22 @@ Full workflow: Initial Setup → Research (site + GAQL + market) → Analyze (go
 
 | The user wants to… | Read these files first |
 |---|---|
-| Create a Search or Display campaign | [references/discovery.md](references/discovery.md) → [references/campaigns/search-display.md](references/campaigns/search-display.md) |
-| Create a Performance Max campaign | [references/discovery.md](references/discovery.md) → [references/campaigns/pmax.md](references/campaigns/pmax.md) |
+| Create a Search or Display campaign | Plan: [references/discovery.md](references/discovery.md). Build, after the user approves the plan: [references/campaigns/search-display.md](references/campaigns/search-display.md) |
+| Create a Performance Max campaign | Plan: [references/discovery.md](references/discovery.md). Build, after the user approves the plan: [references/campaigns/pmax.md](references/campaigns/pmax.md) |
 | Add an asset group to an existing PMax campaign | [references/campaigns/pmax.md](references/campaigns/pmax.md) |
-| Create a Video, Demand Gen, Shopping, or App campaign | [references/discovery.md](references/discovery.md) → [references/campaigns/other-types.md](references/campaigns/other-types.md) |
-| Run a report / GAQL query / analyze performance (any kind) | [references/reporting.md](references/reporting.md) → the matching `references/reports/*.md` recipe |
-| Account health snapshot / "how is the account doing?" | [references/reporting.md](references/reporting.md) → [references/reports/account-overview.md](references/reports/account-overview.md) |
-| Diagnose conversion tracking | [references/reporting.md](references/reporting.md) → [references/reports/conversion-tracking.md](references/reports/conversion-tracking.md) |
-| Find wasteful search terms / negative keyword candidates | [references/reporting.md](references/reporting.md) → [references/reports/search-terms-waste.md](references/reports/search-terms-waste.md) |
+| Create a Video, Demand Gen, Shopping, or App campaign | Plan: [references/discovery.md](references/discovery.md). Build, after the user approves the plan: [references/campaigns/other-types.md](references/campaigns/other-types.md) |
+| Run a report / GAQL query / analyze performance with no recipe below | [references/reporting.md](references/reporting.md) |
+| Account health snapshot / "how is the account doing?" | [references/reports/account-overview.md](references/reports/account-overview.md) |
+| Diagnose conversion tracking | [references/reports/conversion-tracking.md](references/reports/conversion-tracking.md) |
+| Find wasteful search terms / negative keyword candidates | [references/reports/search-terms-waste.md](references/reports/search-terms-waste.md) |
+| Conversions by action or per stage | [references/reports/conversion-by-action.md](references/reports/conversion-by-action.md) |
+| A lead-gen or B2B multi-stage funnel | [references/reports/conversion-funnel.md](references/reports/conversion-funnel.md) |
+| Where the spend goes | [references/reports/budget-distribution.md](references/reports/budget-distribution.md) |
+| Whether to restructure | [references/reports/campaign-structure.md](references/reports/campaign-structure.md) |
+| Campaign performance over time | [references/reports/campaign-performance.md](references/reports/campaign-performance.md) |
+| Ad-level performance | [references/reports/ad-performance.md](references/reports/ad-performance.md) |
 | Build a Google Ads dashboard or data app | [references/reporting.md](references/reporting.md) → matching report recipe's dashboard section |
 | Work across an MCC / many sub-accounts | [references/mcc.md](references/mcc.md) → [references/reporting.md](references/reporting.md) |
 | Goal not yet clear | [references/discovery.md](references/discovery.md) — discovery clarifies the goal |
 
-Reporting responses follow [references/report-template.md](references/report-template.md); keep claims tied to queried data per [references/heuristics.md](references/heuristics.md).
+A report names the customer ID, the date range, the GAQL resource queried and its key results, and says whether the output is a written report or a dashboard. It treats rows as evidence, not as recommendations, unless the user asks for recommendations.

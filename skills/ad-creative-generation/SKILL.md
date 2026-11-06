@@ -2,7 +2,7 @@
 name: ad-creative-generation
 description: Generate on-brand ad creatives — visuals + copy — for Google, Meta (Facebook / Instagram), and other paid platforms via the Hyper MCP. Extracts brand identity from a website, writes ad copy variants, and produces brand-consistent images using reference-based image generation. Use when the user asks for ad creative, ad copy variants, RSA headlines, Meta ad creative, display ads, carousel ads, or A/B test variants.
 metadata:
-  version: 1.0.0
+  version: 1.1.0
 requires_toolkits:
   - image_gen
 icon: image_gen
@@ -23,25 +23,21 @@ Every tool in this skill is named by its canonical tool name. Run it with the ca
 
 | Surface | Find a tool | Run it |
 | --- | --- | --- |
-| MCP client (Claude, Cursor, Codex, ChatGPT) | `search("<what you want to do>")`, then `describe("<name>")` | `call("<name>", {...})` |
+| Hyper chat | Call the tool by its name; `search_tools(queries=["<provider> <action>"])` shows its parameters | `<name>(...)` |
+| MCP client (Claude, Cursor, Codex, ChatGPT) | `search("<what you want to do>")`, then `describe("<name>")` | `call_read("<name>", {...})`, `call_write` or `call_destructive`: the one that `describe` names in `call_with` |
 | Hyper CLI | `hyperai search "<what you want to do>"`, then `hyperai describe <name>` | `hyperai call <name> --json '{...}'` |
 
-If a tool is not found, its integration is not connected or not enabled for the workspace: stop and tell the user which integration to connect.
+If a tool is not found: in Hyper chat, find its toolkit id with `discover_toolkits` and pass it to `enable_toolkit`. On an MCP client or the CLI, tell the user which integration to connect in Hyper.
 
 ## Tool surface
 
 | Group | Tools |
 |-------|-------|
 | Brand extraction | `firecrawl_branding_extract` |
-| Archetype recommendations (conditional) | `cmo_ad_brief` |
-| Competitor ad tracking (conditional) | `cmo_ads_track`, `cmo_ads_tracked_list` |
+| Competitor ads | `marketing_queries_start`, `marketing_queries_continue` (stream `ads.meta_library`) |
 | Image generation (default) | `images_generate` (`model="gpt-image-2"`) |
 | Image generation (text-heavy) | `images_generate` (`model="nano-banana-pro"`) |
 | Image generation (photoreal product shots) | `images_generate` (`model="seedream-4.5"`) |
-
-The `cmo_*` tools are conditional — they appear when the CMO toolkit is
-enabled in the workspace. When absent, skip them and use the reference
-frameworks; do not fail the workflow.
 
 For deeper image-tool selection guidance see the `image-generation` skill. To turn finished creatives into running campaigns see `google-ads` and `meta-ads`.
 
@@ -49,7 +45,7 @@ For deeper image-tool selection guidance see the `image-generation` skill. To tu
 
 - Picking the right image model when the task isn't ad creative — use `image-generation`.
 - Creating, launching, or budgeting actual ad campaigns — use `google-ads`, `meta-ads`, `tiktok-ads`, `pinterest-ads`, or `amazon-ads`.
-- Searching live competitor ads — use `meta-ads-library`; to save and monitor competitor ads cross-platform (Meta + Google Ads Transparency, durable creatives, longevity ranking), use `cmo_ads_track` / `cmo_ads_tracked_list` when the CMO toolkit is enabled.
+- Searching live competitor ads — use `meta-ads-library`. To read the Meta ads of a known competitor by its domain or Meta page in one query, use `marketing_queries_start` with the `ads.meta_library` stream; a repeated query within a day reads the stored run at no cost.
 
 ## Critical rules
 
@@ -95,23 +91,9 @@ The result contains:
 
 Both `logo` and `screenshot` are saved images ready to pass as `reference_images` to image generation tools. SVG logos are automatically converted to PNG, so always include the logo — no need to filter by format.
 
-**For deeper guidance on brand extraction, read `references/brand-extraction.md`.**
+**Read `references/brand-extraction.md` only when the site gives no logo, colors or screenshot.**
 
 ### Phase 2: Ad Copy Generation
-
-**If `cmo_ad_brief` is available, call it first** — it returns ranked ad
-archetypes for the brand's goal and platform with the reasoning, hook
-examples, structure beats, dos/donts, and a generation prompt already
-grounded in the brand's saved data:
-
-```python
-brief = cmo_ad_brief(goal="drive conversions", platform="meta", url="https://example.com")
-```
-
-Build the copy variants and visual direction on the recommended archetypes
-(`brief.recommendations[n].prompt` is a ready generation prompt; unresolved
-placeholders are listed per recommendation). If the tool is not available,
-work from `references/ad-copy-frameworks.md` instead.
 
 Using the brand personality, tone, and value proposition from the extraction, write ad copy variants. Structure copy by what's being tested:
 
@@ -121,7 +103,7 @@ Using the brand personality, tone, and value proposition from the extraction, wr
 
 Change only one element per variant so results can be attributed to specific changes.
 
-**For copy frameworks, hook patterns, and variant strategy, read `references/ad-copy-frameworks.md`.**
+**The platform file of Phase 4 holds the copy rules of its placements. Read `references/ad-copy-frameworks.md` only for copy with no placement.**
 
 ### Phase 3: Visual Creative Generation
 
