@@ -50,7 +50,7 @@ BLUF is "bottom line up front." The Minto pyramid is the full discipline: conclu
 
 **Hard rules:**
 
-1. A headline of six to ten words, in sentence case, carrying real information.
+1. A headline (the tease) of six or fewer strong words, in sentence case, carrying real information.
 2. One bold first sentence with the single most important fact.
 3. A "Why it matters" line immediately after — the consequence for this reader, not the company.
 4. Then short labeled chunks ("The details," "What's next," "The catch"), each 1–3 sentences or a tight bullet list.
