@@ -24,7 +24,7 @@
 5. **Asset group** — `google_ads_asset_groups_create` (atomic: creates the asset group, its text assets, and all links in ONE API call, which the API requires):
 
    Required: `customer_id`, `campaign_id` (numeric id), `final_urls`, `headlines` (3–15, ≤30 chars), `long_headlines` (1–5, ≤90), `descriptions` (2–5, ≤90), `business_name` (≤25 chars), and the three image asset id lists (`marketing_image_asset_ids`, `square_marketing_image_asset_ids`, `logo_asset_ids`). Text fields are lists of plain strings. Image ids are the `asset_id` values that `google_ads_image_assets_upload` returns.
-6. **Optional video** — register a YouTube video with `google_ads_video_assets_link(customer_id, youtube_video_id)`, then link it with `google_ads_asset_group_assets_link(customer_id, asset_group_id="<id>", asset_id="<last part of results[0].resourceName>", field_type="YOUTUBE_VIDEO")`. Without one, Google auto-generates video from your assets.
+6. **Optional video** — register a YouTube video with `google_ads_video_assets_link(customer_id, youtube_video_id)`, then link it with `google_ads_asset_group_assets_link(customer_id, asset_group_id="<id>", asset_id="<the asset_id that google_ads_video_assets_link returns>", field_type="YOUTUBE_VIDEO")`. Without one, Google auto-generates video from your assets.
 
 ## Standalone PMax asset group (existing campaign)
 
