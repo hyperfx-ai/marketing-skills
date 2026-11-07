@@ -71,12 +71,12 @@ When you generate an image (e.g., via `images_generate`), the result includes a 
 
 1. Generate the image using the image generation tool
 2. Note the `file_id` from the result
-3. Call `slack_files_upload` with that `file_id`, the current `channel_id`, and `thread_ts`
+3. Call `slack_files_upload` with that `file_id`, the current channel id as `channels`, and `thread_ts`
 
 **Example workflow:**
 - User asks: "Generate an image of a sunset"
 - You call the image generation tool, which returns `file_id: "abc123"`
-- You then call `slack_files_upload(channel_id="C...", file_id="abc123", thread_ts="...")`
+- You then call `slack_files_upload(channels="C...", file_id="abc123", thread_ts="...")`
 - Now the image appears in Slack
 
 Do NOT just say "Here's your image" without uploading it. The user will see nothing.
@@ -84,8 +84,7 @@ Do NOT just say "Here's your image" without uploading it. The user will see noth
 ### Sharing Other Files
 
 For any file you want to share (documents, CSVs, etc.), use `slack_files_upload` with either:
-- `file_id`: For files already in the system
-- `file_path`: For local files
+- `file_id`: For files already in the system. The tool takes no file path.
 - `content`: For text content to upload as a file
 
 ## Message Formatting
