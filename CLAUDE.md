@@ -34,7 +34,7 @@ Skills are NOT tools. They are markdown instructions plus optional reference fil
 
 | Skill | What it does |
 | --- | --- |
-| [`tiktok`](./skills/tiktok) | Publish organic TikTok videos, photos, and carousels through the compliance posting form. |
+| [`tiktok`](./skills/tiktok) | Publish organic TikTok videos, photos, and carousels through the TikTok consent card. |
 | [`instagram`](./skills/instagram) | Publish photos / Reels / Stories / carousels, moderate comments and mentions, send DMs, and pull insights from the Instagram API with Instagram Login. |
 | [`linkedin`](./skills/linkedin) | Publish LinkedIn text, article, document, organization (company page), and AI text-to-carousel posts. |
 
