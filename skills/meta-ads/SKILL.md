@@ -20,6 +20,20 @@ Strategic guide for creating and managing Meta advertising campaigns, analyzing 
 | Google Ads campaigns | `google-ads` |
 | Pinterest / TikTok / Amazon paid campaigns | `pinterest-ads`, `tiktok-ads`, `amazon-ads` |
 
+## Not available through Hyper
+
+Meta exposes these only in its own surfaces (Ads Manager, Events Manager, or Meta's hosted MCP). Hyper has no tool for them and `meta_ads_request` cannot reach them either: say so, name the surface, and do not guess.
+
+| Request | Where it lives |
+| --- | --- |
+| Industry or auction benchmarks, anomaly signals, advertiser context, performance trend narratives | Ads Manager account overview |
+| Help Center article search | business.facebook.com/business/help |
+| Create, change or delete pixel event rules or parameter extractors (reads work: `meta_ads_pixel_event_rules_list`, `meta_ads_pixel_parameters_list`) | Events Manager |
+| Catalog event-source match-rate health and "which source to connect" recommendations (connect, list and disconnect work) | Commerce Manager |
+| A/B test eligibility check before creation | Ads Manager Experiments |
+| Study results broken down per cell, and creative tests (`SPLIT_TEST_V2`) | Ads Manager Experiments |
+| Remove a user from a pixel (assigning works) | Business Settings |
+
 ## Requirements
 
 - **Hyper MCP installed and connected.** [https://app.hyperfx.ai/mcp](https://app.hyperfx.ai/mcp)
@@ -56,6 +70,11 @@ Use the exact tool name that `search_tools` (Hyper chat) or `search` / `describe
 | Insights & dashboards | `meta_ads_insights_get`, `data_apps_build`, `database_tables_list`, `database_tables_describe`, `database_query` |
 | Launch & edits | `meta_ads_campaigns_activate`, `meta_ads_campaign_update`, `meta_ads_adset_update`, `meta_ads_ad_update` |
 | Automated rules | `meta_ads_adrule_create`, `meta_ads_adrule_list`, `meta_ads_adrule_get`, `meta_ads_adrule_update`, `meta_ads_adrule_delete`, `meta_ads_adrule_history_list` |
+| Audiences (write) | `meta_ads_custom_audience_create`, `meta_ads_custom_audience_get`, `meta_ads_custom_audience_update`, `meta_ads_custom_audience_delete`, `meta_ads_custom_audience_users_add`, `meta_ads_custom_audience_users_remove`, `meta_ads_custom_audience_users_replace`, `meta_ads_custom_audience_adsets_list`, `meta_ads_custom_audience_ads_list` |
+| Account history & health | `meta_ads_activity_list`, `meta_ads_delivery_issues_list`, `meta_ads_recommendation_list`, `meta_ads_business_recommendation_list`, `meta_ads_recommendation_apply`, `meta_ads_field_context_get` |
+| Signals (pixel / dataset) | `meta_ads_dataset_stats_list`, `meta_ads_dataset_quality_get`, `meta_ads_dataset_da_checks_list`, `meta_ads_pixel_event_rules_list`, `meta_ads_pixel_parameters_list`, `meta_ads_dataset_shared_account_list`, `meta_ads_dataset_shared_account_create`, `meta_ads_dataset_shared_account_delete`, `meta_ads_dataset_assigned_user_list`, `meta_ads_dataset_assigned_user_create` |
+| Catalog health & feeds | `meta_ads_catalog_health_get`, `meta_ads_catalog_diagnostics_list`, `meta_ads_catalog_data_sources_list`, `meta_ads_catalog_event_stats_list`, `meta_ads_catalog_batch_status_get`, `meta_ads_product_item_list` (with `filter`), `meta_ads_catalog_event_source_list`, `meta_ads_catalog_event_source_create`, `meta_ads_catalog_event_source_delete`, `meta_ads_event_source_catalogs_list`, `meta_ads_product_feed_rule_list`, `meta_ads_product_feed_rule_create`, `meta_ads_product_feed_rule_delete`, `meta_ads_product_feed_upload_list`, `meta_ads_product_feed_upload_create`, `meta_ads_product_feed_upload_errors_list` |
+| Experiments | `meta_ads_ad_study_list`, `meta_ads_ad_study_get`, `meta_ads_ad_study_create`, `meta_ads_ad_study_update`, `meta_ads_ad_study_delete`, `meta_ads_ad_account_ad_study_list`, `meta_ads_ad_study_cell_list`, `meta_ads_ad_study_objective_list` |
 | Site research | `firecrawl_branding_extract`, `firecrawl_screenshots_create` |
 
 CLI users: translate tool names with the `hyper-cli` skill (`hyperai search "<tool name>"`).
@@ -122,6 +141,10 @@ Every task follows this sequence. Do not skip steps.
 | Analyze performance / query insights | [references/analytics.md](references/analytics.md) |
 | Audit an account / find optimization opportunities | [references/account-audit.md](references/account-audit.md) |
 | Set up automated rules (auto-pause, budget guards, alerts) | [references/automated-rules.md](references/automated-rules.md) |
+| Create or fill a custom audience, exclude recent buyers, see what uses an audience | [references/audiences.md](references/audiences.md) |
+| Who changed what, what blocks delivery, what Meta recommends, which fields a tool accepts | [references/account-health.md](references/account-health.md) |
+| Pixel event volume, Event Match Quality, pixel sharing, catalog issues, feed rules and re-fetches | [references/signals-and-catalog-health.md](references/signals-and-catalog-health.md) |
+| Set up an A/B test or a conversion lift study, read its results | [references/experiments.md](references/experiments.md) |
 | Build a Meta dashboard or data app | [references/analytics.md](references/analytics.md) → [references/dashboards.md](references/dashboards.md) |
 | Analyze performance, then create a campaign | [references/analytics.md](references/analytics.md) → [references/discovery.md](references/discovery.md) → relevant campaign file |
 | Build a funnel / multiple campaigns at once (TOF/MOF/BOF) | [references/multi-campaign-funnel.md](references/multi-campaign-funnel.md) → [references/discovery.md](references/discovery.md) → per-tier campaign files |
