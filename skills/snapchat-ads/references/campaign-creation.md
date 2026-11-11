@@ -70,10 +70,10 @@ snapchat_ads_create_media(
 )
 # PREFER file_id (a Hyper file id, e.g. a generated image/video). It is read
 # straight from storage, so it works even when a public URL isn't reachable
-# from the backend. Use file_url / file_path only for genuinely external assets.
+# from the backend. Use file_url only for genuinely external assets.
 snapchat_ads_upload_media(
     media_id="<MEDIA_ID>",
-    file_id="<HYPER_FILE_ID>",   # or file_url="https://..." / file_path="/server/path"
+    file_id="<HYPER_FILE_ID>",   # or file_url="https://..."
 )
 ```
 
