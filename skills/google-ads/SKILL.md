@@ -38,12 +38,16 @@ If a tool is not found: in Hyper chat, find its toolkit id with `discover_toolki
 
 ## Tool surface
 
-Reads are GAQL (`google_ads_gaql_query` covers every resource). Writes are one tool per resource operation, named `google_ads_<resource>_<create|update|remove>`. Generated create and update tools take `(customer_id, body)`, where `body` is the bare resource object in snake_case. A generated `_remove` takes `body={"resource_name": "customers/<cid>/<collection>/<id>"}`. The keyword, location, asset-group, asset-link, image-upload and `_delete` tools take flat arguments: read them with `describe` or `search_tools`.
+Reads are GAQL (`google_ads_gaql_query` covers every resource). For Search impression share, auction insights and search terms, use the typed report tools in the table below first: they build the GAQL for you. Writes are one tool per resource operation, named `google_ads_<resource>_<create|update|remove>`. Generated create and update tools take `(customer_id, body)`, where `body` is the bare resource object in snake_case. A generated `_remove` takes `body={"resource_name": "customers/<cid>/<collection>/<id>"}`. The keyword, location, asset-group, asset-link, image-upload and `_delete` tools take flat arguments: read them with `describe` or `search_tools`.
 
 | Tool | Purpose |
 | --- | --- |
 | `google_ads_accounts_list` | Discover accessible accounts (and MCC sub-accounts). |
 | `google_ads_gaql_query` | Run a GAQL query (conversion actions, search terms, any resource). |
+| `google_ads_impression_share_get` | Search impression share per day, per campaign or keyword, with the share lost to budget and to rank. |
+| `google_ads_auction_insights_get` | Search auction insights per day: one row per competitor domain. |
+| `google_ads_search_terms_get` | Matched search terms with keyword, clicks, cost, conversions and Google's status (`ADDED`, `EXCLUDED`, `NONE`). |
+| `google_ads_search_term_proposals_get` | Keyword and negative keyword proposals from search terms, each with its source rows. Changes nothing. |
 | `google_ads_campaign_budgets_create` | Create the budget first (micros!). |
 | `google_ads_campaigns_create` / `_update` / `_remove` | The ONE campaign create — every `advertising_channel_type` (SEARCH, DISPLAY, PERFORMANCE_MAX, VIDEO, DEMAND_GEN, SHOPPING, MULTI_CHANNEL for App). |
 | `google_ads_ad_groups_create` / `_update`, `google_ads_ad_groups_delete` | Ad groups under a campaign. |

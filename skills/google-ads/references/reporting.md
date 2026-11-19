@@ -5,6 +5,8 @@ Report on existing Google Ads accounts using GAQL-backed data. Dashboards and da
 ## Core contract
 
 - Use `google_ads_gaql_query` as the canonical Google Ads data tool.
+- For Search reports, use the typed tools first: `google_ads_impression_share_get`, `google_ads_auction_insights_get`, `google_ads_search_terms_get` and `google_ads_search_term_proposals_get`. They return only Search campaigns. If one is not found, write the GAQL with `google_ads_gaql_query`.
+- When `google_ads_auction_insights_get` returns `error`, Google refused auction insights to the developer token of the connection. Tell the user that. Do not report it as "no competitors".
 - Written GAQL-backed reports are valid outputs. Build a dashboard or data app only when the user asks for one or when an interactive view materially improves the answer.
 - Call `google_ads_gaql_query(customer_id, query)`. Its description gives the GAQL rules. Select the account whose data the report needs.
 - Treat rows as evidence, not as automatic recommendations ([heuristics.md](heuristics.md)).
@@ -27,7 +29,9 @@ Report on existing Google Ads accounts using GAQL-backed data. Dashboards and da
 | Conversions broken down by action / per stage | [reports/conversion-by-action.md](reports/conversion-by-action.md) |
 | Lead-gen / B2B multi-stage funnel | [reports/conversion-funnel.md](reports/conversion-funnel.md) |
 | Where is spend going | [reports/budget-distribution.md](reports/budget-distribution.md) |
-| Wasteful search terms | [reports/search-terms-waste.md](reports/search-terms-waste.md) |
+| Wasteful search terms, or new keywords and negatives | [reports/search-terms-waste.md](reports/search-terms-waste.md) |
+| Search impression share, or share lost to budget or rank | `google_ads_impression_share_get` (`level` is `campaign` or `keyword`) |
+| Which competitors show in the same Search auctions | `google_ads_auction_insights_get` |
 | Should we restructure | [reports/campaign-structure.md](reports/campaign-structure.md) |
 | Campaign performance over time | [reports/campaign-performance.md](reports/campaign-performance.md) |
 | Ad-level performance | [reports/ad-performance.md](reports/ad-performance.md) |

@@ -18,8 +18,22 @@ conversion value.
 - Threshold: cost-without-conversion floor (default: $10 / 10_000_000
   micros over the window).
 
-Use the GAQL below through `google_ads_gaql_query` for both ad-hoc
-reporting and refreshable dashboards.
+For an ad-hoc report, use the typed tools:
+
+- `google_ads_search_terms_get(customer_id, date_range, campaign_ids)`:
+  one row per search term, ad group and matched keyword, sorted by cost.
+  `status` is Google's value: `ADDED` is already a keyword, `EXCLUDED`
+  is already a negative, `NONE` is neither.
+- `google_ads_search_term_proposals_get(customer_id, date_range,
+  campaign_ids, min_conversions_for_keyword, min_cost_micros_for_negative)`:
+  keyword and negative proposals from `NONE` terms. Each proposal sums
+  one term in one ad group and carries its source rows. It changes
+  nothing. Defaults: 2 conversions for a keyword; 0 conversions and
+  50,000,000 micros cost for a negative.
+- When `row_limit_reached` is true, narrow the dates or the campaigns.
+
+If these tools are not found, or for a refreshable dashboard, use the
+GAQL below through `google_ads_gaql_query`.
 
 ## GAQL
 
@@ -39,7 +53,7 @@ WHERE segments.date BETWEEN '{start}' AND '{end}'
 
 ## Before proposing negatives
 
-Read the negatives the account already has. Run each query through `google_ads_gaql_query`.
+Read the negatives the account already has. Run each query through `google_ads_gaql_query`. Do this also for the negatives from `google_ads_search_term_proposals_get`: that tool does not read negative keyword lists.
 
 ```sql
 SELECT shared_set.id, shared_set.name, shared_set.type, shared_criterion.keyword.text, shared_criterion.keyword.match_type
