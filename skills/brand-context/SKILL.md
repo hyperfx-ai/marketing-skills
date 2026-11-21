@@ -13,7 +13,9 @@ Build and maintain **one `brand-context.md` file per brand**: the single source 
 
 This is the hub in a hub-and-spoke model. Ad copy, blog posts, cold email, social content, and landing-page work are all downstream of the same positioning and voice; when those live in one maintained doc, every downstream skill starts warm and stays consistent.
 
-> **The file contract.** The doc lives in persistent storage at a stable path — `/files/<brand-slug>/brand-context.md` — and is reused at that SAME path every time. Create it once, then **update it in place**; never recreate it from scratch when it already exists (you would destroy verbatim customer language and proof points the user curated). If a run touches the doc, bump the `Last updated` line.
+> **The file contract.** Two sibling files live under `/files/<brand-slug>/` and are reused in place:
+> - `/files/<brand-slug>/brand-context.md` — narrative positioning, ICP, customer quotes, voice, and verified proof points. Never recreate it from scratch when it already exists; bump `Last updated` on edits.
+> - `/files/<brand-slug>/brand-kit.json` — structured visual identity (version `1`: `brand_name`, `colors` hex values, `fonts`, `logo` file IDs/paths, `tone`, `banned_claims`, `safe_zones`). `creative_concepts_generate` and `ad_creatives_generate` read `brand-kit.json` automatically to style ad packs and enforce brand compliance.
 
 ## Requirements
 
@@ -80,7 +82,7 @@ The full template with per-section guidance lives in `references/brand-context-t
 3. Optionally call `firecrawl_branding_extract` once to fill the visual identity notes in section 12.
 4. Draft every section you have real evidence for. Where the site is silent (objections, goals, most customer language), leave the section marked `*(unverified — needs input)*` instead of guessing.
 5. **Present the draft to the user section by section for correction before saving.** The site says what the brand *wants* to be true; the user knows what *is* true. Ask specifically about: the ICP ("who actually buys?"), differentiation ("why do people pick you over X?"), and proof points ("which of these numbers are real and current?").
-6. Save to `/files/<brand-slug>/brand-context.md` and report the path.
+6. Save to `/files/<brand-slug>/brand-context.md` and, when visual identity was extracted via `firecrawl_branding_extract` or supplied by the user, save `/files/<brand-slug>/brand-kit.json` with schema version `1` (`brand_name`, `colors: {primary, secondary, accent, background, text}`, `fonts: {heading, body}`, `logo: {primary, dark, light}`, `tone`, `banned_claims`). Report both paths.
 
 **Path B — interview (no site, pre-launch, or user prefers talking).**
 Walk the sections conversationally, a few questions at a time, in the order given in `references/brand-context-template.md` — not as one giant questionnaire. Start with product overview and ICP (everything else hangs off those), and let the user skip sections; an honest partial doc beats a padded complete one. Save incrementally so a broken-off interview still leaves a usable doc.
