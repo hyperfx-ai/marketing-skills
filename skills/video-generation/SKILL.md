@@ -1,6 +1,6 @@
 ---
 name: video-generation
-description: End-to-end AI video production through the Hyper MCP — text-to-video and image-to-video generation (Veo, Seedance), scene chaining, video analysis, transcription, subtitles, TikTok / karaoke captions, voiceover (TTS), audio mixing, clipping, stitching, and text overlays. Use when the user asks to generate a video, create UGC, scene-chain, add captions or subtitles, add narration, stitch clips, clip a podcast highlight, or do any AI video editing.
+description: End-to-end AI video production through the Hyper MCP — text-to-video and image-to-video generation (Gemini Omni 1.2, Seedance 2.5, Veo 3.1 Fast, Runway Gen-4.5, FLUX 3 Video), paid-social placements (9:16, 4:5, 1:1), scene chaining, analysis, transcription, captions, voiceover, clipping, and stitching. Use when the user asks to generate a video, create UGC, scene-chain, add captions or narration, stitch clips, or edit AI video.
 requires_toolkits:
   - video_generation_toolkit
 icon: video_generation
@@ -13,7 +13,7 @@ Guide for generating, editing, analyzing, and post-processing videos using AI mo
 
 ## Requirements
 
-This skill assumes the [Hyper MCP](https://app.hyperfx.ai/mcp) is connected to your agent so the tools below are available. The underlying providers (Google Veo, ByteDance Seedance, OpenAI TTS, transcription, etc.) are configured under your Hyper integrations.
+This skill assumes the [Hyper MCP](https://app.hyperfx.ai/mcp) is connected to your agent so the tools below are available. The underlying providers (Google Gemini Omni 1.2, OpenRouter video models such as Seedance 2.5 and Veo 3.1 Fast, speech/transcription, etc.) are configured under your Hyper integrations.
 
 ### How to run the tools in this skill
 
@@ -85,7 +85,11 @@ videos_analyze(file_id="...", question="Does this match: [original prompt]?")
 Always review generated videos before delivering to the user:
 
 ```python
-result = videos_generate(prompt="...", model="veo-3.1-generate-preview")
+result = videos_generate(
+    prompt="...",
+    model="gemini-omni-1.2-flash",
+    aspect_ratio="9:16",
+)
 review = videos_analyze(file_id="video_file_id", analysis_type="quality_review")
 # If issues found, regenerate with adjustments. If quality is good, proceed to editing.
 ```

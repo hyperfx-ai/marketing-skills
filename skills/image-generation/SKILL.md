@@ -1,8 +1,8 @@
 ---
 name: image-generation
-description: Generate images through the Hyper MCP with the unified `images_generate` tool — text-to-image, image-to-image, and branded ad creatives — choosing the model (gpt-image-2.5-flare, gpt-image-2.5-sunburst, nano-banana, nano-banana-pro, seedream-4.5) per task. Use when the user asks to generate an image, create an ad creative, do an image-to-image edit, render text inside an image, or produce a print-quality poster.
+description: Generate images through the Hyper MCP with the unified `images_generate` tool — text-to-image, image-to-image, and multi-placement paid-social creatives — with eval-routed model="auto" (gpt-image-2.6-sunburst, gpt-image-2.6-flare, nano-banana-2.1, nano-banana-pro, flux-3-image, seedream-4.5). Use when the user asks to generate an image, create ad creatives in 9:16/4:5/1:1, do an image-to-image edit, render text inside an image, or produce a print-quality poster.
 metadata:
-  version: 1.0.0
+  version: 2.0.0
 requires_toolkits:
   - image_gen
 icon: image_gen
@@ -37,32 +37,37 @@ If a tool is not found: in Hyper chat, find its toolkit id with `discover_toolki
 
 ```python
 images_generate(
-    requests=[{"id": "ad1", "prompt": "A polished SaaS ad, clean composition"}],
-    aspect_ratio="16:9",     # "1:1" (default), "9:16", "16:9", "4:5", "5:4", "2:3", "3:2", "3:4", "4:3", "21:9"
+    requests=[{"id": "ad1", "prompt": "Editorial morning daylight product photo on stone counter"}],
+    aspect_ratio="4:5",      # "1:1" (default), "9:16", "16:9", "4:5", "5:4", "2:3", "3:2", "3:4", "4:3", "21:9"
+    ad_placements=["9:16", "4:5", "1:1"],  # optional: generate native paid-social sizes in one call
+    ad_format="product_hero",              # optional: "ugc" | "product_hero" | "headline_offer" | "us_vs_them" | "testimonial"
     quality="standard",      # "draft" | "standard" | "high"
-    n=1,                      # 1-4 images per request
+    n=1,                     # 1-4 images per request
     model="auto",            # see "Choosing a model" below
 )
 ```
 
 - **Image-to-image / brand references:** put files in the request:
   `requests=[{"prompt": "Compose into a gift basket", "reference_images": ["file1", "file2"]}]`.
+- **Multi-placement paid social:** pass `ad_placements=["9:16", "4:5", "1:1"]` so every placement is framed natively and audited with the 7-check quality gate. For full ad packs with crisp HTML headlines and CTAs, use `ad_creatives_generate`.
 - **Reproducible output:** pass `seed=...`.
 - **Ground in real-world search:** pass `use_search=True`.
 - Do not display image URLs — they render automatically in chat.
 
 ## Choosing a model
 
-`model="auto"` is the right default. Override only when the task clearly calls for a
-specific model:
+`model="auto"` is the right default. Under `"auto"`, Hyper selects the eval-verified winner per request:
 
 | Task | `model` |
 |------|---------|
-| First-pass concepts / quick ad ideation / everyday generation | `gpt-image-2.5-flare` |
-| Precise edits and branded compositions from reference images, production creative | `gpt-image-2.5-sunburst` |
-| Cheap iteration, image-to-image, the widest aspect ratios (adds 1:4, 1:8, 4:1, 8:1) | `nano-banana` |
-| Readable text inside the image (posters, labels, infographics) or search-grounded scenes | `nano-banana-pro` |
-| Product photography, material/fabric fidelity, accurate spatial depth | `seedream-4.5` |
+| Production text-to-image and ad visuals (`standard` / `high` default) | `gpt-image-2.6-sunburst` |
+| Fast concept drafts (`draft` default) | `gpt-image-2.6-flare` |
+| Reference images, multi-reference edits, and extreme aspect ratios (1:4, 1:8, 4:1, 8:1) (`auto` default with refs) | `nano-banana-2.1` |
+| Readable text inside the image or Google Search grounding (`use_search=True`) | `nano-banana-pro` |
+| Candid photographic UGC scenes (text-to-image only) | `flux-3-image` |
+| Reproducible text-to-image when `seed` is set (takes no references) | `seedream-4.5` |
+
+Legacy IDs (`gpt-image-2.5-flare`, `gpt-image-2.5-sunburst`, `nano-banana`) remain accepted for explicit callers, but prefer `model="auto"` or the promoted models above. Never call retired `gpt-image-2`.
 
 See [references/image-prompting.md](references/image-prompting.md) for per-model
 prompt-writing tips.

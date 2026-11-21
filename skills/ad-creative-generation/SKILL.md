@@ -2,11 +2,12 @@
 name: ad-creative-generation
 description: Generate on-brand ad creatives — visuals + copy — for Google, Meta (Facebook / Instagram), and other paid platforms via the Hyper MCP. Extracts brand identity from a website, writes ad copy variants, and produces brand-consistent images using reference-based image generation. Use when the user asks for ad creative, ad copy variants, RSA headlines, Meta ad creative, display ads, carousel ads, or A/B test variants.
 metadata:
-  version: 1.1.0
+  version: 2.0.0
 requires_toolkits:
+  - ad_creatives
   - image_gen
 icon: image_gen
-short_description: Brand extraction, ad copy variants, and on-brand images for Google and Meta placements.
+short_description: Concept generation, multi-placement ad packs (9:16, 4:5, 1:1), quality checks, and Save to Creatives.
 ---
 
 # Ad Creative Generation
@@ -35,11 +36,12 @@ If a tool is not found: in Hyper chat, find its toolkit id with `discover_toolki
 |-------|-------|
 | Brand extraction | `firecrawl_branding_extract` |
 | Competitor ads | `marketing_queries_start`, `marketing_queries_continue` (stream `ads.meta_library`) |
-| Image generation (default) | `images_generate` (`model="gpt-image-2"`) |
-| Image generation (text-heavy) | `images_generate` (`model="nano-banana-pro"`) |
-| Image generation (photoreal product shots) | `images_generate` (`model="seedream-4.5"`) |
+| Concept generation | `creative_concepts_generate` |
+| Full multi-placement ad packs (image or video) | `ad_creatives_generate` |
+| Direct image generation (eval-routed default) | `images_generate` (`model="auto"`, supports `ad_placements=["9:16", "4:5", "1:1"]`) |
+| Direct video generation | `videos_generate` (`model="gemini-omni-1.2-flash"`, supports `aspect_ratio` `"9:16" | "4:5" | "1:1" | "16:9"`) |
 
-For deeper image-tool selection guidance see the `image-generation` skill. To turn finished creatives into running campaigns see `google-ads` and `meta-ads`.
+For deeper image-tool selection guidance see the `image-generation` skill. For video post-production see `video-generation`. To turn finished creatives into running campaigns see `google-ads` and `meta-ads`.
 
 ## Out of scope
 
@@ -49,17 +51,15 @@ For deeper image-tool selection guidance see the `image-generation` skill. To tu
 
 ## Critical rules
 
-- **Always extract branding first** before generating visuals for a website/brand.
-- **Always pass both logo and screenshot** as reference images — SVG logos are auto-converted to PNG.
-- **DO NOT display image URLs** — they are automatically shown in chat.
-- **Read `brand.screenshot.description`** to understand the product — never guess from the company name.
-- **Default to logo + headline + product screenshot** for SaaS / product ads unless the user requests a different style.
-- **Use `model="gpt-image-2"` for the initial ad creative by default** — with reference images for branded work, or without for loose first-pass concepts.
-- **Do not default to `model="nano-banana-pro"` for the first creative pass** — use it when the user explicitly asks or when readable text inside the image is the main requirement.
-- **Set `aspect_ratio` to the placement** — `1:1` (feed), `9:16` (story), `16:9` (banner) — and `quality` (`"draft" | "standard" | "high"`); `images_generate` takes those, not raw pixel sizes.
+- **Read `brand-kit.json` and `brand-context.md` first** under `/files/<brand-slug>/` before asking brand questions. If neither exists, call `firecrawl_branding_extract` once and save `/files/<brand-slug>/brand-kit.json`.
+- **Use the two-step ad workflow for full creative sets:** call `creative_concepts_generate` first so the user picks concepts, then call `ad_creatives_generate` with the chosen concept and `placements` (`["9:16", "4:5", "1:1"]`).
+- **Use `model="auto"` on `images_generate`** when generating single visuals or direct placement sets (`ad_placements=["9:16", "4:5", "1:1"]`). Under `"auto"`, Hyper routes standard/high text-to-image to `gpt-image-2.6-sunburst`, drafts to `gpt-image-2.6-flare`, and reference-image compositions to `nano-banana-2.1`. Never call retired `gpt-image-2`, `veo-3.1-generate-preview`, or `sora-2`.
+- **Every ad creative runs through the 7-check quality audit.** Never present an asset with `quality.passed == false` as ready to ship or save it to Creatives — offer a targeted retry or explain which check failed.
+- **Pass real product references with explicit roles** (`role="product"` or `role="logo"`) so packaging, labels, and logo stay faithful. SVG logos are auto-converted to PNG.
+- **DO NOT display image or video URLs** — the chat card renders every placement at its true aspect ratio automatically.
 - **Respect character limits** — Google RSA headlines are 30 chars, descriptions 90 chars; Meta primary text is 125 chars visible.
 - **Change one variable per variant** so test results are attributable.
-- **Match aspect ratio to placement** — feed is 1:1, story is 9:16 (use `1024x1536`), banner is 16:9 (use `1536x1024`).
+- **Always generate native ad placements** — `9:16` (`1080x1920`, Stories/Reels with 250px top and 340px bottom safe zones), `4:5` (`1080x1350`, Feed portrait), `1:1` (`1080x1080`, Feed square), or `1.91:1` (`1200x628`, Display/Link).
 
 ## Routing Table
 
@@ -105,57 +105,62 @@ Change only one element per variant so results can be attributed to specific cha
 
 **The platform file of Phase 4 holds the copy rules of its placements. Read `references/ad-copy-frameworks.md` only for copy with no placement.**
 
-### Phase 3: Visual Creative Generation
+### Phase 3: Concept & Multi-Placement Ad Pack Generation
 
-Generate ad images using brand assets as references. Always pass **both logo and screenshot** as reference images — SVG logos are automatically converted to PNG by the branding tool.
+Prefer `creative_concepts_generate` + `ad_creatives_generate` for full branded ad sets (the compositor applies crisp HTML typography, safe zones, and the 7-check quality audit automatically):
 
-**Read `brand.screenshot.description`** to understand what the product actually does and what the UI looks like. Do not guess from the company name.
+```python
+concepts = creative_concepts_generate(
+    brief="Launch summer hydration campaign for athletes",
+    count=4,
+    formats=["image"],
+)
 
-**Preferred first pass: `images_generate` with `model="gpt-image-2"`**
+pack = ad_creatives_generate(
+    concept=concepts.concepts[0],
+    placements=["9:16", "4:5", "1:1"],
+    variants=2,
+    quality="standard",
+    references=[{"file_id": brand.logo.file_id, "role": "logo"}],
+    save_to="generated",
+)
+```
 
-#### Default approach (best practice for SaaS / product ads)
-
-By default, a strong ad creative has three layers: **brand** (logo), **copy** (headline), and **product** (realistic screenshot showing the core value prop). This is the recommended starting point when the user hasn't specified a creative direction. Use `model="gpt-image-2"` for this initial composition unless the user explicitly asks for another model or the image is primarily a text-rendering task.
+For direct single-pass image generation without HTML text composition, call `images_generate` with `model="auto"` and `ad_placements`:
 
 ```python
 images_generate(
     requests=[{
-        "prompt": (
-            "Social media ad creative for [company name]. "
-            "Top: the [company] logo. "
-            "Headline: '[headline from ad copy phase or site hero text]'. "
-            "Below the headline: a clean, realistic product screenshot of [describe the actual UI "
-            "based on brand.screenshot.description]. "
-            "Match the brand style from the references."
-        ),
-        "reference_images": [brand.logo.file_id, brand.screenshot.file_id]
+        "prompt": "Natural morning daylight lifestyle shot of the product on stone counter, clean headroom for copy.",
+        "reference_images": [brand.logo.file_id, brand.screenshot.file_id],
     }],
-    model="gpt-image-2",
-    aspect_ratio="1:1",
-    quality="high"
+    model="auto",
+    ad_placements=["9:16", "4:5", "1:1"],
+    ad_format="product_hero",
+    quality="standard",
 )
 ```
 
 #### Following user direction
 
-If the user asks for a specific creative style (lifestyle imagery, abstract, illustration, people using the product, etc.), follow their direction. The defaults above are a starting point, not a constraint. The reference images still supply brand consistency regardless of creative direction.
+If the user asks for a specific creative style (UGC, lifestyle imagery, comparison, testimonial, video), follow their direction. Pass `kind="video"` to `ad_creatives_generate` when producing paid-social video packs with an opening headline and branded end card.
 
 #### Things to avoid (unless the user specifically asks)
 
-- Made-up visual elements (robot mascots, random platform logos, abstract graphics)
+- Made-up visual elements (robot mascots, invented packaging, random platform logos)
 - UI chrome (buttons, nav bars, form inputs) — ad platforms add their own CTAs
 - Guessing what the product does from the company name
-- Generic marketing clip art
+- Generic marketing clip art or banned brand claims
 
 ## Visual Tool Selection
 
 | Scenario | Tool | Why |
 |----------|------|-----|
-| On-brand creative (default) | `images_generate` (`model="gpt-image-2"`) with logo + screenshot refs | Best default for the first branded concept |
-| Text-heavy creative (headlines in image) | `images_generate` (`model="nano-banana-pro"`) | Use only when text rendering inside the image is the main requirement |
-| Quick ideation / concept exploration | `images_generate` (`model="gpt-image-2"`) | Fast first-pass concepting with no references needed |
-| Iterative refinement of existing image | `images_generate` (`model="nano-banana"`) with the image as a reference | Edit a specific generated image |
-| Photoreal product shots / material detail | `images_generate` (`model="seedream-4.5"`) | Strong fabric/texture/spatial depth |
+| Full branded ad set (9:16, 4:5, 1:1 + crisp headline/CTA + quality audit) | `creative_concepts_generate` -> `ad_creatives_generate` | Deterministic typography, safe zones, auto-retry, Save to Creatives |
+| Direct image ad / concept pass | `images_generate` (`model="auto"`, optional `ad_placements`) | Eval-routed (`gpt-image-2.6-sunburst` standard, `gpt-image-2.6-flare` draft, `nano-banana-2.1` references) |
+| Search-grounded or text-in-image poster | `images_generate` (`model="nano-banana-pro"`) | Grounded search and dense in-image copy |
+| Seeded reproducible product shot | `images_generate` (`model="seedream-4.5"`, `seed=...`) | Reproducible text-to-image |
+| Video ad creative pack | `ad_creatives_generate(kind="video")` or `videos_generate` (`model="gemini-omni-1.2-flash"`) | Native 9:16 + deterministic 4:5 / 1:1 crop and branded end card |
 
 ## Platform Quick Reference
 
