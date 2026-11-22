@@ -1,114 +1,43 @@
-# AGENTS.md
+# Marketing Skills
 
-Guidance for AI coding agents (Codex, Cursor, Claude Code, etc.) working in this repository.
+A public collection of marketing-domain Agent Skills that wrap the **Hyper MCP** tool surface. Each skill in [`skills/`](./skills) teaches an agent how to drive Hyper's MCP tools (ad platforms, organic social, SEO, scrapers, image and video generation, email, analytics, and more) for one marketing job. `CLAUDE.md` imports this file.
 
-## What this repo is
+Skills are not tools. They are markdown instructions plus optional reference files; the tool calls come from the connected Hyper MCP at [https://app.hyperfx.ai/mcp](https://app.hyperfx.ai/mcp). The live MCP descriptor is the only source of truth for tool names, argument names and types. When a skill and the live catalog disagree, the catalog wins.
 
-A public collection of marketing-domain Agent Skills that wrap the **Hyper MCP** tool surface. Each skill in [`skills/`](./skills) teaches an agent how to drive Hyper's MCP-exposed tools (Google Ads, Meta, Amazon, TikTok, Pinterest, LinkedIn, HyperSEO, Apify scrapers, image / video generation, Gmail, Apollo, Klaviyo, Resend, Beehiiv, GA4, GTM, Search Console, BigQuery, etc.) for a specific marketing job.
+## Where to look
 
-Skills are NOT tools. They are markdown instructions plus optional reference files. The actual tool calls come from the connected Hyper MCP at [https://app.hyperfx.ai/mcp](https://app.hyperfx.ai/mcp). The MCP descriptor for each tool is the only source of truth for tool names, arg names, and arg types — never trust skill content over the live MCP catalog when they disagree.
-
-## Available skills
-
-### Foundation
-
-| Skill | What it does |
+| Need | Read |
 | --- | --- |
-| [`brand-context`](./skills/brand-context) | Build and maintain one `brand-context.md` per brand — positioning, ICP, personas, verbatim customer language, voice, proof points — the hub doc every other skill reads before asking the user brand questions. Auto-drafts from the brand's site (Firecrawl) or via interview. |
-
-### Paid ads
-
-| Skill | What it does |
-| --- | --- |
-| [`google-ads`](./skills/google-ads) | Plan and create new Google Ads campaigns (Search, Display, Performance Max) with the per-resource tools, plus GAQL-backed reports and dashboards on existing accounts. |
-| [`meta-ads`](./skills/meta-ads) | Plan and create Meta (Facebook/Instagram) ad campaigns with Advantage+ as the default; includes an account-audit workflow. |
-| [`meta-ads-library`](./skills/meta-ads-library) | Search the Meta Ads Library for competitor ads, optionally enrich with page contact info, and surface structured ad-intelligence summaries inline in chat. |
-| [`amazon-ads`](./skills/amazon-ads) | Plan and create Amazon Sponsored Products campaigns with strategic targeting and budget rules. |
-| [`tiktok-ads`](./skills/tiktok-ads) | Plan and create TikTok Ads (Traffic, Reach, Conversions, App Promotion, Video View) with strict objective-specific parameter validation. |
-| [`pinterest-ads`](./skills/pinterest-ads) | Plan and create Pinterest Ads with microcurrency budgeting, CBO rules, and conversion-tag handling. |
-| [`reddit-ads`](./skills/reddit-ads) | Plan and create Reddit Ads campaigns — promoted posts, subreddit / interest / geo targeting, audiences, Reddit pixel conversion tracking, and reporting, with micro-currency budgets. |
-| [`snapchat-ads`](./skills/snapchat-ads) | Plan and create Snapchat Ads campaigns — ad squads, media upload, creatives, Snap Pixel conversion tracking, and reporting, with micro-currency budgets and JSON-Patch updates. |
-| [`openai-ads`](./skills/openai-ads) | Plan and manage OpenAI Ads (ChatGPT ads) — chat_card and product-feed creatives, geo targeting, custom audiences, conversion tracking, and insights. |
-
-### Organic social publishing
-
-| Skill | What it does |
-| --- | --- |
-| [`tiktok`](./skills/tiktok) | Publish organic TikTok videos, photos, and carousels through the TikTok consent card. |
-| [`instagram`](./skills/instagram) | Publish photos / Reels / Stories / carousels, moderate comments and mentions, send DMs, and pull insights from the Instagram API with Instagram Login. |
-| [`linkedin`](./skills/linkedin) | Publish LinkedIn text, article, document, organization (company page), and AI text-to-carousel posts. |
-
-### Research
-
-| Skill | What it does |
-| --- | --- |
-| [`seo-research`](./skills/seo-research) | Data-driven SEO research via the HyperSEO toolkit — keyword research, SERP and AI Overview analysis, competitor benchmarking, content planning, AI search visibility tracking (ChatGPT / Claude / Perplexity), backlink trends, and full site audits. Ships with five reference workflows under `references/`. |
-| [`competitor-intel`](./skills/competitor-intel) | End-to-end competitor research and monitoring — pick the set, scrape every public surface (Firecrawl for site/blog/pricing, HyperSEO for rank/backlinks/intersection, Apify scrapers for Instagram / TikTok / LinkedIn / Twitter / Reddit / Google search / Google Trends), diff against last run, and synthesize battle cards / weekly digests / comparison-page input / board-prep updates. Ships with two references under `references/` (per-source playbook, brief templates). |
-| [`customer-research`](./skills/customer-research) | Mine Reddit, YouTube comments, G2/Capterra, X/Twitter, and TikTok to surface what customers actually say in their own words. Produces research synthesis reports, VOC quote banks, personas, and JTBD maps. Requires the Apify scrapers toolkit (Reddit, Twitter, YouTube, TikTok, Instagram). Ships with two references under `references/` (per-source playbooks, synthesis templates). |
-| [`reddit`](./skills/reddit) | Research subreddits, threads, and sentiment — mine questions, pain points, and voice-of-customer from Reddit. |
-| [`youtube`](./skills/youtube) | Fetch YouTube transcripts and AI-powered video extraction (`youtube_video_transcripts_fetch`, `youtube_videos_read`), repurpose video content, and create thumbnails with the bundled scripts and composition references. Requires the YouTube toolkit. |
-
-### Creative output
-
-| Skill | What it does |
-| --- | --- |
-| [`ad-creative-generation`](./skills/ad-creative-generation) | End-to-end ad creative pipeline — brand extraction (Firecrawl) → ad copy variants → on-brand images for Google RSAs, Display, Performance Max, Meta feed / story / carousel, and other paid placements. Ships with four reference workflows under `references/`. |
-| [`image-generation`](./skills/image-generation) | Model-selection guide for `images_generate` — OpenAI GPT Image 2.5 (`gpt-image-2.5-flare`, `gpt-image-2.5-sunburst`), Nano Banana (Gemini 3 Pro / 3.1 Flash), Seedream 4.5 (ByteDance) — for ad creatives, branded compositions, photoreal product shots, image-to-image edits, and high-resolution output. |
-| [`video-generation`](./skills/video-generation) | End-to-end AI video — text-to-video / image-to-video (Veo, Seedance), scene chaining, video analysis, transcription, subtitles, TikTok / karaoke captions, voiceover (TTS), audio mixing, clipping, stitching, and text overlays. |
-| [`blog-generation`](./skills/blog-generation) | Generate one excellent, on-brand blog post per run — a stateful engine (reads a brand strategy doc, never repeats a topic) built to rank on Google and get cited by AI search. Firecrawl / HyperSEO / Search Console recommended. |
-
-### Outbound & lifecycle
-
-| Skill | What it does |
-| --- | --- |
-| [`cold-email-outreach`](./skills/cold-email-outreach) | End-to-end B2B cold outreach — Apollo prospect search and email enrichment, Firecrawl + LinkedIn-scraper personalization signals, Gmail drafting / sending / threading, multi-touch follow-up cadences, and reply routing via Gmail labels. Ships with three reference workflows under `references/` (frameworks, follow-ups, deliverability). |
-| [`email-lifecycle`](./skills/email-lifecycle) | Welcome / nurture / re-engagement / win-back / abandoned-cart sequences across Klaviyo (ecom), Resend (SaaS / dev tools), Beehiiv (newsletters), and Gmail (small lists). Provider-selection guidance, audience setup, sequence build, launch, and measurement. Ships with two references under `references/` (cross-provider sequence patterns and per-provider tool-call mechanics). |
-
-### Analytics
-
-| Skill | What it does |
-| --- | --- |
-| [`analytics-insights`](./skills/analytics-insights) | Drive Google Analytics (GA4), Google Tag Manager, Google Search Console, and BigQuery from chat — tracking-plan design, key-event (conversion) management, custom dimensions / metrics, GA4 reports, GTM container audits, GSC search performance, and queries against the GA4 BigQuery export. Ships with three references under `references/` (GA4 tracking plan, GTM audit, BigQuery GA4 export). |
-
-### Execution
-
-| Skill | What it does |
-| --- | --- |
-| [`hyper-cli`](./skills/hyper-cli) | Run any marketing skill from a terminal with `hyperai`: auth, search, describe, call, and switching connected accounts. |
-
-### Apps & channels
-
-| Skill | What it does |
-| --- | --- |
-| [`gmail`](./skills/gmail) | Read, draft, send, and organize Gmail — labels, threads, drafts, and attachments. |
-| [`google-sheets`](./skills/google-sheets) | Write structured data to Google Sheets and keep spreadsheets up to date. |
-| [`slack`](./skills/slack) | Send Slack messages, share files and images, and work with channels and threads. |
-| [`twilio`](./skills/twilio) | Send SMS and WhatsApp messages and manage Twilio messaging workflows. |
+| Skill catalog with required integrations | [`README.md`](./README.md#skills) |
+| One skill's workflow | `skills/<name>/SKILL.md`, long-form material in `skills/<name>/references/` |
+| Authoring rules, validation, releasing | [`CONTRIBUTING.md`](./CONTRIBUTING.md) |
+| Validator and its banned-strings list | [`validate-skills.sh`](./validate-skills.sh) |
 
 ## Adding or editing a skill
 
-1. Each skill lives in `skills/<skill-name>/SKILL.md` with YAML frontmatter (`name`, `description`).
+1. A skill lives in `skills/<skill-name>/SKILL.md` with YAML frontmatter `name` and `description` only.
 2. `name` MUST match the folder name.
-3. `description` MUST contain a "Use when…" trigger phrase, 50–500 chars.
-4. SKILL.md MUST be ≤500 lines. Move long-form material into a sibling `references/` folder.
-5. SKILL.md MUST contain a `## Requirements` section pointing at `https://app.hyperfx.ai/mcp`.
-6. Run `./validate-skills.sh` before opening a PR. CI runs the same check.
-
-See [`CONTRIBUTING.md`](./CONTRIBUTING.md) for details.
+3. `description` MUST contain a "Use when…" trigger phrase and be 50–500 characters.
+4. `SKILL.md` MUST be at most 500 lines. Move long-form material into a sibling `references/` folder.
+5. `SKILL.md` MUST contain a `## Requirements` section pointing at `https://app.hyperfx.ai/mcp`, plus a `## Tool surface` table of the tools it calls.
+6. When adding, renaming or removing a skill, update the catalog in `README.md`.
+7. Run `./validate-skills.sh` before opening a PR. CI runs the same check.
+8. To release, bump the version in both `.claude-plugin/plugin.json` and `.claude-plugin/marketplace.json`. A merge to `main` tags and publishes it.
 
 ## Repo conventions
 
-- **One canonical tool name, every surface.** A skill names a tool once, by its canonical name, for example `gmail_messages_send`. That name runs in Hyper chat as a direct call, on MCP with `call_read("<name>", {...})`, `call_write` or `call_destructive` (the one that `describe` names in `call_with`), and on the CLI with `hyperai call <name> --json '{...}'`. Never write a legacy name and never write a CLI alias path such as `gmail messages send`: the live catalog (`search`, `describe`) is the only source of truth, and it wins over codebase function names, prior skill content, or memory.
-- **Allowed Hyper URLs in skill bodies:** only `app.hyperfx.ai/mcp` and `app.hyperfx.ai/apps`. No other Hyper URLs.
-- **No internal infra references.** No `hyper_cache_*` table names in skills, and no instructions to discover one at runtime — those tables and the `*_insights_query` / `*_sync_*` tools that fed them are being removed. For live data, call the provider's own API tool. For a workspace's own warehouse tables, use the `database` toolkit — it is the single database path in Hyper: `database_tables_list` to discover, `database_tables_describe` for real columns, then `database_query`. Never hardcode or guess a table name. Also no internal filesystem paths and no template ids that aren't part of the public MCP surface.
-- **Conditional integrations.** Some tools only appear when the underlying integration is enabled in the user's Hyper workspace (LinkedIn scraper is the canonical example). Skills citing such tools must mark them conditional and gracefully skip the affected step rather than failing the whole workflow.
-- **Self-contained skills.** If two skills overlap, add an "Out of scope" section pointing at the right sibling rather than duplicating workflow.
+- **One tool name on every surface.** A skill names a tool once, by its catalog name, for example `gmail_messages_send`. That name runs in Hyper chat as a direct call, on MCP with `call_read("<name>", {...})`, `call_write` or `call_destructive` (the one `describe` names in `call_with`), and on the CLI with `hyperai call <name> --json '{...}'`. Never write a legacy name or a CLI alias path such as `gmail messages send`. The live catalog (`search`, `describe`) wins over codebase function names, earlier skill content, or memory.
+- **Allowed Hyper URLs in skill bodies:** only `app.hyperfx.ai/mcp` and `app.hyperfx.ai/apps`.
+- **No internal infra references.** No `hyper_cache_*` table names and no instructions to discover one at runtime; those tables and the `*_insights_query` / `*_sync_*` tools that fed them are being removed. No removed `hyper_data_*` tools, internal filesystem paths, internal agent template names, or template ids outside the public MCP surface. No real account IDs, customer data, or tokens.
+- **Live data and warehouses.** For live data, call the provider's own API tool. For a workspace's own warehouse tables, the `database` toolkit is the only database path: `database_tables_list` to discover, `database_tables_describe` for real columns, then `database_query`. Never hardcode or guess a table name.
+- **Conditional integrations.** Some tools appear only when the integration is enabled in the user's Hyper workspace (the LinkedIn scraper, for example). Mark those tools conditional and skip the affected step gracefully instead of failing the whole workflow.
+- **Self-contained skills.** When two skills overlap, add an `## Out of scope` section pointing at the right sibling instead of duplicating workflow.
 - **Microcurrency.** Pinterest Ads budgets and bids are in microcurrency (`$1.00 = 1,000,000` microdollars). Skills that touch budget fields must convert.
 
 ## How an agent should use these skills
 
-1. Read the matching `SKILL.md` from `skills/<name>/SKILL.md`.
+1. Read the matching `skills/<name>/SKILL.md`.
 2. When a tool is not found, follow the skill's not-found line: in Hyper chat, find the toolkit id with `discover_toolkits` and pass it to `enable_toolkit`; on an MCP client or the CLI, tell the user which integration to connect.
-3. Follow the workflow defined in the skill's body.
-4. Cross-reference sibling skills via the "Out of scope" table when relevant.
-5. When a tool call fails with an arg-validation error, re-read the MCP tool descriptor before retrying — don't blindly retry with the same args.
+3. Follow the workflow in the skill's body.
+4. Use the skill's "Out of scope" section to hand off to a sibling skill.
+5. When a call fails with an argument-validation error, re-read the MCP tool descriptor before retrying. Do not retry with the same arguments.
