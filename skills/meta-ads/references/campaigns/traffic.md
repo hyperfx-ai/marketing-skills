@@ -183,7 +183,7 @@ meta_ads_ad_images_upload(
 meta_ads_ad_previews_get(creative_ids=["<creative_id>"])
 # Summarize formats to user — never render iframe inline
 
-meta_ads_campaigns_activate(campaign_id="<campaign_id>")
+meta_ads_campaigns_activate(campaign_id="<campaign_id>", recursive=True)
 # Only when user explicitly approves
 ```
 

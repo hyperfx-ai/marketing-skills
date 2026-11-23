@@ -69,7 +69,7 @@ Key constraints:
 - Budget at campaign level (ad set has no budget)
 - meta_ads_adset_create takes ad_account_id + body
 - meta_ads_ad_create takes ad_account_id + body
-- Will use meta_ads_campaigns_activate(), not meta_ads_campaign_update(campaign_id, body={"status": "ACTIVE"})
+- Will use meta_ads_campaigns_activate(campaign_id, recursive=True), not meta_ads_campaign_update(campaign_id, body={"status": "ACTIVE"})
 ```
 
 ---
@@ -198,8 +198,8 @@ When you're ready to go live, reply "activate" and I'll launch it.
 ### Activation (when user approves)
 
 ```python
-# RIGHT — activates campaign + ad sets + ads
-meta_ads_campaigns_activate(campaign_id="987654321")
+# RIGHT — recursive=True turns on the campaign and every paused ad set and ad
+meta_ads_campaigns_activate(campaign_id="987654321", recursive=True)
 
 # WRONG — do not use this
 # meta_ads_campaign_update(campaign_id="987654321", status="ACTIVE")

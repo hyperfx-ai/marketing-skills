@@ -73,9 +73,15 @@ Deciding budget placement per campaign *before* creating anything avoids a delet
 # WRONG — only flips the campaign flag; ad sets and ads stay PAUSED → nothing serves
 meta_ads_campaign_update(campaign_id="...", body={"status": "ACTIVE"})
 
-# RIGHT — activates campaign + all ad sets + all ads in one call
+# RIGHT for a campaign you just built — turns on the campaign and every paused ad set and ad
+meta_ads_campaigns_activate(campaign_id, recursive=True)
+
+# RIGHT for a campaign that already ran — turns on the campaign only and
+# reports the ad sets and ads that are still paused
 meta_ads_campaigns_activate(campaign_id)
 ```
+
+Without `recursive`, ad sets and ads keep their own status. A person can have paused them on purpose, so ask the user before you pass `recursive=True` on a campaign that already ran. If a recursive call stops midway, the error names what it turned on: read the current statuses and tell the user before another call.
 
 `meta_ads_campaign_update(campaign_id="...", body={"status": "ACTIVE"})` creates a silent non-delivery failure: the dashboard shows ACTIVE but nothing is actually serving because ad sets and ads remain PAUSED.
 
@@ -294,7 +300,7 @@ When the user wants to update, pause, adjust budget, or change targeting on an e
 | Campaign status / budget | `meta_ads_campaign_update` | `campaign_id`, `body` (`status`, `daily_budget`) |
 | Ad set status / budget / targeting | `meta_ads_adset_update` | `adset_id`, `body` (`status`, `daily_budget`, `targeting`) |
 | Ad status / creative | `meta_ads_ad_update` | `ad_id`, `body` (`status`) |
-| Take everything live at once | `meta_ads_campaigns_activate` | `campaign_id` |
+| Turn on a campaign (and, with `recursive=True`, every paused ad set and ad) | `meta_ads_campaigns_activate` | `campaign_id`, `recursive` |
 
 Before updating, fetch current state with `meta_ads_campaign_get(campaign_id=..., fields="name,objective,status,daily_budget,lifetime_budget,bid_strategy")` or `meta_ads_adset_get(adset_id=..., fields="promoted_object,attribution_spec,bid_strategy,bid_amount,targeting")` — do not guess at current values.
 
