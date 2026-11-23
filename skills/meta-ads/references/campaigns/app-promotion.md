@@ -223,7 +223,7 @@ meta_ads_ad_images_upload(account_id="act_123456789", image_url="<url>")
 ```python
 # creative_id: section 13 of ../constraints.md
 meta_ads_ad_previews_get(creative_ids=["<creative_id>"])
-meta_ads_campaigns_activate(campaign_id="<campaign_id>")  # when user approves
+meta_ads_campaigns_activate(campaign_id="<campaign_id>", recursive=True)  # when user approves
 ```
 
 ---
