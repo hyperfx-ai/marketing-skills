@@ -72,7 +72,9 @@ CLI users: translate tool names with the `hyper-cli` skill (`hyperai search "<to
 
 > **DERIVED NUMBERS SHOW THEIR INPUTS**: A total, difference or rate that you compute names the tool values it comes from: "312 carts with no purchase (414 add-to-carts − 102 purchases)".
 
-> **ACTIVATE, DON'T UPDATE**: Use `meta_ads_campaigns_activate(campaign_id)` to go live. Never `meta_ads_campaign_update(status="ACTIVE")` — that silently leaves ad sets and ads PAUSED so nothing serves.
+> **ACTIVATE, DON'T UPDATE**: To take a campaign you just built live, use `meta_ads_campaigns_activate(campaign_id, recursive=True)`: it turns on the campaign and every paused ad set and ad. Never `meta_ads_campaign_update(status="ACTIVE")` for this — that silently leaves ad sets and ads PAUSED so nothing serves.
+
+> **EXISTING CAMPAIGNS: NO `recursive`**: For a campaign that already ran, call `meta_ads_campaigns_activate(campaign_id)` without `recursive`. It turns on the campaign only and reports how many ad sets and ads are still paused. A person can have paused those on purpose, so ask the user before you turn them on. Use `recursive=True` on an existing campaign only when the user asks for everything on.
 
 > **ALWAYS START PAUSED**: Create campaigns with `status="PAUSED"`. Never launch live without user review.
 
@@ -103,7 +105,7 @@ Every task follows this sequence. Do not skip steps.
 3. **Make a written plan** — state campaign type, budget in cents, optimization goal, and sequence of steps; show it before acting
 4. **Execute step by step** by the campaign file, whose rules list the constraints of its type. Read a section of [references/constraints.md](references/constraints.md) only when a step names it
 5. **Show ad previews** before activation
-6. **Activate only when the user approves** using `meta_ads_campaigns_activate()`
+6. **Activate only when the user approves** using `meta_ads_campaigns_activate(campaign_id, recursive=True)` for the campaign you just built
 
 **Automated / scheduled runs:** If there is no user present to interact with (e.g. a scheduled task), skip steps 3 and 6, and read only the campaign file of the routing row: the task's instructions are its plan. Do not write a plan and wait for confirmation — proceed directly. Do not activate unless activation was explicitly included in the task instructions.
 

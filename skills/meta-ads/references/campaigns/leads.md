@@ -353,8 +353,8 @@ Summarize preview formats to user — never render iframe inline.
 Wait for explicit user approval before activating.
 
 ```python
-meta_ads_campaigns_activate(campaign_id="<campaign_id>")
-# Activates campaign + ad sets + ads together
+meta_ads_campaigns_activate(campaign_id="<campaign_id>", recursive=True)
+# recursive=True turns on the campaign and every paused ad set and ad
 # NOT: meta_ads_campaign_update(status="ACTIVE") — that leaves ad sets PAUSED
 ```
 
