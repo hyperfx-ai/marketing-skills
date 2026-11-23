@@ -89,7 +89,7 @@ Primary site: [url]
 - Site: [url] · Blog: [url] · Docs: [url]
 - Social: [handles per platform]
 - Ad accounts in play: [platforms]
-- Visual identity: [primary colors, typography, logo notes — from firecrawl_branding_extract if run]
+- Visual identity: [primary colors, typography, logo notes — from brand guidelines, supplied assets, the website, or firecrawl_branding_extract]
 - Other docs: [link to blog-strategy.md or other per-skill files if they exist]
 ```
 
@@ -105,13 +105,13 @@ Primary site: [url]
 
 **4. Pain points.** Ranked by what drives *purchase*, not what customers complain about most. Phrase each as the customer experiences it ("I can't tell which campaigns actually made money"), not as the product answers it ("lack of attribution").
 
-**5. Competitive landscape.** Always include the status-quo row — for most brands the real competitor is a spreadsheet, an agency, or doing nothing. When `competitor-intel` or `seo-research` data is available, prefer it over the user's guess about who they compete with (search results reveal who prospects actually compare).
+**5. Competitive landscape.** Always include the status-quo row — for most brands the real competitor is a spreadsheet, an agency, or doing nothing. When data from the optional `competitor-intel` or `seo-research` skills is available, prefer it over the user's guess about who they compete with (search results reveal who prospects actually compare).
 
 **6. Differentiation.** Per-alternative, not a generic strengths list — "why us over X" differs by X. The **only-we claim** must survive the test: could a competitor truthfully say the same sentence? If yes, it isn't differentiation. If no only-we claim exists, record that honestly; downstream copy then leads with proof and voice instead of claims.
 
 **7. Objections & switching.** Source these from the user (sales calls, churn reasons) — the site never admits them. Each objection gets the *honest* answer, including "that's a real limitation"; downstream skills need to know what not to promise.
 
-**8. Customer language.** The most valuable section and the one most tempting to fake. Only verbatim quotes with sources. Good sources: reviews (G2, Capterra, app stores, Amazon), Reddit threads, sales-call notes the user pastes, support tickets, social comments. If the user has none, offer to run `customer-research` to mine them. Downstream, these phrases become headlines, subject lines, and hooks — a real "I was drowning in carrier spreadsheets" beats any invented tagline.
+**8. Customer language.** The most valuable section and the one most tempting to fake. Only verbatim quotes with sources. Good sources: reviews (G2, Capterra, app stores, Amazon), Reddit threads, sales-call notes the user pastes, support tickets, social comments. If the user has none, offer to run the optional `customer-research` skill to mine them. Downstream, these phrases become headlines, subject lines, and hooks — a real "I was drowning in carrier spreadsheets" beats any invented tagline.
 
 **9. Brand voice.** Extract, don't prescribe. From the site's best pages (or the user's favorite piece of their own writing), name the tone in plain adjectives and — most enforceable — build the two word lists. "Words we ban" should include the AI-tells and corporate clichés the user hates; downstream skills treat both lists as hard constraints. Always capture one endorsed reference sample: a paragraph outranks any adjective list.
 
@@ -119,7 +119,7 @@ Primary site: [url]
 
 **11. Goals & current focus.** Keeps downstream skills pointed at the right job (if the quarter is about activation, blog and email skills should skew toward onboarding content, not top-of-funnel). The **explicitly not doing** line prevents well-meaning suggestions the user has already ruled out.
 
-**12. Assets & channels.** Pure logistics, but it's what lets skills act without asking: which handles to post to, which ad accounts exist, where the blog lives. Link out to per-skill files (like `blog-generation`'s `blog-strategy.md`) rather than duplicating their contents.
+**12. Assets & channels.** Pure logistics, but it's what lets skills act without asking: which handles to post to, which ad accounts exist, where the blog lives. Visual identity notes can come from any source the user trusts — a brand guidelines PDF, supplied logo and font files, the website itself, or `firecrawl_branding_extract` — for example "Primary #1A4DFF on white, Inter for headlines and body, wordmark logo (PNG) with a light variant for dark backgrounds." Link out to per-skill files (like `blog-generation`'s `blog-strategy.md`) rather than duplicating their contents.
 
 ---
 
@@ -139,7 +139,7 @@ Ask conversationally, a few at a time, in this order — each block builds on th
 - What's the most common reason a good-fit prospect *doesn't* buy?
 
 **Block 3 — their words:**
-- Do you have reviews, call notes, or messages where customers describe the problem in their own words? Paste a few. (If not: offer `customer-research`.)
+- Do you have reviews, call notes, or messages where customers describe the problem in their own words? Paste a few. (If not: offer the optional `customer-research` skill.)
 - What's the best thing a customer ever said about you, verbatim?
 - What words do customers use for what you do that you'd never put on your site?
 

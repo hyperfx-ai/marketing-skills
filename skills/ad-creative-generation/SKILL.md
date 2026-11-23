@@ -1,22 +1,33 @@
 ---
 name: ad-creative-generation
-description: Generate on-brand ad creatives — visuals + copy — for Google, Meta (Facebook / Instagram), and other paid platforms via the Hyper MCP. Extracts brand identity from a website, writes ad copy variants, and produces brand-consistent images using reference-based image generation. Use when the user asks for ad creative, ad copy variants, RSA headlines, Meta ad creative, display ads, carousel ads, or A/B test variants.
+description: Generate on-brand ad creative for Meta, Google, and other paid platforms - copy variants, creative concepts, and placement-sized image or video packs. Works through the Hyper MCP, and still delivers copy, concepts, and visual briefs without Hyper. Use when the user asks for ad creative, ad copy variants, RSA headlines, Meta ad creative, display ads, carousel ads, or A/B test variants.
 metadata:
   version: 2.0.0
 requires_toolkits:
   - ad_creatives
   - image_gen
+  - video_generation_toolkit
+  - firecrawl_toolkit
 icon: image_gen
-short_description: Concept generation, multi-placement ad packs (9:16, 4:5, 1:1), quality checks, and Save to Creatives.
+short_description: Ad copy variants, creative concepts, and placement-sized image or video packs (9:16, 4:5, 1:1, 1.91:1).
 ---
 
 # Ad Creative Generation
 
-Generate ad creatives — both visuals and copy — that match a brand's identity. This skill orchestrates brand extraction, copywriting, and image generation into a single workflow.
+Write ad copy variants, pitch creative concepts, and produce placement-sized image or video ads that match a brand. The workflow is the same everywhere: gather brand context, write copy, pick a concept, generate creatives, review before delivery.
+
+> **Brand files.** In a Hyper workspace, brand files live under `/files/<brand-slug>/`:
+> - `brand-context.md` — positioning, audience, voice, and verified proof. Owned by the `brand-context` skill; this skill only reads it.
+> - `brand-kit.json` (optional) — visual tokens: logo, colors, fonts, product photos. See `references/brand-extraction.md`.
+>
+> `creative_concepts_generate` reads `brand-kit.json`, and only when a kit exists does it also read `brand-context.md` (through the kit's `context` field or the sibling path). `ad_creatives_generate` reads `brand-kit.json` only, never `brand-context.md`. Outside Hyper, use whatever brand doc or details the user provides.
 
 ## Requirements
 
-This skill assumes the [Hyper MCP](https://app.hyperfx.ai/mcp) is connected to your agent so the tools below are available. Brand extraction also requires Firecrawl to be configured under your Hyper integrations.
+- **[Hyper MCP](https://app.hyperfx.ai/mcp)** for brand extraction (`firecrawl_branding_extract`), concepts and ad packs (`creative_concepts_generate`, `ad_creatives_generate`), and image/video generation. All are built into Hyper; there is no separate integration to connect.
+- **Optional:** the Hyper Ads app (https://app.hyperfx.ai/apps) to save passed assets straight into Hyper Ads Creatives (`save_to="creatives"`).
+- Some directory MCP connectors do not expose `images_generate` / `videos_generate` directly. If they are missing, use `ad_creatives_generate`, or deliver copy plus placement visual briefs.
+- **Without Hyper:** Steps 0–2 work fully as text, and Step 3 produces placement-ready creative briefs for the user's own design or image tool.
 
 ### How to run the tools in this skill
 
@@ -33,156 +44,144 @@ If a tool is not found: in Hyper chat, find its toolkit id with `discover_toolki
 ## Tool surface
 
 | Group | Tools |
-|-------|-------|
+| --- | --- |
+| Brand files (Hyper workspace) | `files_list`, `files_read`, `files_create` |
 | Brand extraction | `firecrawl_branding_extract` |
-| Competitor ads | `marketing_queries_start`, `marketing_queries_continue` (stream `ads.meta_library`) |
-| Concept generation | `creative_concepts_generate` |
-| Full multi-placement ad packs (image or video) | `ad_creatives_generate` |
-| Direct image generation (eval-routed default) | `images_generate` (`model="auto"`, supports `ad_placements=["9:16", "4:5", "1:1"]`) |
-| Direct video generation | `videos_generate` (`model="gemini-omni-1.2-flash"`, supports `aspect_ratio` `"9:16" | "4:5" | "1:1" | "16:9"`) |
+| Competitor ads (optional) | `marketing_queries_start`, `marketing_queries_continue` (stream `ads.meta_library`) |
+| Concepts and multi-placement ad packs | `creative_concepts_generate`, `ad_creatives_generate` (background; poll `tool_job_read` if a `background_job.job_id` returns) |
+| Direct image / video generation | `images_generate`, `videos_generate`, `ugc_videos_create` |
 
-For deeper image-tool selection guidance see the `image-generation` skill. For video post-production see `video-generation`. To turn finished creatives into running campaigns see `google-ads` and `meta-ads`.
+For image model choice see `image-generation`; for video models and post-production see `video-generation`. To launch finished creatives see `google-ads` and `meta-ads`.
 
 ## Out of scope
 
-- Picking the right image model when the task isn't ad creative — use `image-generation`.
-- Creating, launching, or budgeting actual ad campaigns — use `google-ads`, `meta-ads`, `tiktok-ads`, `pinterest-ads`, or `amazon-ads`.
-- Searching live competitor ads — use `meta-ads-library`. To read the Meta ads of a known competitor by its domain or Meta page in one query, use `marketing_queries_start` with the `ads.meta_library` stream; a repeated query within a day reads the stored run at no cost.
+- Image work that isn't ad creative — use `image-generation`.
+- Creating, launching, or budgeting campaigns — use `google-ads`, `meta-ads`, `tiktok-ads`, `pinterest-ads`, or `amazon-ads`.
+- Broad competitor ad research — use `meta-ads-library` or `competitor-intel`.
+- Writing or rebuilding `brand-context.md` — use `brand-context`.
 
-## Critical rules
+## Workflow
 
-- **Read `brand-kit.json` and `brand-context.md` first** under `/files/<brand-slug>/` before asking brand questions. If neither exists, call `firecrawl_branding_extract` once and save `/files/<brand-slug>/brand-kit.json`.
-- **Use the two-step ad workflow for full creative sets:** call `creative_concepts_generate` first so the user picks concepts, then call `ad_creatives_generate` with the chosen concept and `placements` (`["9:16", "4:5", "1:1"]`).
-- **Use `model="auto"` on `images_generate`** when generating single visuals or direct placement sets (`ad_placements=["9:16", "4:5", "1:1"]`). Under `"auto"`, Hyper routes standard/high text-to-image to `gpt-image-2.6-sunburst`, drafts to `gpt-image-2.6-flare`, and reference-image compositions to `nano-banana-2.1`. Never call retired `gpt-image-2`, `veo-3.1-generate-preview`, or `sora-2`.
-- **Every ad creative runs through the 7-check quality audit.** Never present an asset with `quality.passed == false` as ready to ship or save it to Creatives — offer a targeted retry or explain which check failed.
-- **Pass real product references with explicit roles** (`role="product"` or `role="logo"`) so packaging, labels, and logo stay faithful. SVG logos are auto-converted to PNG.
-- **DO NOT display image or video URLs** — the chat card renders every placement at its true aspect ratio automatically.
-- **Respect character limits** — Google RSA headlines are 30 chars, descriptions 90 chars; Meta primary text is 125 chars visible.
-- **Change one variable per variant** so test results are attributable.
-- **Always generate native ad placements** — `9:16` (`1080x1920`, Stories/Reels with 250px top and 340px bottom safe zones), `4:5` (`1080x1350`, Feed portrait), `1:1` (`1080x1080`, Feed square), or `1.91:1` (`1200x628`, Display/Link).
+### Step 0 — Gather brand context (never skip)
 
-## Routing Table
+**With Hyper workspace file tools (`files_list` / `files_read`):**
 
-Based on what the user needs, read the appropriate reference file:
+1. List `/files/` and check for `/files/<brand-slug>/brand-kit.json` and `brand-context.md` for the requested brand.
+2. **Both exist for this brand:** read them, then ask only for campaign details (offer, goal, target placements).
+3. **Several folders contain `brand-kit.json`:** always pass `brand_kit_path="/files/<brand-slug>/brand-kit.json"` to `creative_concepts_generate` and `ad_creatives_generate`. Omitting it returns an error that lists the kits.
+4. **The only `brand-kit.json` belongs to a different brand:** do not let the tools auto-apply it. Gather the new brand's details and save and pass its own `brand_kit_path`, or ask the user.
+5. **Only `brand-context.md` exists:** the ad tools do not read it without a kit, so put the positioning, audience, voice rules and banned words, and verified proof directly in `brief`.
+6. **Only `brand-kit.json` exists:** ask for audience, offer, proof points, and words to avoid, or suggest running `brand-context`.
+7. **Neither exists:** ask for the website URL or brand assets. For physical products, also ask for real product photos so generation does not invent packaging.
+   - With a URL, call `firecrawl_branding_extract(url=...)` and read `brand.screenshot.description` to learn what the product really is. Never guess from the company name.
+   - If extraction fails (`success` is false) or there is no URL, ask for a PNG/JPG logo, 2–3 hex colors, headline and body fonts, product photos, and a one-sentence product description.
+   - If the user wants to skip brand setup, proceed unbranded and say so.
+   - Save `/files/<brand-slug>/brand-kit.json` only after the user confirms the extracted or supplied visual tokens (schema v1 in `references/brand-extraction.md`). Never create or overwrite `brand-context.md` here; suggest running `brand-context` if the user wants a persistent narrative brand doc.
 
-| User Need | Reference |
-|-----------|-----------|
-| "Extract branding from this site" / brand colors, logo | `references/brand-extraction.md` |
-| "Write ad copy" / headlines / variants / hooks | `references/ad-copy-frameworks.md` |
-| Google RSAs / display ads / Performance Max assets | `references/google-ads-creatives.md` |
-| Meta / Facebook / Instagram ads / carousel / stories | `references/meta-ads-creatives.md` |
+**Outside Hyper (no workspace file tools):** ask the user for their brand doc, website URL, or a quick 5-point intake: product one-liner, target audience, offer, visual colors and fonts, proof points and words to avoid. Do not mention `/files/` paths.
 
-When the task spans multiple areas (e.g., "create ad creatives for this website"), follow the full workflow below.
+### Step 1 — Write ad copy variants
 
-## Core Workflow
+1. **Hook variants** — number-led, question, pain-point, benefit-first, social proof.
+2. **Body variants** — problem-agitate-solve, feature-benefit, before-after.
+3. **CTA variants** — matched to funnel stage (Learn More, Get Started, Shop Now, Book a Demo).
 
-### Phase 1: Brand Extraction
+Change one variable per variant so results are attributable. Ground every claim in verified proof from the brand context; if the proof isn't there, the copy doesn't make the claim. Platform limits and copy rules: `references/google-ads-creatives.md` and `references/meta-ads-creatives.md`. Frameworks, variant grouping, and A/B pairing: `references/ad-copy-frameworks.md`.
 
-Call `firecrawl_branding_extract` with the website URL. This single call returns branding data, a saved logo, and a website screenshot:
+### Step 2 — Generate concepts
 
-```python
-brand = firecrawl_branding_extract(url="https://example.com")
+```json
+{
+  "brief": "Summer hydration launch for amateur runners; offer: 20% off first order",
+  "count": 4,
+  "formats": ["image"],
+  "brand_kit_path": "/files/acme/brand-kit.json"
+}
 ```
 
-The result contains:
-- `brand.logo.file_id` — logo image to use as reference
-- `brand.screenshot.file_id` — website screenshot to use as reference
-- `brand.branding` — colors, typography, spacing, personality
+Call `creative_concepts_generate` with at least one of `brief`, `source_creative_ids`, or `source_file_ids` (`count` `1`–`10`, default `5`; `formats` defaults to `["image"]`). Put any copy direction, offer, voice bans, and verified proof into `brief`. Show the returned concepts and let the user pick before generating full packs. Without Hyper, present each concept as text: `title`, `angle`, `hook`, `visual_direction`, `headline`, `primary_text`, `call_to_action`.
 
-Both `logo` and `screenshot` are saved images ready to pass as `reference_images` to image generation tools. SVG logos are automatically converted to PNG, so always include the logo — no need to filter by format.
+### Step 3 — Generate creatives
 
-**Read `references/brand-extraction.md` only when the site gives no logo, colors or screenshot.**
+**Matched multi-placement sets (primary path):** pass the chosen concept (either returned by Step 2 or written directly with `title`, `angle`, `hook`, `visual_direction`, `headline`, `call_to_action`, optional `primary_text`, `format`) to `ad_creatives_generate`:
 
-### Phase 2: Ad Copy Generation
-
-Using the brand personality, tone, and value proposition from the extraction, write ad copy variants. Structure copy by what's being tested:
-
-1. **Hook variants** — different opening angles (number-led, question, pain-point, benefit-first)
-2. **Body variants** — different messaging (social proof, feature highlight, urgency)
-3. **CTA variants** — different calls to action (Learn More, Shop Now, Get Started, Try Free)
-
-Change only one element per variant so results can be attributed to specific changes.
-
-**The platform file of Phase 4 holds the copy rules of its placements. Read `references/ad-copy-frameworks.md` only for copy with no placement.**
-
-### Phase 3: Concept & Multi-Placement Ad Pack Generation
-
-Prefer `creative_concepts_generate` + `ad_creatives_generate` for full branded ad sets (the compositor applies crisp HTML typography, safe zones, and the 7-check quality audit automatically):
-
-```python
-concepts = creative_concepts_generate(
-    brief="Launch summer hydration campaign for athletes",
-    count=4,
-    formats=["image"],
-)
-
-pack = ad_creatives_generate(
-    concept=concepts.concepts[0],
-    placements=["9:16", "4:5", "1:1"],
-    variants=2,
-    quality="standard",
-    references=[{"file_id": brand.logo.file_id, "role": "logo"}],
-    save_to="generated",
-)
+```json
+{
+  "concept": {
+    "title": "Morning Stride",
+    "angle": "Fast hydration after summer runs",
+    "hook": "Still dragging after mile 5?",
+    "visual_direction": "Runner pouring cold citrus drink into bottle on sunlit patio, clean headroom",
+    "headline": "Hydrate faster after every run",
+    "primary_text": "Zero-sugar electrolytes made for summer miles.",
+    "call_to_action": "Shop Now",
+    "format": "image"
+  },
+  "kind": "image",
+  "placements": ["1:1", "4:5", "9:16"],
+  "variants": 2,
+  "quality": "standard",
+  "references": [{ "file_id": "<product photo file ID>", "role": "product" }],
+  "brand_kit_path": "/files/acme/brand-kit.json",
+  "save_to": "generated"
+}
 ```
 
-For direct single-pass image generation without HTML text composition, call `images_generate` with `model="auto"` and `ad_placements`:
+Defaults: `kind` follows `concept.format`, `placements` defaults to `["1:1", "4:5", "9:16"]`, `variants` defaults to `1` (`1`–`4` visual variants of the concept), `quality` defaults to `"standard"` (`"draft" | "standard" | "high"`), and `save_to` defaults to `"generated"`.
 
-```python
-images_generate(
-    requests=[{
-        "prompt": "Natural morning daylight lifestyle shot of the product on stone counter, clean headroom for copy.",
-        "reference_images": [brand.logo.file_id, brand.screenshot.file_id],
-    }],
-    model="auto",
-    ad_placements=["9:16", "4:5", "1:1"],
-    ad_format="product_hero",
-    quality="standard",
-)
-```
+| Placement | Size | Use |
+| --- | --- | --- |
+| `"9:16"` | 1080x1920 | Stories and Reels; top 250px and bottom 340px kept clear |
+| `"4:5"` | 1080x1350 | Feed portrait |
+| `"1:1"` | 1080x1080 | Feed square (also accepted for Google Display alongside 1200x1200) |
+| `"1.91:1"` | 1200x628 | Display and link ads; images only, rejected for video |
 
-#### Following user direction
+Drop `"1.91:1"` for video.
 
-If the user asks for a specific creative style (UGC, lifestyle imagery, comparison, testimonial, video), follow their direction. Pass `kind="video"` to `ad_creatives_generate` when producing paid-social video packs with an opening headline and branded end card.
+**Reference roles:** logo → `"logo"`; real product photos → `"product"`; website screenshot → `"style"` (use `"product"` only when the product is the software UI itself); existing ads → `"source_creative"`. Logos must be raster PNG/JPG, not SVG. When `brand-kit.json` already sets `logo.primary`, `ad_creatives_generate` loads it automatically — pass a `"logo"` reference only to override it or when running without a kit.
 
-#### Things to avoid (unless the user specifically asks)
+**Direct single-pass tools** (direct generation without concept and overlay packaging):
 
-- Made-up visual elements (robot mascots, invented packaging, random platform logos)
-- UI chrome (buttons, nav bars, form inputs) — ad platforms add their own CTAs
-- Guessing what the product does from the company name
-- Generic marketing clip art or banned brand claims
+- `images_generate(..., ad_placements=["9:16", "4:5", "1:1"])` generates each placement independently instead of adapting one base image, and supports only `9:16`, `4:5`, and `1:1`. See `image-generation` for model choice.
+- `videos_generate` / `ugc_videos_create` with `ad_placements=["9:16"]` (or `"4:5"`, `"1:1"`) produce one clip framed for the first placement when `aspect_ratio` is omitted. See `video-generation` for models and post-production.
 
-## Visual Tool Selection
+**Without Hyper:** write one creative brief per placement: dimensions, visual layout, copy placement, safe zones, and reference notes, ready for the user's design or image tool.
 
-| Scenario | Tool | Why |
-|----------|------|-----|
-| Full branded ad set (9:16, 4:5, 1:1 + crisp headline/CTA + quality audit) | `creative_concepts_generate` -> `ad_creatives_generate` | Deterministic typography, safe zones, auto-retry, Save to Creatives |
-| Direct image ad / concept pass | `images_generate` (`model="auto"`, optional `ad_placements`) | Eval-routed (`gpt-image-2.6-sunburst` standard, `gpt-image-2.6-flare` draft, `nano-banana-2.1` references) |
-| Search-grounded or text-in-image poster | `images_generate` (`model="nano-banana-pro"`) | Grounded search and dense in-image copy |
-| Seeded reproducible product shot | `images_generate` (`model="seedream-4.5"`, `seed=...`) | Reproducible text-to-image |
-| Video ad creative pack | `ad_creatives_generate(kind="video")` or `videos_generate` (`model="gemini-omni-1.2-flash"`) | Native 9:16 + deterministic 4:5 / 1:1 crop and branded end card |
+### Step 4 — Review and deliver
 
-## Platform Quick Reference
+Each `ad_creatives_generate` asset returns a quality result: pass/fail, a score, and 7 checks (product fidelity, no invented products, realism, artifacts, text legibility, brand match, safe zones). Static image packs retry failed checks automatically. Video packs are checked once on the opening frame; the CTA appears on the closing end card. Present any unpassed asset as a draft, name the failed check, and offer a targeted retry (re-call `ad_creatives_generate` for only the failed placement with a tighter `concept` or clearer `references`). Never present an unpassed asset as ready to launch.
 
-| Platform | Format | Image Size | Key Limits |
-|----------|--------|-----------|------------|
-| Meta Feed | 1:1 | 1080x1080 | Primary text: 125 chars visible |
-| Meta Story | 9:16 | 1080x1920 | Full screen, 15s max |
-| Meta Carousel | 1:1 | 1080x1080 | Up to 10 cards |
-| Google RSA | N/A (text only) | N/A | 15 headlines (30 chars), 4 descriptions (90 chars) |
-| Google Display | Various | 1200x628 | Responsive display ads |
+**Delivery by surface:**
 
-**For full platform specs, read `references/google-ads-creatives.md` or `references/meta-ads-creatives.md`.**
+- **Hyper Chat:** assets render in the ad creative card; do not repeat raw image or video URLs in prose. Save to Hyper Ads Creatives with the card button or `save_to="creatives"` (requires the Hyper Ads app). Only passed assets are saved to Creatives; failed assets stay in generated drafts.
+- **MCP / CLI:** list each asset's placement, variant, pass/fail status, and returned `url` (or `path`) so the user can view or download it.
 
-## Ad Copy Variant Quick Reference
+## Quality gate
 
-When generating variants from existing top performers:
+- No invented products, packaging, labels, mascots, or claims; never guess the product from the company name.
+- No UI chrome (fake buttons, nav bars, form fields); ad platforms add their own CTA.
+- Proof points only from `brand-context.md` or facts the user confirmed.
+- Character limits respected for every platform and field.
+- One variable per variant, with variants grouped by what they test.
+- Follow the user's style direction (UGC, lifestyle, illustration, testimonial); references still carry brand consistency.
 
-1. Identify the winning elements: hook type, CTA, messaging angle, format
-2. Generate variants that preserve winning elements while changing one variable
-3. Group variants by what's being tested (hook, body, CTA)
-4. Pair variants for A/B testing — each pair should isolate one variable
+## Platform quick reference
 
-**For detailed frameworks, read `references/ad-copy-frameworks.md`.**
+| Platform | Format | Size | Key limits |
+| --- | --- | --- | --- |
+| Meta Feed | 1:1 or 4:5 | 1080x1080 / 1080x1350 | Primary text ~125 chars visible; headline ~40 chars |
+| Meta Stories / Reels | 9:16 | 1080x1920 | Vertical full screen; keep top 250px and bottom 340px clear |
+| Meta Carousel | 1:1 or 4:5 | 1080x1080 / 1080x1350 | 2–10 cards |
+| Google RSA | Text only | — | Up to 15 headlines (30 chars), 4 descriptions (90 chars) |
+| Google Display | 1.91:1 and 1:1 | 1200x628 / 1200x1200 | Short headline 30, long headline 90, description 90 chars |
 
-- **Follow user direction** — if the user wants lifestyle, illustration, abstract, or any other style, follow their lead. The reference images still supply brand consistency regardless of creative direction.
+## Routing table
+
+| User need | Reference |
+| --- | --- |
+| Brand colors, logo, extraction, `brand-kit.json` | `references/brand-extraction.md` |
+| Ad copy, headlines, hooks, variants, A/B pairs | `references/ad-copy-frameworks.md` |
+| Google RSAs, Display, Performance Max assets | `references/google-ads-creatives.md` |
+| Meta Feed, Stories, Reels, carousel | `references/meta-ads-creatives.md` |
+
+When the request spans several areas (for example "make ads for this website"), run the full workflow above.

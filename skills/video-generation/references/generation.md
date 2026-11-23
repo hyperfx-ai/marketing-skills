@@ -1,131 +1,77 @@
-# Video Generation: Models, Prompting & Scene Chaining
+# Video Generation and Scene Chaining
 
-## Script Planning
+## Plan the clip
 
-For longer, cohesive videos, plan the FULL SCRIPT before generating:
+For a multi-scene video, plan the full sequence before generating. Give each clip one main action and at most two camera moves. Choose a shot size and a clear ending pose or composition so the next scene can continue from it. For image-to-video, describe how the scene moves from the first frame. [Video prompting](video-prompting.md)
 
-### 1. Scene Breakdown
-- **Scenes:** break story into segments
-  - Gemini Omni 1.2 (`gemini-omni-1.2-flash`, default): 3–10 seconds per scene, native audio, strong realism and real-person handling
-  - Seedance (`seedance-2.5`, `seedance-2.5-flash`, `seedance-2`, `seedance-2-fast`): 4–15 seconds per scene, native audio with lip-sync
-  - Other OpenRouter models: `veo-3.1-fast`, `runway-gen-4.5`, `flux-3-video`
-- **Camera:** shot type (wide, close-up, tracking), max 1–2 smooth moves per clip
-- **Transitions:** how each scene connects to the next
-- **Consistency:** for image-to-video, describe only the motion delta — keep static product/subject appearance anchored to the start image
+## Choose a model
 
-## Scene Chaining Technique
+Use the user's requested model when it supports the brief. Otherwise, start with the default and use the alternatives in the order below as the task requires.
 
-To create seamless multi-scene videos:
+| Preference | Model | Supported duration in seconds | Audio and best fit |
+| --- | --- | --- | --- |
+| 1 (default) | `gemini-omni-1.2-flash` | 4–8, default 8 | Native audio, `720p`, realistic human and UGC clips |
+| 2 | `veo-3.1-fast` | 4, 6, 8 | Native audio, human and UGC clips |
+| 3 | `heygen-video-1` | 5, 6, 7, 8, 12, 15, 30 | One native talking-head or UGC shot with automatic spoken audio. Uses `480p` or `768p` and ignores `generate_audio`. |
+| 4 | `runway-gen-4.5` | 4–8 | Stylized motion, silent output. Ignores `generate_audio`. |
+| 5 | `grok-imagine-video-1.5-lite` | 4, 5, 6, 7, 8, 12, 15 | Fast human and UGC clips with native audio |
+| 6 | `flux-3-video` | 4–8 | Native audio |
+| Product or scene only | `seedance-2.5` (quality), `seedance-2.5-flash` (faster); legacy `seedance-2`, `seedance-2-fast` | 4, 5, 6, 7, 8, 12, 15 | Native audio (set `generate_audio=false` for silent shots). Use product or scene shots without human faces. Keep photorealistic human faces out of start frames. |
 
-### Scene 1 (text-to-video)
+## Set tool parameters
+
+`model`, `aspect_ratio`, and `duration_seconds` are optional. The default model, `gemini-omni-1.2-flash`, generates an 8-second clip at `720p` by default. Set the model, ratio, and duration explicitly when the brief requires specific settings.
+
+| Argument | Values and behavior |
+| --- | --- |
+| `prompt` | Free text describing the subject, movement, style, and any audio cues |
+| `image_file_id` | Stored start-frame image for image-to-video or continuity |
+| `duration_seconds` | Shared enum of `4`, `5`, `6`, `7`, `8`, `12`, `15`, and `30`. The value goes to the selected model, so choose a duration from its row above. |
+| `aspect_ratio` | `"16:9"`, `"9:16"`, `"4:5"`, or `"1:1"` |
+| `ad_placements` | Optional list drawn from `["9:16", "4:5", "1:1"]`. Generates one clip. Applies placement-safe framing. When `aspect_ratio` is omitted, the first placement sets the ratio. |
+| `resolution` | `"480p"`, `"720p"`, or `"768p"`. HeyGen maps `"720p"` to `"768p"`. Other models map `"768p"` to `"720p"`. Omni generation uses `720p`. |
+| `generate_audio` | Optional boolean (`true` by default on Veo, Grok, FLUX, and Seedance; set `false` for silent output). Omni always generates native audio, HeyGen generates speech automatically, and Runway outputs silent clips; those three ignore `generate_audio`. |
+
+For `4:5`, Hyper crops from `9:16` or `3:4`, depending on the model. Some models output `1:1` natively and others crop from `9:16`. If the crop fails, the original framing may be kept. For a multi-placement pack with overlays, use `ad_creatives_generate(kind="video")`. [Ad creative generation](../../ad-creative-generation/SKILL.md)
+
+## Wait for completion
+
+Use the same completion flow for `videos_generate` and `ugc_videos_create`.
+
+1. If the tool returns a `background_job.job_id`, poll `tool_job_read(job_id=...)` until the job finishes, then read the tool result.
+2. If the result has a pending `operation_id`, poll `videos_status_check(operation_id=...)` until it finishes. If the tool already returned a completed `video_file_id`, use it immediately.
+3. Pass the completed `video_file_id` to the next step. On failure, read the returned message and any `next_step` before retrying.
+
+## Chain scenes
+
+Generate the first clip.
 
 ```python
-videos_generate(prompt="...", model="gemini-omni-1.2-flash", aspect_ratio="9:16")
-```
-
-### Scene 2+ (image-to-video)
-
-```python
-videos_frames_capture(video_file_id="scene1_file_id", frame_position="last")
-videos_generate(prompt="continuation: ...", image_file_id="captured_frame_id")
-```
-
-Repeat: extract last frame → generate next scene.
-
-### Stitching Scenes Together
-
-After generating all scenes, combine them:
-
-```python
-videos_stitch(video_file_ids=["scene1_id", "scene2_id", "scene3_id"])
-
-videos_stitch(
-    video_file_ids=["scene1_id", "scene2_id", "scene3_id"],
-    transition="crossfade",
-    crossfade_duration=0.5,
+scene1 = videos_generate(
+    prompt="A travel mug sits beside a kitchen window. A hand reaches into frame and lifts it.",
+    model="gemini-omni-1.2-flash",
+    aspect_ratio="9:16",
+    duration_seconds=8,
 )
 ```
 
-## Prompt Structure
+Wait for `scene1` to hold the completed result. Review it, then capture its last frame. The capture tool also accepts `"first"` and `"middle"`.
 
-Each scene prompt should include:
-
-- "Continuation of previous scene" (for scenes 2+)
-- Consistent character / setting descriptions
-- Specific action for this segment
-- Camera movement direction
-
-## Control Principles (most important)
-
-- Treat API params as the **container** and prompt text as the **content**:
-  - `model`, `aspect_ratio`, and `duration_seconds` must be set explicitly in the tool call.
-  - Do not expect prose like "make it longer" or "make it vertical" to override API parameters.
-- Use detail for control, brevity for exploration:
-  - Short prompts give more creative variation.
-  - Detailed prompts improve consistency and shot control.
-- Iterate in small steps:
-  - Change one major variable at a time (camera, lighting, action, or palette).
-  - Keep what works fixed and only modify the target dimension.
-
-## Key Parameters
-
-| Parameter | Description |
-|-----------|-------------|
-| `image_file_id` | Use for image-to-video (scene continuity) |
-| `videos_frames_capture` | Extract frames with `frame_position="last"` \| `"first"` \| `"middle"` |
-| `aspect_ratio` | `"16:9"`, `"9:16"`, `"4:5"`, or `"1:1"` (for `4:5` and `1:1`, Hyper crops cleanly to `1080x1350` or `1080x1080` when a provider only outputs `3:4` or `9:16`) |
-| `ad_placements` | Optional list of `["9:16", "4:5", "1:1"]` to emit a multi-placement ad pack in one call |
-| `duration_seconds` | Gemini Omni / Veo / Runway / FLUX: 4-8 seconds. Seedance: 4-15 seconds |
-
-## Important Input Rules
-
-- Use exact values accepted by the tool schema. Do not send aliases like `landscape`, `portrait`, `720p`, or `1080p`.
-- Use `aspect_ratio` (`"16:9"`, `"9:16"`, `"4:5"`, `"1:1"`) across all video models; pass `ad_placements` when producing a multi-size ad pack.
-- For Seedance, you may also pass `resolution` (`"480p"` or `"720p"`).
-- Keep the same `aspect_ratio` across chained scenes for continuity.
-
-## Model Selection Guide
-
-**When the user mentions a specific model name, always use that model.** Map user requests to the correct `model` parameter:
-
-| User says | `model` parameter |
-|-----------|-------------------|
-| Default / best general video | `"gemini-omni-1.2-flash"` |
-| "use seedance", "seedance 2.5" | `"seedance-2.5"` |
-| "fast seedance", "seedance flash" | `"seedance-2.5-flash"` |
-| "use veo", "fast veo" | `"veo-3.1-fast"` |
-| "use runway", "runway gen 4.5" | `"runway-gen-4.5"` |
-| "use flux video", "flux 3 video" | `"flux-3-video"` |
-
-If the user asks for Sora or retired preview Veo models, route to `"gemini-omni-1.2-flash"` or `"veo-3.1-fast"` and note the retirement in one line.
-
-## Model-Specific Parameter Matrix
-
-- **Gemini Omni (`gemini-omni-1.2-flash`), Veo (`veo-3.1-fast`), Runway (`runway-gen-4.5`)**
-  - Allowed sizing parameter: `aspect_ratio` (`"16:9"`, `"9:16"`, `"4:5"`, `"1:1"`; `4:5` and `1:1` are generated at `9:16` with safe-area framing and cropped to `1080x1350` or `1080x1080`)
-  - Automatic fallback: real-person refusals retry once on `gemini-omni-1.2-flash`; audio copyright refusals retry once with `generate_audio=False`
-- **Seedance (`seedance-2.5`, `seedance-2.5-flash`, legacy `seedance-2`, `seedance-2-fast`) and FLUX (`flux-3-video`)**
-  - Allowed sizing parameters: `aspect_ratio` (`"16:9"`, `"9:16"`, `"4:5"`, `"1:1"`; `4:5` generates at `3:4` and center-crops to `1080x1350`) and optional `resolution` (`"480p"`, `"720p"`) on Seedance
-  - Supports `generate_audio=true` for native audio with lip-sync
-
-## Duration Limits
-
-- **Gemini Omni, Veo, Runway, FLUX:** 4, 5, 6, 7, or 8 seconds per generation. Use scene chaining + `videos_stitch` for longer videos.
-- **Seedance:** 4-15 seconds per generation (most flexible). Supports `generate_audio=true` for native audio with lip-sync.
-
-## High-Control Prompt Template
-
-Use this structure when you want predictable output:
-
-```text
-Style/Tone: [realistic, cinematic, animation, documentary, etc.]
-Subject/World: [who/what is in frame, key visual anchors]
-Camera: [shot size + angle + movement]
-Lighting/Palette: [light direction + 3-5 color anchors]
-Action Beats:
-- [beat 1 with timing/count]
-- [beat 2 with timing/count]
-- [beat 3 with timing/count]
-Audio/Dialogue: [short lines or ambient cues]
-Constraints: [no logos/brands, no text overlays, etc.]
+```python
+review = videos_analyze(file_id=scene1.video_file_id, analysis_type="quality_review")
+frame = videos_frames_capture(video_file_id=scene1.video_file_id, frame_position="last")
+scene2 = videos_generate(
+    prompt="Continue the lift into a close-up as the thumb snaps the lid shut. The camera tracks upward.",
+    image_file_id=frame.image.file_id,
+    model="gemini-omni-1.2-flash",
+    aspect_ratio="9:16",
+    duration_seconds=8,
+)
 ```
+
+Repeat with the same model and aspect ratio as needed. Once each clip is complete and reviewed, pass two or more completed `video_file_ids` in order to `videos_stitch`. The default `transition="none"` makes hard cuts. For crossfading, set `transition="crossfade"` and use `crossfade_duration=0.5` seconds or specify another duration. Stitch in Hyper Chat or use local FFmpeg or a video editor. [Post-production](post-production.md#stitch-clips)
+
+## Handle refusals
+
+- Real-person start-frame refusals leave the selected model in place. Follow any `next_step` hint to use a product-only start frame or select a human-capable model (`gemini-omni-1.2-flash`, `veo-3.1-fast`, `heygen-video-1`, or `grok-imagine-video-1.5-lite`).
+- Eligible audio or music refusals at generation start trigger one retry with `generate_audio=false`. HeyGen and Runway skip that retry. If needed, add narration or music in post-production.

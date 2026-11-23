@@ -2,6 +2,11 @@
 
 Frameworks for writing ad copy variants and structuring A/B tests.
 
+> **Before writing any copy:**
+> - Use only verified proof points: section 10 of `brand-context.md` or facts the user confirmed. Never invent ratings, customer counts, or results. The numbers and quotes in the examples below are placeholders showing the pattern, not claims to reuse.
+> - Honor the brand voice: words to use and words to ban are hard constraints.
+> - Respect platform character limits in `meta-ads-creatives.md` and `google-ads-creatives.md`.
+
 ## Hook Patterns
 
 The hook is the first line of ad copy — it determines whether someone keeps reading. Each pattern works differently depending on audience and offer.
@@ -35,11 +40,11 @@ Leads with the outcome, not the problem. Works for solution-aware audiences.
 - "Ship landing pages in minutes, not sprints"
 
 ### Social Proof Hook
-Opens with credibility — customer results, user count, or testimonials.
+Opens with credibility — customer results, user count, or testimonials. Use this hook only when the proof is verified.
 
-- "Join 10,000+ teams that ditched manual reporting"
-- "'We cut our CAC by 40% in the first quarter' — [Customer]"
-- "Rated #1 on G2 for ease of use"
+- "Join [verified customer count] teams that ditched manual reporting"
+- "'[verbatim customer quote with a real result]' — [named customer]"
+- "Rated [verified rating] on [review site] for ease of use"
 
 ## Body Frameworks
 

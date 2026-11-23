@@ -13,14 +13,20 @@ Build and maintain **one `brand-context.md` file per brand**: the single source 
 
 This is the hub in a hub-and-spoke model. Ad copy, blog posts, cold email, social content, and landing-page work are all downstream of the same positioning and voice; when those live in one maintained doc, every downstream skill starts warm and stays consistent.
 
-> **The file contract.** Two sibling files live under `/files/<brand-slug>/` and are reused in place:
-> - `/files/<brand-slug>/brand-context.md` — narrative positioning, ICP, customer quotes, voice, and verified proof points. Never recreate it from scratch when it already exists; bump `Last updated` on edits.
-> - `/files/<brand-slug>/brand-kit.json` — structured visual identity (version `1`: `brand_name`, `colors` hex values, `fonts`, `logo` file IDs/paths, `tone`, `banned_claims`, `safe_zones`). `creative_concepts_generate` and `ad_creatives_generate` read `brand-kit.json` automatically to style ad packs and enforce brand compliance.
+> **The file contract.** `brand-context.md` is a portable markdown file, reused in place:
+> - **In Hyper workspace storage** it lives at `/files/<brand-slug>/brand-context.md`, with an optional sibling `/files/<brand-slug>/brand-kit.json`.
+> - **Outside Hyper** it lives at whatever project path the user chooses (for example `brand-context.md` in the repo or project folder).
+>
+> `brand-context.md` holds narrative positioning, ICP, customer quotes, voice, and verified proof points. Never recreate it from scratch when it already exists; bump `Last updated` on edits. A confirmed `brand-context.md` on its own is a complete, valid output — including when the user declines the JSON kit or is working outside Hyper.
+>
+> `brand-kit.json` is **optional** structured visual identity used by Hyper's ad tools. `creative_concepts_generate` reads `brand-kit.json` and the sibling or linked (`context`) `brand-context.md`; `ad_creatives_generate` reads only the `brand-kit.json` visual tokens. Schema version `1`:
+> - Required: `brand_name`, `logo.primary`, `colors.{primary, background, text}` (`#RRGGBB`), `fonts.{headline, body}.family`, `updated_at` (ISO string).
+> - Optional: `version` (defaults to `1`), `website`, `logo.on_dark`, `colors.{secondary, accent}`, `fonts.{headline, body}.file`, `product_photos`, `context` (path to `brand-context.md`), `confirmed_by_user` (defaults to `false`; set `true` only when the user confirms).
 
 ## Requirements
 
-- **Hyper MCP connected.** https://app.hyperfx.ai/mcp — needed for the file tools that persist the doc, and for auto-draft.
-- **Recommended for auto-draft**, enabled at https://app.hyperfx.ai/apps: **Firecrawl** (read the brand's site and extract visual identity). Without it, skip auto-draft and use the interview path — the skill still works.
+- **Hyper MCP** (https://app.hyperfx.ai/mcp) — workspace file storage for the doc, plus site auto-draft. Firecrawl (`firecrawl_urls_scrape`, `firecrawl_branding_extract`) is built into Hyper; there is no separate setup.
+- **Without Hyper** the skill still works: auto-draft with any available web-fetch tool or site copy the user pastes, or use the Path B interview, and save the doc with your local file tools.
 - **Optional enrichment:** the Apify scrapers used by `customer-research` (verbatim customer language) and **HyperSEO** (competitive landscape). Both are nice-to-have; mark any section built without real data as unverified rather than inventing content.
 
 ### How to run the tools in this skill
@@ -39,8 +45,8 @@ If a tool is not found: in Hyper chat, find its toolkit id with `discover_toolki
 
 | Job | Tools |
 | --- | --- |
-| Read, create, update `brand-context.md` | your file tools (`read_file`, `create_file`, `edit_file`) |
-| Auto-draft from the brand's site | `firecrawl_urls_scrape` (homepage, about, pricing, product pages), `web_pages_fetch` fallback |
+| Read, create, update `brand-context.md` (and optional `brand-kit.json`) | `files_list`, `files_read`, `files_create`, `files_edit` in Hyper, or your local file tools when running outside Hyper |
+| Auto-draft from the brand's site | `firecrawl_urls_scrape` (homepage, about, pricing, product pages), `web_pages_fetch` fallback; outside Hyper, any web-fetch tool or pasted site copy |
 | Visual identity (colors, logo, typography) | `firecrawl_branding_extract` |
 | Verbatim customer language (optional) | defer to `customer-research` |
 | Competitive landscape (optional) | defer to `competitor-intel`, `seo-research` |
@@ -74,18 +80,18 @@ The full template with per-section guidance lives in `references/brand-context-t
 
 ## Building the doc
 
-**Step 0: check for an existing doc.** Look for `brand-context.md` at the brand's path (and reasonable legacy locations). If one exists, this is an **update** run: read it fully, then only revise the sections the user wants changed or that new evidence contradicts. Only when nothing exists do you build fresh.
+**Step 0: check for an existing doc.** Look for `brand-context.md` at the brand's path — `/files/<brand-slug>/` in Hyper, or the user's chosen project path outside Hyper (and reasonable legacy locations). If one exists, this is an **update** run: read it fully, then only revise the sections the user wants changed or that new evidence contradicts. Only when nothing exists do you build fresh.
 
 **Path A — auto-draft (default when the brand has a website).**
 1. Ask for the site URL if you don't have it.
-2. Scrape the load-bearing pages with `firecrawl_urls_scrape`: homepage, about, pricing, 1–2 product/feature pages, and a customer-facing page with testimonials or case studies if one exists.
+2. Scrape the load-bearing pages with `firecrawl_urls_scrape` (or another web-fetch tool, or site copy the user pastes): homepage, about, pricing, 1–2 product/feature pages, and a customer-facing page with testimonials or case studies if one exists.
 3. Optionally call `firecrawl_branding_extract` once to fill the visual identity notes in section 12.
 4. Draft every section you have real evidence for. Where the site is silent (objections, goals, most customer language), leave the section marked `*(unverified — needs input)*` instead of guessing.
 5. **Present the draft to the user section by section for correction before saving.** The site says what the brand *wants* to be true; the user knows what *is* true. Ask specifically about: the ICP ("who actually buys?"), differentiation ("why do people pick you over X?"), and proof points ("which of these numbers are real and current?").
-6. Save to `/files/<brand-slug>/brand-context.md` and, when visual identity was extracted via `firecrawl_branding_extract` or supplied by the user, save `/files/<brand-slug>/brand-kit.json` with schema version `1` (`brand_name`, `colors: {primary, secondary, accent, background, text}`, `fonts: {heading, body}`, `logo: {primary, dark, light}`, `tone`, `banned_claims`). Report both paths.
+6. Save `brand-context.md` — `/files/<brand-slug>/brand-context.md` in Hyper, or the user's chosen path outside Hyper. Optionally, in Hyper, when visual identity was extracted with `firecrawl_branding_extract` or supplied by the user and the user confirms it, also save `/files/<brand-slug>/brand-kit.json` using the schema v1 fields in the file contract above (set `context` to `/files/<brand-slug>/brand-context.md`, `confirmed_by_user: true`, and a current `updated_at`). Skip the kit if the user declines it; the doc alone is complete. Report every path saved.
 
 **Path B — interview (no site, pre-launch, or user prefers talking).**
-Walk the sections conversationally, a few questions at a time, in the order given in `references/brand-context-template.md` — not as one giant questionnaire. Start with product overview and ICP (everything else hangs off those), and let the user skip sections; an honest partial doc beats a padded complete one. Save incrementally so a broken-off interview still leaves a usable doc.
+Walk the sections conversationally, a few questions at a time, in the order given in `references/brand-context-template.md` — not as one giant questionnaire. Start with product overview and ICP (everything else hangs off those), and let the user skip sections; an honest partial doc beats a padded complete one. Save incrementally so a broken-off interview still leaves a usable doc. If the user supplies visual identity during the interview (logo, colors, fonts), you can also save an optional `brand-kit.json` as in Path A step 6.
 
 **Either path, before saving:** run the quality gate below.
 
@@ -101,7 +107,7 @@ Walk the sections conversationally, a few questions at a time, in the order give
 
 When any marketing skill needs brand context — positioning, audience, tone, proof:
 
-1. **Check for `brand-context.md` first** at `/files/<brand-slug>/brand-context.md` before asking the user a single brand question. If it exists, read the whole file and ask only for what the task needs that the doc doesn't cover.
+1. **Check for `brand-context.md` first** (at `/files/<brand-slug>/brand-context.md` in Hyper, or the user's project path) before asking the user a single brand question. If it exists, read the whole file and ask only for what the task needs that the doc doesn't cover.
 2. **Honor the voice section** — the words-to-use / words-to-ban lists are hard constraints on generated copy.
 3. **Pull hooks from customer language** — verbatim phrases from section 8 outperform invented copy; prefer them for headlines, subject lines, and openers.
 4. **Never cite a proof point that isn't in section 10.** If the doc has no proof for a claim, the copy doesn't make the claim.

@@ -1,25 +1,29 @@
-# Video Prompting (per backend)
+# Video Prompting
 
-Each video backend rewards a different prompt structure. When calling `videos_generate` directly (not via `ugc_videos_create`), shape the prompt to the model you're using.
+The `prompt` in `videos_generate` is free text. Choose the details below that help describe the shot. Set aspect ratio and duration through the tool arguments. [Model IDs, durations, and aspect ratios](generation.md)
 
-## Veo (`veo-3.1-generate-preview`, `veo-3.1-fast-generate-preview`)
-- Shape: a single clear scene.
-- Required sections: shot → scene → character details → action → lighting → style (+ optional dialogue).
-- Avoid: ambiguous subjects, multiple unrelated events, quoted dialogue syntax (just write what's said).
+## Gemini Omni and Veo 3.1 Fast
 
-## Seedance (`seedance-2`, `seedance-2-fast`)
-- Shape: shot type, subject, what moves, environment, camera, lighting/style.
-- Required sections: shot_type → subject → motion → environment → camera → lighting_style.
-- Cap camera moves at 2 per clip. One strong subject per clip.
-- Avoid: rewriting everything during iteration — change one variable at a time.
+Describe a single scene with a clear subject and natural motion. Start with shot size and setting, then add relevant character details, action, lighting, and style. For spoken dialogue, say who speaks, what they say, and when they speak. Keep the line short enough for the shot.
 
-## Kling (image-to-video)
-- Shape: motion only.
-- Required sections: camera_move → action_beats → ambient_motion.
-- Do not redescribe what's in the input image — clothing, appearance, product details. The image already carries that.
-- Avoid: complex cinematic jargon, competing visual instructions.
+## HeyGen Video 1
 
-## Universal rules
+Write one talking-head or presenter shot. Anchor the presenter with `image_file_id`, give the exact lines, and describe delivery, gestures, and expression. The model generates spoken audio automatically.
 
-- Veo and Seedance use `aspect_ratio` (e.g. `16:9`).
-- For chained scenes, capture the last frame and pass it as `image_file_id` in the next call.
+## Runway Gen-4.5
+
+Describe stylized motion, camera trajectory, and light. Build the shot around visual action because Runway produces silent clips. If the brief calls for narration or music, add it during [post-production](post-production.md).
+
+## Grok Imagine Video 1.5 Lite and FLUX 3 Video
+
+Keep the prompt focused on one subject, one camera move, and a short sequence of natural action. Add a short dialogue line or ambient sound cue if it supports the scene.
+
+## Seedance
+
+For product or scene shots, describe the shot type, subject, movement, setting, camera, and lighting. Use one main subject and one or two camera moves. Keep photorealistic human faces out of start frames.
+
+## Image-to-video motion delta
+
+When you supply `image_file_id`, describe only what changes from the start frame. Focus on camera movement, action, expression, dialogue, or movement in the surroundings. The image already establishes static details such as clothing, packaging, and background.
+
+For scene chaining, capture the previous clip's last frame, then describe the next action as a continuation of that frame. [Scene chaining](generation.md#chain-scenes)
