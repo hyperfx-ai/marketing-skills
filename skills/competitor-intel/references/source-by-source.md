@@ -22,14 +22,14 @@ Firecrawl is the backbone for any web-content slice. Use it whenever the questio
 | --- | --- |
 | One specific URL (homepage, pricing, a single blog post) | `firecrawl_urls_scrape(url=...)` |
 | 5–50 known URLs at once | `firecrawl_urls_scrape_batch(urls=[...])` then `firecrawl_batches_status_check(...)` |
-| Whole-site crawl (every blog post, every doc page) | `firecrawl_websites_crawl(url=..., max_pages=...)` then `firecrawl_crawls_status_check(...)` |
+| Whole-site crawl (every blog post, every doc page) | `firecrawl_websites_crawl(url=..., limit=...)` then `firecrawl_crawls_status_check(...)` |
 | Branding (logo + palette + voice) | `firecrawl_branding_extract(url=...)` |
 | Visual snapshot for the brief | `firecrawl_screenshots_create(url=...)` |
 
 ### Pitfalls
 
 - **JS-heavy SPAs may not render fully.** If the page comes back near-empty, retry with `firecrawl_urls_scrape(url=..., proxy="auto")`, or open a browser with `browser_sessions_create()`, go to the page with `browser_navigate(url=...)` and read it with `browser_a11y_tree()`. The browser renders JavaScript.
-- **`firecrawl_websites_crawl` can be slow + credit-heavy.** Cap with `max_pages` for first run. A 200-post blog archive easily becomes a 10-minute job.
+- **`firecrawl_websites_crawl` can be slow + credit-heavy.** Use `limit` to cap the first run. The default is 10 pages. A 200-post blog archive easily becomes a 10-minute job.
 - **Pricing pages with toggles (monthly / annual).** A single scrape captures the default state. Run twice — once for monthly, once for annual — by including the URL parameter or hash in the URL.
 - **Geo-fenced pages.** Firecrawl scrapes from a default region; pricing in EUR vs USD vs GBP varies. Note the apparent locale of the result in the brief.
 
@@ -188,4 +188,4 @@ Every source has cost (HyperSEO credits, Apify compute, Firecrawl quota). Operat
 2. **Per-competitor budget.** Decide before pulling: "for each competitor I'll spend ~5 calls." Stick to it. Drift kills credit budgets.
 3. **Sequence, don't parallelize.** 8 parallel scrapes = 8 timeouts. 8 sequential scrapes = 8 results, with the option to bail early if the early ones don't reveal anything.
 4. **Cache + re-use within the session.** A `hyperseo_domain_overview_get` result is stable for a day or two — don't re-pull within the same brief.
-5. **Tell the user the budget upfront.** "This will hit ~25 HyperSEO calls and ~12 Firecrawl scrapes for the 4-competitor brief. OK to proceed?" Avoids a $50 surprise on the bill.
+5. **Tell the user the call budget upfront.** "This will hit ~25 HyperSEO calls and ~12 Firecrawl scrapes for the 4-competitor brief. OK to proceed?" Avoids an unexpected credit spike.

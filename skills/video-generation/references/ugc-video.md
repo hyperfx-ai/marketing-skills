@@ -1,46 +1,38 @@
 # UGC Video Reference
 
-Use `ugc_videos_create` for any of: TikTok/UGC ads, continuous POV creator videos, how-to/tutorial videos, unboxings, routines, before/after demos, product showcases, product reviews, testimonials, TV spots, "wild card" scroll-stoppers, or virtual try-ons. The tool wraps prompt structure, model selection, and product/avatar reference handling.
+Use `ugc_videos_create` for creator ads, continuous POV clips, tutorials, unboxings, reviews, product demos, testimonials, TV spots, and virtual try-ons. Give the tool a short brief and the beats that need to appear in the clip (`product` is optional). For long single-shot scripts (such as a 30-second founder talking head on `heygen-video-1`) or custom shots without UGC beat structure, call `videos_generate` directly.
 
 ## Modes
 
-| Mode | Structure | Default aspect | Default duration |
-|------|-----------|----------------|------------------|
-| `ugc` | casual presenter-to-camera product mention | 9:16 | 8s |
-| `ugc_how_to` | quick tutorial with visible steps | 9:16 | 8s |
-| `ugc_unboxing` | package reveal + first impression close-ups | 9:16 | 8s |
-| `product_showcase` | polished product-first highlight (cinematic) | 16:9 | 12s |
-| `product_review` | presenter opinion + proof point | 9:16 | 8s |
-| `tv_spot` | broadcast-style ad with cinematic polish | 16:9 | 12s |
-| `wild_card` | unexpected visual hook around the product | 9:16 | 8s |
-| `ugc_virtual_try_on` | organic mirror/handheld try-on | 9:16 | 8s |
-| `virtual_try_on` | polished model-led try-on | 9:16 | 8s |
+| Mode | Structure | Default aspect | Mode duration before model limits |
+| --- | --- | --- | --- |
+| `ugc` (default) | Casual presenter-to-camera product mention | `9:16` | 8s |
+| `ugc_how_to` | Quick tutorial with visible steps | `9:16` | 8s |
+| `ugc_unboxing` | Package reveal and first-impression close-ups | `9:16` | 8s |
+| `product_showcase` | Polished product-first highlight | `16:9` | 12s |
+| `product_review` | Presenter opinion and proof point | `9:16` | 8s |
+| `tv_spot` | Broadcast-style ad with cinematic polish | `16:9` | 12s |
+| `wild_card` | Unexpected visual hook around the product | `9:16` | 8s |
+| `ugc_virtual_try_on` | Casual mirror or handheld try-on | `9:16` | 8s |
+| `virtual_try_on` | Polished model-led try-on | `9:16` | 8s |
 
-Each mode declares required beats and default camera + voice. Override with `aspect_ratio`, `duration_seconds`, `camera`, and `voice_style`.
+Every mode defaults to `gemini-omni-1.2-flash`. The 12-second defaults for `product_showcase` and `tv_spot` clamp to 8 seconds on models with an 8-second default ceiling. An explicit `duration_seconds` is forwarded as requested, so choose one the model supports. If you omit `aspect_ratio` and supply `ad_placements`, the tool generates one clip framed for the first placement.
 
-## Backend selection
-
-Default generation uses `veo-3.1-fast-generate-preview`. Pass `model` explicitly when you need a different backend:
-
-- `model="veo-3.1-fast-generate-preview"`: default, fastest Veo route
-- `model="veo-3.1-generate-preview"`: higher-quality Veo route
-- `model="seedance-2"` or `model="seedance-2-fast"`: Seedance route
-
-Explicit `model` selection always wins.
+For alternatives to Omni, consider Veo 3.1 Fast, HeyGen Video 1, Runway Gen-4.5, Grok Imagine Video 1.5 Lite, and FLUX 3 Video in that order as the shot requires. Reserve Seedance for product or scene shots without human faces. [Model IDs, durations, and audio support](generation.md#choose-a-model)
 
 ## Style templates
 
-Use `style_template` for machine-friendly TikTok/social formats:
+Passing `style_template` overrides `mode` and supplies the template's defaults, including structure, camera, voice, aspect ratio, and duration. Explicit `camera`, `voice_style`, `aspect_ratio`, and `duration_seconds` values still apply.
 
 | Template | Use when |
-|----------|----------|
-| `tiktok_ugc` | General TikTok/Reels creator ad |
-| `continuous_pov` | One continuous selfie/POV video without abrupt product-only cutaways |
+| --- | --- |
+| `tiktok_ugc` | General TikTok or Reels creator ad |
+| `continuous_pov` | Continuous selfie or POV clip without abrupt product-only cutaways |
 | `creator_review` | Creator opinion with a proof point |
 | `unboxing` | Package opening and first impression |
-| `routine` | Product inside a daily routine |
-| `before_after` | Before/result proof format |
-| `problem_solution` | Quick problem then product solution |
+| `routine` | Product shown as part of a daily routine |
+| `before_after` | Before and after comparison |
+| `problem_solution` | Quick problem followed by the product solution |
 | `how_to` | Short tutorial with visible steps |
 | `testimonial` | Sincere creator testimonial |
 | `product_demo` | Product function demo with creator context |
@@ -48,46 +40,41 @@ Use `style_template` for machine-friendly TikTok/social formats:
 
 ## Beat fields
 
-Pass any of these to override mode defaults:
+- `hook` gives the opening line.
+- `setting` describes the location and surroundings.
+- `action` describes what happens or what the presenter demonstrates.
+- `emotion` sets the emotional tone.
+- `voice_style` describes spoken delivery.
+- `background_sound` describes ambient sound or music.
+- `camera` sets framing and movement.
+- `cta` gives the closing call to action.
 
-- `hook` — opening line
-- `setting` — scene/setting description
-- `action` — what happens / demonstration
-- `emotion` — emotional tone
-- `voice_style` — voiceover or presenter style
-- `background_sound` — ambient sound or music
-- `camera` — camera/framing notes
-- `cta` — closing call-to-action
+## Start-frame references
 
-## Inputs
-
-- `product` — `ProductContext` (product name, brand, references for image-to-video)
-- `avatars` — `list[MediaInput]` of presenter references; the strongest one becomes the start frame for image-to-video
-- `avatar_file_id` or `avatar_url` — direct presenter/start-frame avatar reference for CLI-friendly calls
+The tool selects the first usable `avatars` entry in list order, then falls back to the first usable `product.references` entry. An `avatar_file_id` or `avatar_url` goes at the front of `avatars`. Within one entry, `file_id` takes precedence over `url`.
 
 ## Example
 
-```python
-ugc_videos_create(
-    product=ProductContext(
-        name="Ember Travel Mug",
-        category="insulated travel mug",
-        references=[MediaInput(file_id="file_image_gen_..._mug")],
-    ),
-    avatars=[MediaInput(file_id="file_image_gen_..._presenter")],
-    style_template="unboxing",
-    model="veo-3.1-fast-generate-preview",
-    hook="I just got this mug and the packaging already feels premium",
-    action="Opens the mailer, reveals the mug, shows the leakproof lid",
-    emotion="Excited but natural first impression",
-    voice_style="conversational, unscripted",
-    background_sound="quiet kitchen ambience",
-    cta="Try it for your morning commute",
-    duration_seconds=8,
-)
+Pass these JSON arguments to `ugc_videos_create`.
+
+```json
+{
+  "product": {
+    "name": "Ember Travel Mug",
+    "category": "insulated travel mug",
+    "references": [{"file_id": "<stored mug image file ID>"}]
+  },
+  "avatars": [{"file_id": "<stored presenter image file ID>"}],
+  "style_template": "unboxing",
+  "model": "gemini-omni-1.2-flash",
+  "hook": "My commute mug just arrived. Let's open it.",
+  "action": "Opens the box, lifts the mug toward the lens, and snaps the lid shut.",
+  "emotion": "Pleased and curious",
+  "voice_style": "Conversational",
+  "background_sound": "Quiet kitchen ambience",
+  "cta": "Try it on your next commute.",
+  "duration_seconds": 8
+}
 ```
 
-The result is a `UGCVideoResponse` with:
-- `operation_id` (chat UI and Prefab compiler self-poll via `videos_status_check`)
-- `mode`, `style_template`, `product_name`, `hook` (rendered above the video)
-- `storyboard` and `compiled_prompt` (so the chat card can show the structure)
+If the response contains `background_job.job_id`, poll `tool_job_read` for the result. If the result contains a pending `operation_id`, poll `videos_status_check`. Use the completed `video_file_id` for review and editing. The generation result also includes `mode`, `style_template`, `product_name`, `hook`, `storyboard`, and `compiled_prompt`. [Waiting for generation](generation.md#wait-for-completion)

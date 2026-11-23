@@ -32,7 +32,7 @@ Distribute across these categories:
 | Benefit-driven | 3-4 | "Save 10 Hours Per Week", "Reduce Costs by 40%" |
 | Feature-specific | 2-3 | "AI-Powered Analytics", "Real-Time Dashboards" |
 | CTA-oriented | 2-3 | "Start Free Trial Today", "Get a Demo" |
-| Social proof | 1-2 | "Trusted by 5,000+ Teams", "4.8★ on G2" |
+| Social proof | 1-2 | "Trusted by [verified count] Teams", "[verified rating] on [review site]" |
 | Urgency/offer | 1-2 | "Limited Time Offer", "Free for 14 Days" |
 
 ### Description Rules
@@ -79,16 +79,32 @@ Google's responsive display format assembles your assets into ads across the Dis
 ### Image Guidelines
 
 - File size: max 5MB
-- No text overlays covering more than 20% of the image
+- Square images: `1200x1200` recommended (`1080x1080` is accepted)
+- Landscape images: `1200x628` (`1.91:1`)
+- Keep in-image text minimal; headlines and descriptions are separate assets
 - High contrast between subject and background
 - Product or service should be clearly visible
 - Avoid borders or excessive whitespace
 
 ### Generating Display Ad Images
 
-Every creative needs three layers: **brand** (logo), **copy** (headline), and **product** (realistic screenshot). Use `brand.screenshot.description` to describe the actual product UI.
+Use `creative_concepts_generate` to pick a concept, then `ad_creatives_generate` with both Display shapes. It renders `1:1` and the landscape `1.91:1` (`1200x628`) from one concept, places the headline cleanly, and runs the quality checks:
 
-Square (1:1):
+```python
+pack = ad_creatives_generate(
+    concept=chosen_concept,
+    kind="image",
+    placements=["1:1", "1.91:1"],
+    references=[
+        {"file_id": logo_file_id, "role": "logo"},
+        {"file_id": screenshot_file_id, "role": "style"},
+    ],
+)
+```
+
+`1.91:1` is image-only; drop it for video.
+
+For a quick square image without the concept and overlay packaging, `images_generate` works with `ad_placements=["1:1"]`. Describe the real product from `brand.screenshot.description`:
 
 ```python
 images_generate(
@@ -96,31 +112,16 @@ images_generate(
         "prompt": (
             "Display ad creative for [company name]. "
             "Logo at top. Headline: '[headline]'. "
-            "Below: realistic product screenshot of [describe actual UI from brand.screenshot.description]. "
+            "Below: realistic product shot of [actual product from brand.screenshot.description]. "
             "Match the brand style from the references."
         ),
-        "reference_images": [brand.logo.file_id, brand.screenshot.file_id]
+        "reference_images": [logo_file_id, screenshot_file_id],
     }],
-    quality="high"
+    ad_placements=["1:1"],
 )
 ```
 
-Landscape (1.91:1):
-
-```python
-images_generate(
-    requests=[{
-        "prompt": (
-            "Wide display ad creative for [company name]. "
-            "Logo at top left. Headline: '[headline]'. "
-            "Right side: realistic product screenshot of [describe actual UI]. "
-            "Match the brand style from the references."
-        ),
-        "reference_images": [brand.logo.file_id, brand.screenshot.file_id]
-    }],
-    quality="high"
-)
-```
+`images_generate` does not produce `1.91:1`. A `16:9` image from it will be cropped on `1.91:1` placements, so use `ad_creatives_generate` for landscape Display.
 
 ## Performance Max
 
@@ -131,7 +132,7 @@ Performance Max campaigns use all Google surfaces. Asset requirements are a supe
 | Asset | Spec |
 |-------|------|
 | YouTube video | Various aspect ratios, 10s-60s recommended |
-| Portrait image | 960x1200 (4:5) |
+| Portrait image | 960x1200 (4:5); generate with placement `"4:5"` |
 | Call to action | Select from predefined list |
 | Sitelinks | Up to 4 |
 

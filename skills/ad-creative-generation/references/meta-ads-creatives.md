@@ -44,13 +44,12 @@ Don't rely on the description for critical info — it's often hidden.
 
 | Spec | Requirement |
 |------|-------------|
-| Aspect ratio | 1:1 (recommended) or 4:5 |
+| Aspect ratio | 1:1 or 4:5 |
 | Resolution | 1080x1080 (1:1) or 1080x1350 (4:5) |
 | File type | JPG or PNG |
 | Max file size | 30MB |
-| Text overlay | Less than 20% of image area |
 
-4:5 takes more vertical space in the feed, increasing visibility. Use 1:1 for broad compatibility.
+4:5 takes more vertical space in the feed, increasing visibility. Use 1:1 for broad compatibility. Keep in-image text short and legible; the copy fields carry the detail.
 
 ### Story / Reel Ads (Facebook + Instagram)
 
@@ -60,9 +59,7 @@ Don't rely on the description for critical info — it's often hidden.
 | Resolution | 1080x1920 |
 | File type | JPG or PNG (image), MP4 or MOV (video) |
 | Max file size | 30MB (image), 4GB (video) |
-| Safe zone | Keep key content in center 1080x1420 area |
-
-Leave ~250px clear at top (profile bar) and bottom (CTA bar).
+| Safe zone | Keep the top 250px (profile bar) and bottom 340px (CTA and caption area) clear of key content |
 
 ### Right Column (Facebook Desktop)
 
@@ -88,8 +85,8 @@ Carousel ads display up to 10 scrollable cards, each with its own image, headlin
 | Spec | Requirement |
 |------|-------------|
 | Cards | 2-10 |
-| Aspect ratio | 1:1 (required for carousel) |
-| Resolution | 1080x1080 per card |
+| Aspect ratio | 1:1 or 4:5 (keep every card the same) |
+| Resolution | 1080x1080 (1:1) or 1080x1350 (4:5) per card |
 | Headline per card | 40 characters recommended |
 | Description per card | 20 characters recommended |
 | Link per card | Each card can link to a different URL |
@@ -99,23 +96,12 @@ Carousel ads display up to 10 scrollable cards, each with its own image, headlin
 - **Product showcase** — each card features a different product
 - **Feature walkthrough** — each card explains one feature / benefit
 - **Story arc** — cards tell a sequential story that builds to a CTA
-- **Social proof series** — each card shows a different testimonial
+- **Social proof series** — each card shows a different verified testimonial
 - **Before / after** — alternate between problem and solution cards
 
-### Generating Carousel Images
+### Generating Carousel Cards
 
-Generate all cards in a single batch. Each card should have the brand logo, a short headline for that card's feature, and a relevant product screenshot.
-
-```python
-images_generate(
-    requests=[
-        {"prompt": "Card 1 for [company]. Logo at top. Headline: '[feature 1]'. Below: product screenshot showing [feature 1 UI]. Match brand style.", "reference_images": [logo_id, screenshot_id]},
-        {"prompt": "Card 2 for [company]. Logo at top. Headline: '[feature 2]'. Below: product screenshot showing [feature 2 UI]. Same style as card 1.", "reference_images": [logo_id, screenshot_id]},
-        {"prompt": "Card 3 for [company]. Logo at top. Headline: '[feature 3]'. Below: product screenshot showing [feature 3 UI]. Same style as card 1.", "reference_images": [logo_id, screenshot_id]},
-    ],
-    quality="high"
-)
-```
+`ad_creatives_generate` has no dedicated carousel mode. Generate each card as its own `1:1` or `4:5` visual: one concept per card (or one concept with a per-card brief), all at the same placement, so the set reads as a series. Keep logo position, type, and color treatment identical across cards.
 
 ## Creative Best Practices
 
@@ -148,67 +134,60 @@ The image and copy must tell the same story:
 - 4:5 aspect ratio takes maximum screen real estate
 - Hashtags in primary text can extend reach
 
-**Instagram Stories:**
+**Instagram Stories / Reels:**
 - Full-screen vertical format
-- First 3 seconds determine whether users swipe past
-- Swipe-up / link CTA must be visually prompted
+- First 3 seconds determine whether users skip
+- Prompt the tap visually toward the link sticker or CTA button
 - Keep text minimal — the visual does the work
 
 ## Generating Meta Ad Images
 
-Every creative needs three layers: **brand** (logo), **copy** (headline + subline), and **product** (realistic screenshot of the actual app). Use `brand.screenshot.description` to understand what the product UI looks like.
-
-### Feed Creative (1:1)
+Use `creative_concepts_generate` to pick a concept, then `ad_creatives_generate` for the full Meta set. It adapts one visual across Feed (`1:1`, `4:5`) and Stories/Reels (`9:16`), places the headline and CTA inside the safe zones, and runs the quality checks:
 
 ```python
-images_generate(
-    requests=[{
-        "prompt": (
-            "Social media ad creative for [company name]. "
-            "Top: the [company] logo. "
-            "Headline: '[headline from ad copy or site hero text]'. "
-            "Below: a clean, realistic product screenshot of [describe actual UI from brand.screenshot.description]. "
-            "Match the brand style from the references."
-        ),
-        "reference_images": [brand.logo.file_id, brand.screenshot.file_id]
-    }],
-    quality="high"
+pack = ad_creatives_generate(
+    concept=chosen_concept,
+    placements=["9:16", "4:5", "1:1"],
+    variants=2,
+    references=[
+        {"file_id": logo_file_id, "role": "logo"},
+        {"file_id": screenshot_file_id, "role": "style"},
+    ],
 )
 ```
 
-### Story Creative (9:16)
+### Direct fallback with `images_generate`
+
+When `ad_creatives_generate` is unavailable or the user wants a quick single pass, pass `ad_placements` so each output uses the exact Meta size. Each placement is generated independently, so framing can differ between sizes. Describe the real product from `brand.screenshot.description`.
 
 ```python
 images_generate(
     requests=[{
         "prompt": (
-            "Vertical story ad creative for [company name]. "
-            "Top: the [company] logo. "
-            "Headline: '[headline]'. "
-            "Below: a realistic product screenshot of [describe actual UI]. "
-            "Match the brand style from the references."
+            "Social ad for [company name]. Logo at top. "
+            "Realistic shot of [actual product from brand.screenshot.description], "
+            "clean space for a short headline. Match the brand style from the references."
         ),
-        "reference_images": [brand.logo.file_id, brand.screenshot.file_id]
+        "reference_images": [logo_file_id, screenshot_file_id],
     }],
-    quality="high"
+    ad_placements=["9:16", "4:5", "1:1"],
 )
 ```
 
-### Text-Heavy Creative (headlines in image)
+### Text baked into the image
 
-When the creative needs large, readable text baked into the image, use Nano Banana for better text rendering:
+When large, readable text must be part of the image itself (instead of the `ad_creatives_generate` overlay), use `model="nano-banana-pro"`:
 
 ```python
 images_generate(
     requests=[{
         "prompt": (
-            "Ad creative for [company name]. "
-            "Logo at top. Large headline: '[headline]'. "
-            "Below: realistic product screenshot of [describe actual UI]. "
-            "Match the brand style from the references."
+            "Ad creative for [company name]. Logo at top. Large headline: '[headline]'. "
+            "Below: realistic product shot of [actual product]. Match the brand style from the references."
         ),
-        "reference_images": [brand.logo.file_id, brand.screenshot.file_id]
+        "reference_images": [logo_file_id, screenshot_file_id],
     }],
-    aspect_ratio="1:1",
+    model="nano-banana-pro",
+    ad_placements=["1:1"],
 )
 ```
