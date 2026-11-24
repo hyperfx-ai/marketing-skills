@@ -87,7 +87,7 @@ WHERE segments.date BETWEEN '{start}' AND '{end}'
 
 Join conversion rows to cost rows on `(segments.date, campaign.id)`. For
 one-off analysis, join in memory with pandas or an equivalent dataframe in the
-sandbox; cache tables are only needed for dashboard/data-app builds.
+sandbox. A dashboard keeps them as two datasets.
 
 ## How to interpret
 
@@ -101,146 +101,144 @@ sandbox; cache tables are only needed for dashboard/data-app builds.
 
 ## Building a dashboard from this report
 
+`gaql(...)` and `PERIOD` are the shorthands in
+[reporting.md](../reporting.md) Phase 4; expand them in the call.
+
+Put the user's own action names, in the order they confirmed, in `STAGES`. It is
+the start of three `calc_sql` queries; write it out in each one.
+
 ```python
-# After the agent has mapped action names to ordered stages, e.g.
-# stages = ["application_submitted", "lead_reached",
-#           "scheduled_for_training", "showed_for_training",
-#           "launched_from_training", "rep_that_sells"]
-result = data_apps_build(
+# After the user has mapped action names to ordered stages, e.g.
+# application_submitted, lead_reached, scheduled_for_training,
+# showed_for_training, launched_from_training, rep_that_sells
+STAGES = (
+    "WITH stages(stage_order, stage) AS (VALUES "
+    "(1, 'application_submitted'), (2, 'lead_reached'), "
+    "(3, 'scheduled_for_training'), (4, 'showed_for_training'), "
+    "(5, 'launched_from_training'), (6, 'rep_that_sells')) "
+)
+artifacts_create(
+    type="dashboard",
     name="Lead-Gen Funnel",
-    tool_data_sources={
-        "raw_conversions": {
-            "tool_name": "google_ads_gaql_query",
-            "tool_args": {
-                "customer_id": "123-456-7890",
-                "query": (
-                    "SELECT segments.date, campaign.id, campaign.name, "
-                    "segments.conversion_action, segments.conversion_action_name, "
-                    "segments.conversion_action_category, metrics.conversions, "
-                    "metrics.all_conversions, metrics.conversions_value "
-                    "FROM campaign "
-                    "WHERE segments.date DURING LAST_30_DAYS "
-                    "AND campaign.status != 'REMOVED'"
-                ),
-            },
-            "cache_table": "gads_funnel_raw_1234567890",
-            "mode": "replace",
-            "rows_path": "results",
-        },
-        "raw_cost": {
-            "tool_name": "google_ads_gaql_query",
-            "tool_args": {
-                "customer_id": "123-456-7890",
-                "query": (
-                    "SELECT segments.date, campaign.id, campaign.name, "
-                    "metrics.cost_micros, metrics.clicks, metrics.impressions "
-                    "FROM campaign "
-                    "WHERE segments.date DURING LAST_30_DAYS "
-                    "AND campaign.status != 'REMOVED'"
-                ),
-            },
-            "cache_table": "gads_funnel_cost_1234567890",
-            "mode": "replace",
-            "rows_path": "results",
-        },
-    },
-    sql_data_sources={
-        "step_rates": {
-            "shape": "rows",
-            "sql": (
-                "WITH ordered AS ("
-                "  SELECT segments_conversion_action_name AS stage, "
-                "  CASE segments_conversion_action_name "
-                "  WHEN 'application_submitted' THEN 1 "
-                "  WHEN 'lead_reached' THEN 2 "
-                "  WHEN 'scheduled_for_training' THEN 3 "
-                "  WHEN 'showed_for_training' THEN 4 "
-                "  WHEN 'launched_from_training' THEN 5 "
-                "  WHEN 'rep_that_sells' THEN 6 END AS stage_order, "
-                "  SUM(metrics_conversions::numeric) AS conversions "
-                "  FROM gads_funnel_raw_1234567890 "
-                "  WHERE segments_conversion_action_name IN ("
-                "    'application_submitted', 'lead_reached', "
-                "    'scheduled_for_training', 'showed_for_training', "
-                "    'launched_from_training', 'rep_that_sells'"
-                "  ) GROUP BY 1, 2"
-                ") SELECT stage, conversions, "
-                "COALESCE(to_char(100 * conversions / NULLIF(LAG(conversions) OVER (ORDER BY stage_order), 0), 'FM990.0') || '%', '–') "
-                "AS step_rate "
-                "FROM ordered ORDER BY stage_order"
-            ),
-        },
-        "kpis": {
-            "shape": "rows",
-            "sql": (
-                "SELECT 'Conversions' AS label, to_char(COALESCE(SUM(metrics_conversions::numeric), 0), 'FM999,999,990.0') AS value FROM gads_funnel_raw_1234567890 "
-                "WHERE segments_conversion_action_name IN ('application_submitted', 'lead_reached', 'scheduled_for_training', 'showed_for_training', 'launched_from_training', 'rep_that_sells') "
-                "UNION ALL SELECT 'Cost', '$' || to_char(COALESCE(SUM(metrics_cost_micros::numeric), 0) / 1e6, 'FM999,999,990.00') FROM gads_funnel_cost_1234567890"
-            ),
-        },
-        "stage_trend": {
-            "shape": "rows",
-            "sql": (
-                "SELECT segments_date AS date, "
-                "SUM(metrics_conversions::numeric) AS conversions "
-                "FROM gads_funnel_raw_1234567890 "
-                "WHERE segments_conversion_action_name IN ('application_submitted', 'lead_reached', 'scheduled_for_training', 'showed_for_training', 'launched_from_training', 'rep_that_sells') "
-                "GROUP BY 1 ORDER BY 1"
-            ),
-        },
-    },
-    template_html="""
-<div class="grid gap-3" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr));">
-  {% for kpi in kpis %}
-  <div class="card" data-size="sm"><section>
-    <p class="text-xs text-muted-foreground">{{ kpi.label }}</p>
-    <p class="text-2xl font-semibold tabular-nums">{{ kpi.value }}</p>
-  </section></div>
-  {% endfor %}
-</div>
-<div class="grid gap-4 mt-4" style="grid-template-columns:repeat(auto-fit,minmax(300px,1fr));">
-  <div class="card min-w-0">
-    <header><h2>Stage totals</h2><p>In funnel order</p></header>
-    <section><div class="chart h-64"><canvas id="stages" aria-label="Conversions by funnel stage"></canvas></div></section>
+    html="""
+<main class="@container flex flex-col gap-2.5">
+  <hyper-filter-bar params="period"></hyper-filter-bar>
+  <hyper-kpis source="summary"
+    values="first_stage:First stage:decimal,last_stage:Last stage:decimal,end_to_end:End-to-end rate:percent,conversions:All stage conversions:decimal"></hyper-kpis>
+  <hyper-kpis source="cost_context"
+    values="spend:Cost:currency,impressions:Impressions:count,clicks:Clicks:count,avg_cpc:Avg. CPC:cents"></hyper-kpis>
+  <div class="grid grid-cols-1 gap-2.5 @3xl:grid-cols-2">
+    <hyper-chart span="full" kind="line" source="daily" x="day" series="conversions:Conversions" format="decimal" range-param="period" title="Conversions, all stages"></hyper-chart>
+    <hyper-chart kind="bar" source="step_rates" x="stage" series="conversions:Conversions" format="decimal" title="Stage totals" hint="In funnel order"></hyper-chart>
+    <hyper-chart kind="bar" source="step_rates" x="stage" series="step_rate:Step rate" format="percent" title="Step rates" hint="Each stage over the stage before it"></hyper-chart>
   </div>
-  <div class="card min-w-0">
-    <header><h2>Conversion trend</h2><p>All stages, by day</p></header>
-    <section><div class="chart h-64"><canvas id="trend" aria-label="Conversions by day"></canvas></div></section>
-  </div>
-</div>
-<div class="card mt-4">
-  <header><h2>Step rates</h2><p>Each stage over the stage before it</p></header>
-  <section><div class="table-container"><table class="table">
-    <thead><tr><th>Stage</th><th>Conversions</th><th>Step rate</th></tr></thead>
-    <tbody>
-    {% for row in step_rates %}
-      <tr><td class="break-words">{{ row.stage }}</td>
-        <td class="tabular-nums">{{ "%.1f"|format(row.conversions) }}</td>
-        <td class="tabular-nums">{{ row.step_rate }}</td></tr>
-    {% endfor %}
-    </tbody>
-  </table></div></section>
-</div>
-<script>
-document.addEventListener("DOMContentLoaded", () => {
-  window.basecoat.chart("#stages", {
-    type: "bar", labelKey: "stage", options: { indexAxis: "y" },
-    data: {{ step_rates | tojson }},
-    series: { conversions: { label: "Conversions", color: "var(--chart-1)" } }
-  });
-  window.basecoat.chart("#trend", {
-    type: "line", labelKey: "date",
-    data: {{ stage_trend | tojson }},
-    series: { conversions: { label: "Conversions", color: "var(--chart-2)", dataset: { fill: true, tension: 0.35 } } }
-  });
-});
-</script>
+  <hyper-table source="step_rates" sort="stage_order:asc" title="Funnel detail"
+    columns="stage_order:Step:count,stage:Stage:text,conversions:Conversions:decimal,step_rate:Step rate:percent"></hyper-table>
+  <hyper-note>Stages are in the order confirmed with the account owner. Cost is campaign context and is not attributed to a stage.</hyper-note>
+</main>
 """,
+    datasets={
+        "summary": {
+            "source": gaql(
+                "SELECT campaign.id, segments.conversion_action_name, metrics.conversions "
+                "FROM campaign "
+                "WHERE segments.date DURING {{period}} "
+                "AND campaign.status != 'REMOVED'"
+            ),
+            "loader": {
+                "rows_path": "results",
+                "map": {
+                    "action": "segments.conversionActionName",
+                    "conversions": {"from": "metrics.conversions", "cast": "number"},
+                },
+            },
+            "calc_sql": STAGES + (
+                ", totals AS (SELECT s.stage_order, COALESCE(SUM(d.conversions), 0) AS conversions "
+                "FROM stages s LEFT JOIN data d ON d.action = s.stage GROUP BY s.stage_order) "
+                "SELECT MAX(CASE WHEN stage_order = 1 THEN conversions END) AS first_stage, "
+                "MAX(CASE WHEN stage_order = (SELECT MAX(stage_order) FROM totals) THEN conversions END) AS last_stage, "
+                "100.0 * MAX(CASE WHEN stage_order = (SELECT MAX(stage_order) FROM totals) THEN conversions END) "
+                "/ NULLIF(MAX(CASE WHEN stage_order = 1 THEN conversions END), 0) AS end_to_end, "
+                "SUM(conversions) AS conversions FROM totals"
+            ),
+            "columns": {"first_stage": "decimal", "last_stage": "decimal", "end_to_end": "percent", "conversions": "decimal"},
+            "params": PERIOD,
+            "max_age_minutes": 60,
+        },
+        "cost_context": {
+            "source": gaql(
+                "SELECT campaign.id, metrics.cost_micros, metrics.clicks, metrics.impressions "
+                "FROM campaign "
+                "WHERE segments.date DURING {{period}} "
+                "AND campaign.status != 'REMOVED'"
+            ),
+            "loader": {
+                "rows_path": "results",
+                "map": {
+                    "spend": {"from": "metrics.costMicros", "cast": "number", "scale": 0.000001},
+                    "clicks": {"from": "metrics.clicks", "cast": "number"},
+                    "impressions": {"from": "metrics.impressions", "cast": "number"},
+                },
+            },
+            "calc_sql": (
+                "SELECT SUM(spend) AS spend, SUM(clicks) AS clicks, SUM(impressions) AS impressions, "
+                "SUM(spend) / NULLIF(SUM(clicks), 0) AS avg_cpc FROM data"
+            ),
+            "columns": {"spend": "currency", "clicks": "count", "impressions": "count", "avg_cpc": "cents"},
+            "params": PERIOD,
+            "max_age_minutes": 60,
+        },
+        "step_rates": {
+            "source": gaql(
+                "SELECT campaign.id, segments.conversion_action_name, metrics.conversions "
+                "FROM campaign "
+                "WHERE segments.date DURING {{period}} "
+                "AND campaign.status != 'REMOVED'"
+            ),
+            "loader": {
+                "rows_path": "results",
+                "map": {
+                    "action": "segments.conversionActionName",
+                    "conversions": {"from": "metrics.conversions", "cast": "number"},
+                },
+            },
+            "calc_sql": STAGES + (
+                ", totals AS (SELECT s.stage_order, s.stage, COALESCE(SUM(d.conversions), 0) AS conversions "
+                "FROM stages s LEFT JOIN data d ON d.action = s.stage GROUP BY s.stage_order, s.stage) "
+                "SELECT stage_order, stage, conversions, "
+                "100.0 * conversions / NULLIF(LAG(conversions) OVER (ORDER BY stage_order), 0) AS step_rate "
+                "FROM totals ORDER BY stage_order"
+            ),
+            "columns": {"stage_order": "count", "stage": "text", "conversions": "decimal", "step_rate": "percent"},
+            "params": PERIOD,
+            "max_age_minutes": 60,
+        },
+        "daily": {
+            "source": gaql(
+                "SELECT segments.date, campaign.id, segments.conversion_action_name, metrics.conversions "
+                "FROM campaign "
+                "WHERE segments.date DURING {{period}} "
+                "AND campaign.status != 'REMOVED'"
+            ),
+            "loader": {
+                "rows_path": "results",
+                "map": {
+                    "day": "segments.date",
+                    "action": "segments.conversionActionName",
+                    "conversions": {"from": "metrics.conversions", "cast": "number"},
+                },
+            },
+            "calc_sql": STAGES + (
+                "SELECT d.day AS day, SUM(d.conversions) AS conversions FROM data d "
+                "JOIN stages s ON s.stage = d.action GROUP BY d.day ORDER BY d.day"
+            ),
+            "columns": {"day": "date", "conversions": "decimal"},
+            "params": PERIOD,
+            "max_age_minutes": 60,
+        },
+    },
 )
 ```
-
-`data_apps_refresh(data_app_id=...)` runs both GAQL queries again and
-re-renders the app; the window stays the last 30 days.
 
 ## Variants
 

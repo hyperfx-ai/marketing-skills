@@ -53,7 +53,7 @@ Use the exact tool name that `search_tools` (Hyper chat) or `search` / `describe
 | Tracking assets | `meta_ads_ad_pixels_list`, `meta_ads_ad_pixels_get`, `meta_ads_dataset_quality_get`, `meta_ads_dataset_stats_list`, `meta_ads_custom_audiences_list`, `meta_ads_lookalike_audiences_list`, `meta_ads_targeting_search` |
 | Step-by-step creation (preferred) | `meta_ads_campaign_create`, `meta_ads_adset_create`, `meta_ads_ad_create`, `meta_ads_ad_images_upload`, `meta_ads_creative_create` |
 | Read & preview | `meta_ads_campaign_get`, `meta_ads_campaigns_search`, `meta_ads_adset_list`, `meta_ads_ad_sets_list`, `meta_ads_adset_get`, `meta_ads_ad_list`, `meta_ads_list`, `meta_ads_ad_get`, `meta_ads_creative_list`, `meta_ads_creative_get`, `meta_ads_custom_audience_get`, `meta_ads_ad_previews_get` |
-| Insights & dashboards | `meta_ads_insights_get`, `data_apps_build`, `database_tables_list`, `database_tables_describe`, `database_query` |
+| Insights & dashboards | `meta_ads_insights_get`, `artifacts_templates_list`, `artifacts_templates_get`, `artifacts_create`, `artifacts_update`, `artifacts_display`, `database_tables_list`, `database_tables_describe`, `database_query` |
 | Launch & edits | `meta_ads_campaigns_activate`, `meta_ads_campaign_update`, `meta_ads_adset_update`, `meta_ads_ad_update` |
 | Automated rules | `meta_ads_adrule_create`, `meta_ads_adrule_list`, `meta_ads_adrule_get`, `meta_ads_adrule_update`, `meta_ads_adrule_delete`, `meta_ads_adrule_history_list` |
 | Site research | `firecrawl_branding_extract`, `firecrawl_screenshots_create` |
@@ -124,7 +124,7 @@ Every task follows this sequence. Do not skip steps.
 | Analyze performance / query insights | [references/analytics.md](references/analytics.md) |
 | Audit an account / find optimization opportunities | [references/account-audit.md](references/account-audit.md) |
 | Set up automated rules (auto-pause, budget guards, alerts) | [references/automated-rules.md](references/automated-rules.md) |
-| Build a Meta dashboard or data app | [references/analytics.md](references/analytics.md) → [references/dashboards.md](references/dashboards.md) |
+| Build a Meta dashboard | [references/analytics.md](references/analytics.md) → [references/dashboards.md](references/dashboards.md) |
 | Analyze performance, then create a campaign | [references/analytics.md](references/analytics.md) → [references/discovery.md](references/discovery.md) → relevant campaign file |
 | Build a funnel / multiple campaigns at once (TOF/MOF/BOF) | [references/multi-campaign-funnel.md](references/multi-campaign-funnel.md) → [references/discovery.md](references/discovery.md) → per-tier campaign files |
 | Objective not yet known | [references/discovery.md](references/discovery.md) — discovery clarifies the goal |

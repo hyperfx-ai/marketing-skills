@@ -60,7 +60,7 @@ Reads are GAQL (`google_ads_gaql_query` covers every resource). For Search impre
 | `google_ads_asset_groups_create` | PMax asset group (atomic: text + image assets in one call). |
 | `google_ads_conversion_actions_create`, `google_ads_user_lists_create`, `google_ads_bidding_strategies_create`, `google_ads_shared_sets_create`, … | Full per-resource CRUD surface — same naming pattern. |
 | `google_ads_request` | Raw escape hatch for any uncovered endpoint. |
-| `data_apps_build`, `data_apps_refresh` | Optional dashboards / data apps for reports. |
+| `artifacts_templates_list`, `artifacts_templates_get`, `artifacts_create`, `artifacts_update`, `artifacts_display`, `artifacts_refresh` | Optional dashboards for reports. |
 
 ## Rules that must never be forgotten
 
@@ -115,7 +115,7 @@ Full workflow: Initial Setup → Research (site + GAQL + market) → Analyze (go
 | Whether to restructure | [references/reports/campaign-structure.md](references/reports/campaign-structure.md) |
 | Campaign performance over time | [references/reports/campaign-performance.md](references/reports/campaign-performance.md) |
 | Ad-level performance | [references/reports/ad-performance.md](references/reports/ad-performance.md) |
-| Build a Google Ads dashboard or data app | [references/reporting.md](references/reporting.md) → matching report recipe's dashboard section |
+| Build a Google Ads dashboard | [references/reporting.md](references/reporting.md) → matching report recipe's dashboard section |
 | Work across an MCC / many sub-accounts | [references/mcc.md](references/mcc.md) → [references/reporting.md](references/reporting.md) |
 | Goal not yet clear | [references/discovery.md](references/discovery.md) — discovery clarifies the goal |
 

@@ -19,12 +19,14 @@ to keep claims tied to the queried data; they are not optimization rules.
 - If a report needs configured conversion-action metadata, query
   `FROM conversion_action` separately.
 
-## Optional dashboard/data app rules
+## Optional dashboard rules
 
-- Use `google_ads_gaql_query` inside `tool_data_sources`.
-- Query the saved cache table with `sql_data_sources`.
-- Bind only SQL output variables inside the dashboard/data app code.
-- Return the persisted dashboard artifact as the final output only when the
-  user asked for an interface or the task explicitly chose one.
+- Read `google_ads_gaql_query` through a declarative `tool` dataset, with a
+  loader, an optional `calc_sql` and explicit `columns`
+  ([reporting.md](reporting.md) Phase 4).
+- Bind every displayed figure to a dataset through a `<hyper-*>` block. Type no
+  numbers into the HTML.
+- Return the dashboard as the final output only when the user asked for an
+  interface or the task explicitly chose one.
 - Do not describe internal interface implementation details to the user unless
   they ask.
