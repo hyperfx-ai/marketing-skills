@@ -51,114 +51,128 @@ WHERE segments.date BETWEEN '{start}' AND '{end}'
 
 ## Building a dashboard from this report
 
-The account view fits the library template `ads_overview`: KPI rows, a
-daily spend and clicks trend, top campaigns and top ads. Each SQL source
-is named after the template variable it fills.
+`gaql(...)` and `PERIOD` are the shorthands in
+[reporting.md](../reporting.md) Phase 4; expand them in the call.
+
+The account view fits the `ads_overview` blueprint. Read it with
+`artifacts_templates_get("ads_overview")`, then create it with
+`template_name="ads_overview"` and these datasets mapped to its dataset IDs and
+column names, or send this body:
 
 ```python
-result = data_apps_build(
+artifacts_create(
+    type="dashboard",
     name="Account Overview",
-    template_name="ads_overview",
-    template_context={
-        "title": "Account Overview",
-        "subtitle": "Last 30 days · Google Ads",
-    },
-    tool_data_sources={
-        "campaign_days": {
-            "tool_name": "google_ads_gaql_query",
-            "tool_args": {
-                "customer_id": "123-456-7890",
-                "query": (
-                    "SELECT segments.date, campaign.id, campaign.name, "
-                    "campaign.status, metrics.cost_micros, metrics.clicks, "
-                    "metrics.impressions, metrics.conversions, "
-                    "metrics.conversions_value "
-                    "FROM campaign "
-                    "WHERE segments.date DURING LAST_30_DAYS "
-                    "AND campaign.status != 'REMOVED'"
-                ),
+    html="""
+<main class="@container flex flex-col gap-2.5">
+  <hyper-filter-bar params="period"></hyper-filter-bar>
+  <hyper-kpis source="summary"
+    values="spend:Spend:currency,impressions:Impressions:count,clicks:Clicks:count,conversions:Conversions:decimal,roas:ROAS:roas,cost_per_conv:Cost / conv.:cents,conv_rate:Conv. rate:percent,avg_cpc:Avg. CPC:cents"></hyper-kpis>
+  <div class="grid grid-cols-1 gap-2.5 @3xl:grid-cols-2">
+    <hyper-chart span="full" kind="line" source="daily" x="day" series="spend:Spend" format="currency" range-param="period" title="Spend"></hyper-chart>
+    <hyper-chart kind="bar" source="top_campaigns" x="campaign" series="spend:Spend" format="currency" title="Top campaigns by spend"></hyper-chart>
+    <hyper-chart kind="bar" source="top_ads" x="ad" series="spend:Spend" format="currency" title="Top ads by spend"></hyper-chart>
+    <hyper-chart span="full" kind="line" source="daily" x="day" series="clicks:Clicks" format="count" title="Clicks"></hyper-chart>
+  </div>
+</main>
+""",
+    datasets={
+        "summary": {
+            "source": gaql(
+                "SELECT campaign.id, metrics.cost_micros, metrics.clicks, "
+                "metrics.impressions, metrics.conversions, metrics.conversions_value "
+                "FROM campaign "
+                "WHERE segments.date DURING {{period}} "
+                "AND campaign.status != 'REMOVED'"
+            ),
+            "loader": {
+                "rows_path": "results",
+                "map": {
+                    "spend": {"from": "metrics.costMicros", "cast": "number", "scale": 0.000001},
+                    "clicks": {"from": "metrics.clicks", "cast": "number"},
+                    "impressions": {"from": "metrics.impressions", "cast": "number"},
+                    "conversions": {"from": "metrics.conversions", "cast": "number"},
+                    "value": {"from": "metrics.conversionsValue", "cast": "number"},
+                },
             },
-            "cache_table": "gads_account_overview_1234567890",
-            "mode": "replace",
-            "rows_path": "results",
-        },
-        "ad_totals": {
-            "tool_name": "google_ads_gaql_query",
-            "tool_args": {
-                "customer_id": "123-456-7890",
-                "query": (
-                    "SELECT ad_group_ad.ad.id, ad_group.name, "
-                    "metrics.cost_micros "
-                    "FROM ad_group_ad "
-                    "WHERE segments.date DURING LAST_30_DAYS "
-                    "AND ad_group_ad.status != 'REMOVED'"
-                ),
+            "calc_sql": (
+                "SELECT SUM(spend) AS spend, SUM(impressions) AS impressions, "
+                "SUM(clicks) AS clicks, SUM(conversions) AS conversions, "
+                "SUM(value) / NULLIF(SUM(spend), 0) AS roas, "
+                "SUM(spend) / NULLIF(SUM(conversions), 0) AS cost_per_conv, "
+                "100.0 * SUM(conversions) / NULLIF(SUM(clicks), 0) AS conv_rate, "
+                "SUM(spend) / NULLIF(SUM(clicks), 0) AS avg_cpc FROM data"
+            ),
+            "columns": {
+                "spend": "currency", "impressions": "count", "clicks": "count",
+                "conversions": "decimal", "roas": "roas", "cost_per_conv": "cents",
+                "conv_rate": "percent", "avg_cpc": "cents",
             },
-            "cache_table": "gads_account_overview_ads_1234567890",
-            "mode": "replace",
-            "rows_path": "results",
+            "params": PERIOD,
+            "max_age_minutes": 60,
         },
-    },
-    sql_data_sources={
-        "kpis": {
-            "shape": "rows",
-            "sql": (
-                "SELECT 'Spend' AS label, "
-                "'$' || to_char(COALESCE(SUM(metrics_cost_micros::numeric), 0) / 1e6, 'FM999,999,990.00') AS value "
-                "FROM gads_account_overview_1234567890 "
-                "UNION ALL SELECT 'Impressions', to_char(COALESCE(SUM(metrics_impressions::numeric), 0), 'FM999,999,999') FROM gads_account_overview_1234567890 "
-                "UNION ALL SELECT 'Clicks', to_char(COALESCE(SUM(metrics_clicks::numeric), 0), 'FM999,999,999') FROM gads_account_overview_1234567890 "
-                "UNION ALL SELECT 'Conversions', to_char(COALESCE(SUM(metrics_conversions::numeric), 0), 'FM999,999,990.0') FROM gads_account_overview_1234567890"
+        "daily": {
+            "source": gaql(
+                "SELECT segments.date, campaign.id, metrics.cost_micros, metrics.clicks "
+                "FROM campaign "
+                "WHERE segments.date DURING {{period}} "
+                "AND campaign.status != 'REMOVED'"
             ),
-        },
-        "secondary_kpis": {
-            "shape": "rows",
-            "sql": (
-                "SELECT 'ROAS' AS label, "
-                "COALESCE(to_char(SUM(metrics_conversions_value::numeric) / NULLIF(SUM(metrics_cost_micros::numeric) / 1e6, 0), 'FM990.00') || 'x', '–') AS value "
-                "FROM gads_account_overview_1234567890 "
-                "UNION ALL SELECT 'Cost / conv.', COALESCE('$' || to_char(SUM(metrics_cost_micros::numeric) / 1e6 / NULLIF(SUM(metrics_conversions::numeric), 0), 'FM999,990.00'), '–') FROM gads_account_overview_1234567890 "
-                "UNION ALL SELECT 'Conv. rate', COALESCE(to_char(100 * SUM(metrics_conversions::numeric) / NULLIF(SUM(metrics_clicks::numeric), 0), 'FM990.00') || '%', '–') FROM gads_account_overview_1234567890 "
-                "UNION ALL SELECT 'Avg. CPC', COALESCE('$' || to_char(SUM(metrics_cost_micros::numeric) / 1e6 / NULLIF(SUM(metrics_clicks::numeric), 0), 'FM990.00'), '–') FROM gads_account_overview_1234567890"
-            ),
-        },
-        "trend": {
-            "shape": "scalar",
-            "sql": (
-                "SELECT json_build_object("
-                "'labels', COALESCE(json_agg(day ORDER BY day), '[]'), "
-                "'spend', COALESCE(json_agg(spend ORDER BY day), '[]'), "
-                "'clicks', COALESCE(json_agg(clicks ORDER BY day), '[]')) "
-                "FROM (SELECT segments_date AS day, "
-                "ROUND(SUM(metrics_cost_micros::numeric) / 1e6, 2) AS spend, "
-                "SUM(metrics_clicks::numeric) AS clicks "
-                "FROM gads_account_overview_1234567890 GROUP BY 1) daily"
-            ),
+            "loader": {
+                "rows_path": "results",
+                "map": {
+                    "day": "segments.date",
+                    "spend": {"from": "metrics.costMicros", "cast": "number", "scale": 0.000001},
+                    "clicks": {"from": "metrics.clicks", "cast": "number"},
+                },
+            },
+            "calc_sql": "SELECT day, SUM(spend) AS spend, SUM(clicks) AS clicks FROM data GROUP BY day ORDER BY day",
+            "columns": {"day": "date", "spend": "currency", "clicks": "count"},
+            "params": PERIOD,
+            "max_age_minutes": 60,
         },
         "top_campaigns": {
-            "shape": "rows",
-            "sql": (
-                "SELECT campaign_name AS name, "
-                "ROUND(SUM(metrics_cost_micros::numeric) / 1e6, 2) AS value, "
-                "'$' || to_char(SUM(metrics_cost_micros::numeric) / 1e6, 'FM999,999,990.00') AS display "
-                "FROM gads_account_overview_1234567890 GROUP BY 1 ORDER BY 2 DESC LIMIT 10"
+            "source": gaql(
+                "SELECT campaign.id, campaign.name, metrics.cost_micros FROM campaign "
+                "WHERE segments.date DURING {{period}} "
+                "AND campaign.status != 'REMOVED' "
+                "ORDER BY metrics.cost_micros DESC LIMIT 10"
             ),
+            "loader": {
+                "rows_path": "results",
+                "map": {
+                    "campaign": "campaign.name",
+                    "spend": {"from": "metrics.costMicros", "cast": "number", "scale": 0.000001},
+                },
+            },
+            "columns": {"campaign": "text", "spend": "currency"},
+            "params": PERIOD,
+            "max_age_minutes": 60,
         },
         "top_ads": {
-            "shape": "rows",
-            "sql": (
-                "SELECT ad_group_name || ' · ad ' || ad_group_ad_ad_id AS name, "
-                "ROUND(SUM(metrics_cost_micros::numeric) / 1e6, 2) AS value, "
-                "'$' || to_char(SUM(metrics_cost_micros::numeric) / 1e6, 'FM999,999,990.00') AS display "
-                "FROM gads_account_overview_ads_1234567890 GROUP BY 1 ORDER BY 2 DESC LIMIT 10"
+            "source": gaql(
+                "SELECT ad_group_ad.ad.id, ad_group.name, metrics.cost_micros "
+                "FROM ad_group_ad "
+                "WHERE segments.date DURING {{period}} "
+                "AND ad_group_ad.status != 'REMOVED' "
+                "ORDER BY metrics.cost_micros DESC LIMIT 10"
             ),
+            "loader": {
+                "rows_path": "results",
+                "map": {
+                    "ad_group": "adGroup.name",
+                    "ad_id": {"from": "adGroupAd.ad.id", "cast": "string"},
+                    "spend": {"from": "metrics.costMicros", "cast": "number", "scale": 0.000001},
+                },
+            },
+            "calc_sql": "SELECT ad_group || ' · ad ' || ad_id AS ad, spend FROM data ORDER BY spend DESC",
+            "columns": {"ad": "text", "spend": "currency"},
+            "params": PERIOD,
+            "max_age_minutes": 60,
         },
     },
 )
 ```
-
-`data_apps_refresh(data_app_id=...)` runs both GAQL queries again and
-re-renders the app; the window stays the last 30 days.
 
 ## Variants
 

@@ -49,104 +49,113 @@ WHERE conversion_action.status != 'REMOVED'
 
 ## Building a dashboard from this report
 
+`gaql(...)` and `PERIOD` are the shorthands in
+[reporting.md](../reporting.md) Phase 4; expand them in the call.
+
+The inventory has no date window, so this dashboard declares no parameter.
+
 ```python
-result = data_apps_build(
+artifacts_create(
+    type="dashboard",
     name="Conversion Tracking Audit",
-    tool_data_sources={
-        "raw": {
-            "tool_name": "google_ads_gaql_query",
-            "tool_args": {
-                "customer_id": "123-456-7890",
-                "query": (
-                    "SELECT conversion_action.id, conversion_action.name, "
-                    "conversion_action.category, conversion_action.type, "
-                    "conversion_action.status, conversion_action.primary_for_goal, "
-                    "conversion_action.counting_type, "
-                    "conversion_action.click_through_lookback_window_days "
-                    "FROM conversion_action "
-                    "WHERE conversion_action.status != 'REMOVED'"
-                ),
-            },
-            "cache_table": "gads_conv_actions_1234567890",
-            "mode": "replace",
-            "rows_path": "results",
-        },
-    },
-    sql_data_sources={
-        "by_category": {
-            "shape": "rows",
-            "sql": (
-                "SELECT conversion_action_category AS category, "
-                "COUNT(*) AS total_actions, "
-                "SUM(CASE WHEN conversion_action_primary_for_goal THEN 1 ELSE 0 END) AS primary_actions "
-                "FROM gads_conv_actions_1234567890 GROUP BY 1 ORDER BY 1"
+    html="""
+<main class="@container flex flex-col gap-2.5">
+  <hyper-kpis source="summary"
+    values="actions:Actions:count,enabled_actions:Enabled:count,primary_actions:Primary:count,categories:Categories:count"></hyper-kpis>
+  <div class="grid grid-cols-1 gap-2.5 @3xl:grid-cols-2">
+    <hyper-chart kind="bar" source="by_category" x="category" series="total_actions:Actions" format="count" title="Actions by category"></hyper-chart>
+    <hyper-chart kind="bar" source="by_category" x="category" series="primary_actions:Primary actions" format="count" title="Primary actions by category" hint="More than one primary action in a category can double-count"></hyper-chart>
+  </div>
+  <hyper-table source="actions" sort="name:asc" page-size="20" title="Action inventory"
+    columns="name:Action:text,category:Category:text,type:Type:text,status:Status:text,is_primary:Primary:text,counting:Counting:text,lookback_days:Lookback days:count"></hyper-table>
+</main>
+""",
+    datasets={
+        "summary": {
+            "source": gaql(
+                "SELECT conversion_action.id, conversion_action.name, conversion_action.category, "
+                "conversion_action.status, conversion_action.primary_for_goal "
+                "FROM conversion_action "
+                "WHERE conversion_action.status != 'REMOVED'"
             ),
+            "loader": {
+                "rows_path": "results",
+                "map": {
+                    "category": "conversionAction.category",
+                    "status": "conversionAction.status",
+                    "is_primary": {"from": "conversionAction.primaryForGoal", "cast": "boolean"},
+                },
+            },
+            "calc_sql": (
+                "SELECT COUNT(*) AS actions, "
+                "SUM(CASE WHEN status = 'ENABLED' THEN 1 ELSE 0 END) AS enabled_actions, "
+                "SUM(CASE WHEN is_primary THEN 1 ELSE 0 END) AS primary_actions, "
+                "COUNT(DISTINCT category) AS categories FROM data"
+            ),
+            "columns": {"actions": "count", "enabled_actions": "count", "primary_actions": "count", "categories": "count"},
+            "max_age_minutes": 60,
+        },
+        "by_category": {
+            "source": gaql(
+                "SELECT conversion_action.id, conversion_action.name, conversion_action.category, "
+                "conversion_action.status, conversion_action.primary_for_goal "
+                "FROM conversion_action "
+                "WHERE conversion_action.status != 'REMOVED'"
+            ),
+            "loader": {
+                "rows_path": "results",
+                "map": {
+                    "category": "conversionAction.category",
+                    "is_primary": {"from": "conversionAction.primaryForGoal", "cast": "boolean"},
+                },
+            },
+            "calc_sql": (
+                "SELECT category, COUNT(*) AS total_actions, "
+                "SUM(CASE WHEN is_primary THEN 1 ELSE 0 END) AS primary_actions "
+                "FROM data GROUP BY category ORDER BY total_actions DESC"
+            ),
+            "columns": {"category": "text", "total_actions": "count", "primary_actions": "count"},
+            "max_age_minutes": 60,
         },
         "actions": {
-            "shape": "rows",
-            "sql": (
-                "SELECT conversion_action_name AS name, "
-                "conversion_action_category AS category, "
-                "conversion_action_status AS status, "
-                "CASE WHEN conversion_action_primary_for_goal THEN 'Yes' ELSE 'No' END AS is_primary "
-                "FROM gads_conv_actions_1234567890 ORDER BY name"
+            "source": gaql(
+                "SELECT conversion_action.id, conversion_action.name, "
+                "conversion_action.category, conversion_action.type, "
+                "conversion_action.status, conversion_action.primary_for_goal, "
+                "conversion_action.counting_type, "
+                "conversion_action.click_through_lookback_window_days "
+                "FROM conversion_action "
+                "WHERE conversion_action.status != 'REMOVED'"
             ),
-        },
-        "primary_total": {
-            "shape": "scalar",
-            "sql": (
-                "SELECT COUNT(*) FROM gads_conv_actions_1234567890 "
-                "WHERE conversion_action_primary_for_goal"
+            "loader": {
+                "rows_path": "results",
+                "map": {
+                    "name": "conversionAction.name",
+                    "category": "conversionAction.category",
+                    "type": "conversionAction.type",
+                    "status": "conversionAction.status",
+                    "primary_for_goal": {"from": "conversionAction.primaryForGoal", "cast": "boolean"},
+                    "counting": "conversionAction.countingType",
+                    "lookback_days": {"from": "conversionAction.clickThroughLookbackWindowDays", "cast": "integer"},
+                },
+            },
+            "calc_sql": (
+                "SELECT name, category, type, status, "
+                "CASE WHEN primary_for_goal THEN 'Yes' ELSE 'No' END AS is_primary, "
+                "counting, lookback_days FROM data ORDER BY name"
             ),
+            "columns": {
+                "name": "text", "category": "text", "type": "text", "status": "text",
+                "is_primary": "text", "counting": "text", "lookback_days": "count",
+            },
+            "max_age_minutes": 60,
         },
     },
-    template_html="""
-<div class="grid gap-3" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr));">
-  <div class="card" data-size="sm"><section>
-    <p class="text-xs text-muted-foreground">Actions</p>
-    <p class="text-2xl font-semibold tabular-nums">{{ actions | length }}</p>
-  </section></div>
-  <div class="card" data-size="sm"><section>
-    <p class="text-xs text-muted-foreground">Primary actions</p>
-    <p class="text-2xl font-semibold tabular-nums">{{ primary_total }}</p>
-  </section></div>
-</div>
-<div class="card mt-4">
-  <header><h2>Actions by category</h2><p>Total and primary</p></header>
-  <section><div class="chart h-64"><canvas id="by_category" aria-label="Conversion actions by category"></canvas></div></section>
-</div>
-<div class="card mt-4">
-  <header><h2>Action inventory</h2><p>Every action that is not removed</p></header>
-  <section><div class="table-container"><table class="table">
-    <thead><tr><th>Action</th><th>Category</th><th>Status</th><th>Primary</th></tr></thead>
-    <tbody>
-    {% for row in actions %}
-      <tr><td class="break-words">{{ row.name }}</td><td>{{ row.category }}</td><td>{{ row.status }}</td><td>{{ row.is_primary }}</td></tr>
-    {% endfor %}
-    </tbody>
-  </table></div></section>
-</div>
-<script>
-document.addEventListener("DOMContentLoaded", () => {
-  window.basecoat.chart("#by_category", {
-    type: "bar", labelKey: "category", legend: true,
-    data: {{ by_category | tojson }},
-    series: {
-      total_actions: { label: "Total", color: "var(--chart-1)" },
-      primary_actions: { label: "Primary", color: "var(--chart-2)" }
-    }
-  });
-});
-</script>
-""",
 )
 ```
 
-`data_apps_refresh(data_app_id=...)` runs the GAQL again and re-renders
-the app.
-
 ## Variants
 
-- Join with the `conversion-by-action.md` cache table to overlay actual
-  conversion volume on each action's setup status.
+- Add the `by_action` dataset of [conversion-by-action.md](conversion-by-action.md)
+  beside the inventory to show actual conversion volume per action.
 - Filter to `category = 'PURCHASE'` for ecommerce-only audits.

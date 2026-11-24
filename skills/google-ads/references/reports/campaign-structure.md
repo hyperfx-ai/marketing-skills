@@ -50,116 +50,105 @@ WHERE segments.date BETWEEN '{start}' AND '{end}'
 
 ## Building a dashboard from this report
 
+`gaql(...)` and `PERIOD` are the shorthands in
+[reporting.md](../reporting.md) Phase 4; expand them in the call.
+
 ```python
-result = data_apps_build(
+artifacts_create(
+    type="dashboard",
     name="Campaign Structure",
-    tool_data_sources={
-        "raw": {
-            "tool_name": "google_ads_gaql_query",
-            "tool_args": {
-                "customer_id": "123-456-7890",
-                "query": (
-                    "SELECT campaign.id, campaign.name, "
-                    "campaign.advertising_channel_type, "
-                    "ad_group.id, ad_group.name, "
-                    "metrics.cost_micros, metrics.conversions, "
-                    "metrics.clicks, metrics.impressions "
-                    "FROM ad_group "
-                    "WHERE segments.date DURING LAST_30_DAYS "
-                    "AND campaign.status != 'REMOVED' "
-                    "AND ad_group.status != 'REMOVED'"
-                ),
-            },
-            "cache_table": "gads_structure_1234567890",
-            "mode": "replace",
-            "rows_path": "results",
-        },
-    },
-    sql_data_sources={
-        "ad_groups_per_campaign": {
-            "shape": "rows",
-            "sql": (
-                "SELECT campaign_name AS campaign, "
-                "COUNT(DISTINCT ad_group_id) AS ad_groups, "
-                "ROUND(SUM(metrics_cost_micros::numeric) / 1e6, 2) AS spend "
-                "FROM gads_structure_1234567890 GROUP BY 1 ORDER BY spend DESC LIMIT 25"
+    html="""
+<main class="@container flex flex-col gap-2.5">
+  <hyper-filter-bar params="period"></hyper-filter-bar>
+  <hyper-kpis source="summary"
+    values="campaigns:Campaigns with activity:count,ad_groups:Ad groups with activity:count,spend:Spend:currency,conversions:Conversions:decimal"></hyper-kpis>
+  <div class="grid grid-cols-1 gap-2.5 @3xl:grid-cols-2">
+    <hyper-chart kind="bar" source="campaigns" x="campaign" series="spend:Spend" format="currency" title="Spend by campaign"></hyper-chart>
+    <hyper-chart kind="bar" source="campaigns" x="campaign" series="ad_groups:Ad groups" format="count" title="Ad groups by campaign"></hyper-chart>
+  </div>
+  <hyper-table source="campaigns" sort="spend:desc" title="Campaigns"
+    columns="campaign:Campaign:text,ad_groups:Ad groups:count,spend:Spend:cents"></hyper-table>
+  <hyper-table source="ad_group_efficiency" sort="spend:desc" page-size="20" title="Ad group efficiency"
+    columns="campaign:Campaign:text,ad_group:Ad group:text,spend:Spend:cents,conversions:Conversions:decimal"></hyper-table>
+</main>
+""",
+    datasets={
+        "summary": {
+            "source": gaql(
+                "SELECT campaign.id, ad_group.id, metrics.cost_micros, metrics.conversions, "
+                "metrics.impressions FROM ad_group "
+                "WHERE segments.date DURING {{period}} "
+                "AND campaign.status != 'REMOVED' "
+                "AND ad_group.status != 'REMOVED' "
+                "AND metrics.impressions > 0"
             ),
+            "loader": {
+                "rows_path": "results",
+                "map": {
+                    "campaign_id": {"from": "campaign.id", "cast": "string"},
+                    "ad_group_id": {"from": "adGroup.id", "cast": "string"},
+                    "spend": {"from": "metrics.costMicros", "cast": "number", "scale": 0.000001},
+                    "conversions": {"from": "metrics.conversions", "cast": "number"},
+                },
+            },
+            "calc_sql": (
+                "SELECT COUNT(DISTINCT campaign_id) AS campaigns, COUNT(DISTINCT ad_group_id) AS ad_groups, "
+                "SUM(spend) AS spend, SUM(conversions) AS conversions FROM data"
+            ),
+            "columns": {"campaigns": "count", "ad_groups": "count", "spend": "currency", "conversions": "decimal"},
+            "params": PERIOD,
+            "max_age_minutes": 60,
+        },
+        "campaigns": {
+            "source": gaql(
+                "SELECT campaign.id, campaign.name, ad_group.id, metrics.cost_micros, "
+                "metrics.impressions FROM ad_group "
+                "WHERE segments.date DURING {{period}} "
+                "AND campaign.status != 'REMOVED' "
+                "AND ad_group.status != 'REMOVED' "
+                "AND metrics.impressions > 0"
+            ),
+            "loader": {
+                "rows_path": "results",
+                "map": {
+                    "campaign": "campaign.name",
+                    "ad_group_id": {"from": "adGroup.id", "cast": "string"},
+                    "spend": {"from": "metrics.costMicros", "cast": "number", "scale": 0.000001},
+                },
+            },
+            "calc_sql": (
+                "SELECT campaign, COUNT(DISTINCT ad_group_id) AS ad_groups, SUM(spend) AS spend "
+                "FROM data GROUP BY campaign ORDER BY spend DESC LIMIT 25"
+            ),
+            "columns": {"campaign": "text", "ad_groups": "count", "spend": "cents"},
+            "params": PERIOD,
+            "max_age_minutes": 60,
         },
         "ad_group_efficiency": {
-            "shape": "rows",
-            "sql": (
-                "SELECT campaign_name AS campaign, ad_group_name AS ad_group, "
-                "SUM(metrics_cost_micros::numeric) / 1e6 AS spend, "
-                "SUM(metrics_conversions::numeric) AS conversions "
-                "FROM gads_structure_1234567890 GROUP BY 1, 2 "
-                "ORDER BY spend DESC LIMIT 50"
+            "source": gaql(
+                "SELECT campaign.name, ad_group.id, ad_group.name, metrics.cost_micros, metrics.conversions "
+                "FROM ad_group "
+                "WHERE segments.date DURING {{period}} "
+                "AND campaign.status != 'REMOVED' "
+                "AND ad_group.status != 'REMOVED' "
+                "ORDER BY metrics.cost_micros DESC LIMIT 50"
             ),
-        },
-        "ad_group_total": {
-            "shape": "scalar",
-            "sql": "SELECT COUNT(DISTINCT ad_group_id) FROM gads_structure_1234567890",
-        },
-        "campaign_total": {
-            "shape": "scalar",
-            "sql": "SELECT COUNT(DISTINCT campaign_id) FROM gads_structure_1234567890",
+            "loader": {
+                "rows_path": "results",
+                "map": {
+                    "campaign": "campaign.name",
+                    "ad_group": "adGroup.name",
+                    "spend": {"from": "metrics.costMicros", "cast": "number", "scale": 0.000001},
+                    "conversions": {"from": "metrics.conversions", "cast": "number"},
+                },
+            },
+            "columns": {"campaign": "text", "ad_group": "text", "spend": "cents", "conversions": "decimal"},
+            "params": PERIOD,
+            "max_age_minutes": 60,
         },
     },
-    template_html="""
-<div class="grid gap-3" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr));">
-  <div class="card" data-size="sm"><section>
-    <p class="text-xs text-muted-foreground">Campaigns with activity</p>
-    <p class="text-2xl font-semibold tabular-nums">{{ campaign_total }}</p>
-  </section></div>
-  <div class="card" data-size="sm"><section>
-    <p class="text-xs text-muted-foreground">Ad groups with activity</p>
-    <p class="text-2xl font-semibold tabular-nums">{{ ad_group_total }}</p>
-  </section></div>
-</div>
-<div class="card mt-4">
-  <header><h2>Spend by campaign</h2><p>Last 30 days</p></header>
-  <section><div class="chart h-64"><canvas id="structure" aria-label="Spend by campaign"></canvas></div></section>
-</div>
-<div class="card mt-4">
-  <header><h2>Campaigns</h2><p>Ad groups with activity and spend, last 30 days</p></header>
-  <section><div class="table-container"><table class="table">
-    <thead><tr><th>Campaign</th><th>Ad groups</th><th>Spend</th></tr></thead>
-    <tbody>
-    {% for row in ad_groups_per_campaign %}
-      <tr><td class="break-words">{{ row.campaign }}</td>
-        <td class="tabular-nums">{{ row.ad_groups }}</td>
-        <td class="tabular-nums">${{ "%.2f"|format(row.spend) }}</td></tr>
-    {% endfor %}
-    </tbody>
-  </table></div></section>
-</div>
-<div class="card mt-4">
-  <header><h2>Ad group efficiency</h2><p>By spend, last 30 days</p></header>
-  <section><div class="table-container"><table class="table">
-    <thead><tr><th>Campaign</th><th>Ad group</th><th>Spend</th><th>Conversions</th></tr></thead>
-    <tbody>
-    {% for row in ad_group_efficiency %}
-      <tr><td class="break-words">{{ row.campaign }}</td><td class="break-words">{{ row.ad_group }}</td>
-        <td class="tabular-nums">${{ "%.2f"|format(row.spend) }}</td>
-        <td class="tabular-nums">{{ "%.1f"|format(row.conversions) }}</td></tr>
-    {% endfor %}
-    </tbody>
-  </table></div></section>
-</div>
-<script>
-document.addEventListener("DOMContentLoaded", () => {
-  window.basecoat.chart("#structure", {
-    type: "bar", labelKey: "campaign", options: { indexAxis: "y" },
-    data: {{ ad_groups_per_campaign | tojson }},
-    series: { spend: { label: "Spend", color: "var(--chart-1)" } }
-  });
-});
-</script>
-""",
 )
 ```
-
-`data_apps_refresh(data_app_id=...)` runs the GAQL again and re-renders
-the app; the window stays the last 30 days.
 
 ## Variants
 

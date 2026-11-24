@@ -89,78 +89,123 @@ WHERE campaign_criterion.negative = TRUE AND campaign_criterion.type = 'KEYWORD'
 
 ## Building a dashboard from this report
 
+`gaql(...)` and `PERIOD` are the shorthands in
+[reporting.md](../reporting.md) Phase 4; expand them in the call.
+
+The query reads the 2,000 costliest rows, which keeps `calc_sql` inside its
+execution budget. Say so in the report when the account has more. The threshold
+in `HAVING` is in account currency units, after the loader has scaled micros.
+
 ```python
-result = data_apps_build(
+artifacts_create(
+    type="dashboard",
     name="Search Terms Waste",
-    tool_data_sources={
-        "raw": {
-            "tool_name": "google_ads_gaql_query",
-            "tool_args": {
-                "customer_id": "123-456-7890",
-                "query": (
-                    "SELECT search_term_view.search_term, search_term_view.status, "
-                    "campaign.name, ad_group.name, "
-                    "metrics.cost_micros, metrics.clicks, "
-                    "metrics.conversions, metrics.conversions_value "
-                    "FROM search_term_view "
-                    "WHERE segments.date DURING LAST_30_DAYS "
-                    "AND metrics.cost_micros > 0 "
-                    "ORDER BY metrics.cost_micros DESC LIMIT 10000"
-                ),
+    html="""
+<main class="@container flex flex-col gap-2.5">
+  <hyper-filter-bar params="period"></hyper-filter-bar>
+  <hyper-kpis source="summary"
+    values="flagged_terms:Flagged terms:count,flagged_spend:Flagged spend:currency,flagged_clicks:Flagged clicks:count,avg_cpc:Avg. CPC:cents"></hyper-kpis>
+  <div class="grid grid-cols-1 gap-2.5 @3xl:grid-cols-2">
+    <hyper-chart kind="bar" source="by_campaign" x="campaign" series="spend:Flagged spend" format="currency" title="Flagged spend by campaign"></hyper-chart>
+    <hyper-chart kind="bar" source="by_campaign" x="campaign" series="terms:Flagged terms" format="count" title="Flagged terms by campaign"></hyper-chart>
+  </div>
+  <hyper-table source="top_waste" sort="spend:desc" page-size="25" title="Waste candidates"
+    hint="The costliest terms over the threshold with no conversion"
+    columns="term:Search term:text,campaign:Campaign:text,spend:Spend:cents,clicks:Clicks:count"
+    empty-text="No term passed the threshold without a conversion."></hyper-table>
+</main>
+""",
+    datasets={
+        "summary": {
+            "source": gaql(
+                "SELECT search_term_view.search_term, campaign.name, metrics.cost_micros, "
+                "metrics.clicks, metrics.conversions "
+                "FROM search_term_view "
+                "WHERE segments.date DURING {{period}} "
+                "AND metrics.cost_micros > 0 "
+                "ORDER BY metrics.cost_micros DESC LIMIT 2000"
+            ),
+            "loader": {
+                "rows_path": "results",
+                "map": {
+                    "term": "searchTermView.searchTerm",
+                    "campaign": "campaign.name",
+                    "spend": {"from": "metrics.costMicros", "cast": "number", "scale": 0.000001},
+                    "clicks": {"from": "metrics.clicks", "cast": "number"},
+                    "conversions": {"from": "metrics.conversions", "cast": "number"},
+                },
             },
-            "cache_table": "gads_search_terms_1234567890",
-            "mode": "replace",
-            "rows_path": "results",
+            "calc_sql": (
+                "SELECT COUNT(*) AS flagged_terms, COALESCE(SUM(spend), 0) AS flagged_spend, "
+                "COALESCE(SUM(clicks), 0) AS flagged_clicks, "
+                "SUM(spend) / NULLIF(SUM(clicks), 0) AS avg_cpc "
+                "FROM (SELECT term, campaign, SUM(spend) AS spend, SUM(clicks) AS clicks FROM data "
+                "GROUP BY term, campaign HAVING SUM(conversions) = 0 AND SUM(spend) > 10) AS flagged"
+            ),
+            "columns": {"flagged_terms": "count", "flagged_spend": "currency", "flagged_clicks": "count", "avg_cpc": "cents"},
+            "params": PERIOD,
+            "max_age_minutes": 60,
         },
-    },
-    sql_data_sources={
+        "by_campaign": {
+            "source": gaql(
+                "SELECT search_term_view.search_term, campaign.name, metrics.cost_micros, "
+                "metrics.clicks, metrics.conversions "
+                "FROM search_term_view "
+                "WHERE segments.date DURING {{period}} "
+                "AND metrics.cost_micros > 0 "
+                "ORDER BY metrics.cost_micros DESC LIMIT 2000"
+            ),
+            "loader": {
+                "rows_path": "results",
+                "map": {
+                    "term": "searchTermView.searchTerm",
+                    "campaign": "campaign.name",
+                    "spend": {"from": "metrics.costMicros", "cast": "number", "scale": 0.000001},
+                    "clicks": {"from": "metrics.clicks", "cast": "number"},
+                    "conversions": {"from": "metrics.conversions", "cast": "number"},
+                },
+            },
+            "calc_sql": (
+                "SELECT campaign, COUNT(*) AS terms, SUM(spend) AS spend "
+                "FROM (SELECT term, campaign, SUM(spend) AS spend FROM data "
+                "GROUP BY term, campaign HAVING SUM(conversions) = 0 AND SUM(spend) > 10) AS flagged "
+                "GROUP BY campaign ORDER BY spend DESC LIMIT 10"
+            ),
+            "columns": {"campaign": "text", "terms": "count", "spend": "currency"},
+            "params": PERIOD,
+            "max_age_minutes": 60,
+        },
         "top_waste": {
-            "shape": "rows",
-            "sql": (
-                "SELECT search_term_view_search_term AS term, "
-                "campaign_name AS campaign, "
-                "SUM(metrics_cost_micros::numeric) / 1e6 AS spend, "
-                "SUM(metrics_clicks::numeric) AS clicks, "
-                "COUNT(*) OVER () AS flagged_terms, "
-                "'$' || to_char(SUM(SUM(metrics_cost_micros::numeric)) OVER () / 1e6, 'FM999,999,990.00') AS flagged_spend "
-                "FROM gads_search_terms_1234567890 "
-                "GROUP BY 1, 2 "
-                "HAVING SUM(metrics_conversions::numeric) = 0 "
-                "AND SUM(metrics_cost_micros::numeric) > 10000000 "
+            "source": gaql(
+                "SELECT search_term_view.search_term, campaign.name, metrics.cost_micros, "
+                "metrics.clicks, metrics.conversions "
+                "FROM search_term_view "
+                "WHERE segments.date DURING {{period}} "
+                "AND metrics.cost_micros > 0 "
+                "ORDER BY metrics.cost_micros DESC LIMIT 2000"
+            ),
+            "loader": {
+                "rows_path": "results",
+                "map": {
+                    "term": "searchTermView.searchTerm",
+                    "campaign": "campaign.name",
+                    "spend": {"from": "metrics.costMicros", "cast": "number", "scale": 0.000001},
+                    "clicks": {"from": "metrics.clicks", "cast": "number"},
+                    "conversions": {"from": "metrics.conversions", "cast": "number"},
+                },
+            },
+            "calc_sql": (
+                "SELECT term, campaign, SUM(spend) AS spend, SUM(clicks) AS clicks FROM data "
+                "GROUP BY term, campaign HAVING SUM(conversions) = 0 AND SUM(spend) > 10 "
                 "ORDER BY spend DESC LIMIT 50"
             ),
+            "columns": {"term": "text", "campaign": "text", "spend": "cents", "clicks": "count"},
+            "params": PERIOD,
+            "max_age_minutes": 60,
         },
     },
-    template_html="""
-<div class="grid gap-3" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr));">
-  <div class="card" data-size="sm"><section>
-    <p class="text-xs text-muted-foreground">Flagged terms</p>
-    <p class="text-2xl font-semibold tabular-nums">{{ top_waste[0].flagged_terms if top_waste else 0 }}</p>
-  </section></div>
-  <div class="card" data-size="sm"><section>
-    <p class="text-xs text-muted-foreground">Flagged spend</p>
-    <p class="text-2xl font-semibold tabular-nums">{{ top_waste[0].flagged_spend if top_waste else "$0.00" }}</p>
-  </section></div>
-</div>
-<div class="card mt-4">
-  <header><h2>Waste candidates</h2><p>The 50 costliest terms with over $10 and no conversion, last 30 days</p></header>
-  <section><div class="table-container"><table class="table">
-    <thead><tr><th>Search term</th><th>Campaign</th><th>Spend</th><th>Clicks</th></tr></thead>
-    <tbody>
-    {% for row in top_waste %}
-      <tr><td class="break-words">{{ row.term }}</td><td class="break-words">{{ row.campaign }}</td>
-        <td class="tabular-nums">${{ "%.2f"|format(row.spend) }}</td>
-        <td class="tabular-nums">{{ "%.0f"|format(row.clicks) }}</td></tr>
-    {% endfor %}
-    </tbody>
-  </table></div></section>
-</div>
-""",
 )
 ```
-
-`data_apps_refresh(data_app_id=...)` runs the GAQL again and re-renders
-the app; the window stays the last 30 days.
 
 ## Variants
 

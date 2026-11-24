@@ -12,14 +12,14 @@ Date range: [Range]
 Data source: [GAQL resource and key segments]
 
 Output
-- Dashboard ID:
+- Dashboard ID (artifact ID):
 - Dashboard name:
-- Refreshed by:
+- Access: [private, workspace, or public link with Frozen Snapshots]
 
 What was queried
 - Tool:
 - GAQL:
-- Cache table:
+- Datasets:
 
 Key results
 - [metric/result 1]

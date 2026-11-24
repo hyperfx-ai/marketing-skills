@@ -66,8 +66,7 @@ WHERE segments.date BETWEEN '{start}' AND '{end}'
 ```
 
 Join conversion rows to cost rows on `(segments.date, campaign.id)`. For
-ad-hoc analysis, an in-memory pandas/dataframe merge in the sandbox is enough;
-no cache table is required.
+ad-hoc analysis, an in-memory pandas/dataframe merge in the sandbox is enough.
 
 If the user wants to enumerate conversion actions independently of
 campaigns, query the `conversion_action` resource directly — see
@@ -88,125 +87,148 @@ campaigns, query the `conversion_action` resource directly — see
 
 ## Building a dashboard from this report
 
-The data app runs the GAQL through `tool_data_sources`, re-aggregates the
-cached rows with `sql_data_sources`, and binds those variables in its
-template. Cache table convention: `gads_<report>_<scope>`.
+`gaql(...)` and `PERIOD` are the shorthands in
+[reporting.md](../reporting.md) Phase 4; expand them in the call.
+
+The per-action query and the cost query are separate datasets. Google Ads
+rejects them as one query, and `calc_sql` reads one dataset, so the cost stays
+in its own KPI row as campaign context.
 
 ```python
-result = data_apps_build(
+artifacts_create(
+    type="dashboard",
     name="Conversions by Action",
-    tool_data_sources={
-        "raw_conversions": {
-            "tool_name": "google_ads_gaql_query",
-            "tool_args": {
-                "customer_id": "123-456-7890",
-                "query": (
-                    "SELECT segments.date, campaign.id, campaign.name, "
-                    "segments.conversion_action, segments.conversion_action_name, "
-                    "segments.conversion_action_category, metrics.conversions, "
-                    "metrics.all_conversions, metrics.conversions_value "
-                    "FROM campaign "
-                    "WHERE segments.date DURING LAST_30_DAYS "
-                    "AND campaign.status != 'REMOVED'"
-                ),
-            },
-            "cache_table": "gads_conv_by_action_1234567890",
-            "mode": "replace",
-            "rows_path": "results",
-        },
-        "raw_cost": {
-            "tool_name": "google_ads_gaql_query",
-            "tool_args": {
-                "customer_id": "123-456-7890",
-                "query": (
-                    "SELECT segments.date, campaign.id, campaign.name, "
-                    "metrics.cost_micros, metrics.clicks, metrics.impressions "
-                    "FROM campaign "
-                    "WHERE segments.date DURING LAST_30_DAYS "
-                    "AND campaign.status != 'REMOVED'"
-                ),
-            },
-            "cache_table": "gads_campaign_cost_1234567890",
-            "mode": "replace",
-            "rows_path": "results",
-        },
-    },
-    sql_data_sources={
-        "totals_by_action": {
-            "shape": "rows",
-            "sql": (
-                "SELECT segments_conversion_action_name AS action, "
-                "SUM(metrics_conversions::numeric) AS conversions "
-                "FROM gads_conv_by_action_1234567890 "
-                "GROUP BY 1 ORDER BY conversions DESC"
-            ),
-        },
-        "kpis": {
-            "shape": "rows",
-            "sql": (
-                "SELECT 'Conversions' AS label, to_char(COALESCE(SUM(metrics_conversions::numeric), 0), 'FM999,999,990.0') AS value FROM gads_conv_by_action_1234567890 "
-                "UNION ALL SELECT 'Cost', '$' || to_char(COALESCE(SUM(metrics_cost_micros::numeric), 0) / 1e6, 'FM999,999,990.00') FROM gads_campaign_cost_1234567890"
-            ),
-        },
-        "trend": {
-            "shape": "rows",
-            "sql": (
-                "SELECT segments_date AS date, "
-                "SUM(metrics_conversions::numeric) AS conversions "
-                "FROM gads_conv_by_action_1234567890 GROUP BY 1 ORDER BY 1"
-            ),
-        },
-    },
-    template_html="""
-<div class="grid gap-3" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr));">
-  {% for kpi in kpis %}
-  <div class="card" data-size="sm"><section>
-    <p class="text-xs text-muted-foreground">{{ kpi.label }}</p>
-    <p class="text-2xl font-semibold tabular-nums">{{ kpi.value }}</p>
-  </section></div>
-  {% endfor %}
-</div>
-<div class="grid gap-4 mt-4" style="grid-template-columns:repeat(auto-fit,minmax(300px,1fr));">
-  <div class="card min-w-0">
-    <header><h2>Conversion trend</h2><p>All actions, by day</p></header>
-    <section><div class="chart h-64"><canvas id="trend" aria-label="Conversions by day"></canvas></div></section>
+    html="""
+<main class="@container flex flex-col gap-2.5">
+  <hyper-filter-bar params="period"></hyper-filter-bar>
+  <hyper-kpis source="summary"
+    values="conversions:Conversions:decimal,all_conversions:All conversions:decimal,value:Conversion value:currency,actions:Actions with conversions:count"></hyper-kpis>
+  <hyper-kpis source="cost_context"
+    values="spend:Cost:currency,impressions:Impressions:count,clicks:Clicks:count,avg_cpc:Avg. CPC:cents"></hyper-kpis>
+  <div class="grid grid-cols-1 gap-2.5 @3xl:grid-cols-2">
+    <hyper-chart span="full" kind="line" source="daily" x="day" series="conversions:Conversions" format="decimal" range-param="period" title="Conversions, all actions"></hyper-chart>
+    <hyper-chart kind="bar" source="by_action" x="action" series="conversions:Conversions" format="decimal" title="Conversions by action"></hyper-chart>
+    <hyper-chart kind="donut" source="by_category" x="category" series="conversions:Conversions" format="decimal" title="Conversions by category"></hyper-chart>
   </div>
-  <div class="card min-w-0">
-    <header><h2>Conversions by action</h2></header>
-    <section><div class="chart h-64"><canvas id="by_action" aria-label="Conversions by action"></canvas></div></section>
-  </div>
-</div>
-<div class="card mt-4">
-  <header><h2>Action detail</h2></header>
-  <section><div class="table-container"><table class="table">
-    <thead><tr><th>Action</th><th>Conversions</th></tr></thead>
-    <tbody>
-    {% for row in totals_by_action %}
-      <tr><td class="break-words">{{ row.action }}</td><td class="tabular-nums">{{ "%.1f"|format(row.conversions) }}</td></tr>
-    {% endfor %}
-    </tbody>
-  </table></div></section>
-</div>
-<script>
-document.addEventListener("DOMContentLoaded", () => {
-  window.basecoat.chart("#trend", {
-    type: "line", labelKey: "date",
-    data: {{ trend | tojson }},
-    series: { conversions: { label: "Conversions", color: "var(--chart-1)", dataset: { fill: true, tension: 0.35 } } }
-  });
-  window.basecoat.chart("#by_action", {
-    type: "bar", labelKey: "action", options: { indexAxis: "y" },
-    data: {{ totals_by_action | tojson }},
-    series: { conversions: { label: "Conversions", color: "var(--chart-2)" } }
-  });
-});
-</script>
+  <hyper-table source="by_action" sort="conversions:desc" title="Action detail"
+    columns="action:Action:text,conversions:Conversions:decimal,value:Value:currency"></hyper-table>
+  <hyper-note>Cost is campaign context for the period. It is not attributed to a conversion action.</hyper-note>
+</main>
 """,
+    datasets={
+        "summary": {
+            "source": gaql(
+                "SELECT campaign.id, segments.conversion_action_name, metrics.conversions, "
+                "metrics.all_conversions, metrics.conversions_value "
+                "FROM campaign "
+                "WHERE segments.date DURING {{period}} "
+                "AND campaign.status != 'REMOVED'"
+            ),
+            "loader": {
+                "rows_path": "results",
+                "map": {
+                    "action": "segments.conversionActionName",
+                    "conversions": {"from": "metrics.conversions", "cast": "number"},
+                    "all_conversions": {"from": "metrics.allConversions", "cast": "number"},
+                    "value": {"from": "metrics.conversionsValue", "cast": "number"},
+                },
+            },
+            "calc_sql": (
+                "SELECT SUM(conversions) AS conversions, SUM(all_conversions) AS all_conversions, "
+                "SUM(value) AS value, "
+                "COUNT(DISTINCT CASE WHEN conversions > 0 THEN action END) AS actions FROM data"
+            ),
+            "columns": {"conversions": "decimal", "all_conversions": "decimal", "value": "currency", "actions": "count"},
+            "params": PERIOD,
+            "max_age_minutes": 60,
+        },
+        "cost_context": {
+            "source": gaql(
+                "SELECT campaign.id, metrics.cost_micros, metrics.clicks, metrics.impressions "
+                "FROM campaign "
+                "WHERE segments.date DURING {{period}} "
+                "AND campaign.status != 'REMOVED'"
+            ),
+            "loader": {
+                "rows_path": "results",
+                "map": {
+                    "spend": {"from": "metrics.costMicros", "cast": "number", "scale": 0.000001},
+                    "clicks": {"from": "metrics.clicks", "cast": "number"},
+                    "impressions": {"from": "metrics.impressions", "cast": "number"},
+                },
+            },
+            "calc_sql": (
+                "SELECT SUM(spend) AS spend, SUM(clicks) AS clicks, SUM(impressions) AS impressions, "
+                "SUM(spend) / NULLIF(SUM(clicks), 0) AS avg_cpc FROM data"
+            ),
+            "columns": {"spend": "currency", "clicks": "count", "impressions": "count", "avg_cpc": "cents"},
+            "params": PERIOD,
+            "max_age_minutes": 60,
+        },
+        "daily": {
+            "source": gaql(
+                "SELECT segments.date, campaign.id, segments.conversion_action_name, metrics.conversions "
+                "FROM campaign "
+                "WHERE segments.date DURING {{period}} "
+                "AND campaign.status != 'REMOVED'"
+            ),
+            "loader": {
+                "rows_path": "results",
+                "map": {
+                    "day": "segments.date",
+                    "conversions": {"from": "metrics.conversions", "cast": "number"},
+                },
+            },
+            "calc_sql": "SELECT day, SUM(conversions) AS conversions FROM data GROUP BY day ORDER BY day",
+            "columns": {"day": "date", "conversions": "decimal"},
+            "params": PERIOD,
+            "max_age_minutes": 60,
+        },
+        "by_action": {
+            "source": gaql(
+                "SELECT campaign.id, segments.conversion_action_name, metrics.conversions, "
+                "metrics.conversions_value FROM campaign "
+                "WHERE segments.date DURING {{period}} "
+                "AND campaign.status != 'REMOVED'"
+            ),
+            "loader": {
+                "rows_path": "results",
+                "map": {
+                    "action": "segments.conversionActionName",
+                    "conversions": {"from": "metrics.conversions", "cast": "number"},
+                    "value": {"from": "metrics.conversionsValue", "cast": "number"},
+                },
+            },
+            "calc_sql": (
+                "SELECT action, SUM(conversions) AS conversions, SUM(value) AS value "
+                "FROM data GROUP BY action ORDER BY conversions DESC"
+            ),
+            "columns": {"action": "text", "conversions": "decimal", "value": "currency"},
+            "params": PERIOD,
+            "max_age_minutes": 60,
+        },
+        "by_category": {
+            "source": gaql(
+                "SELECT campaign.id, segments.conversion_action_category, metrics.conversions "
+                "FROM campaign "
+                "WHERE segments.date DURING {{period}} "
+                "AND campaign.status != 'REMOVED'"
+            ),
+            "loader": {
+                "rows_path": "results",
+                "map": {
+                    "category": "segments.conversionActionCategory",
+                    "conversions": {"from": "metrics.conversions", "cast": "number"},
+                },
+            },
+            "calc_sql": "SELECT category, SUM(conversions) AS conversions FROM data GROUP BY category ORDER BY conversions DESC",
+            "columns": {"category": "text", "conversions": "decimal"},
+            "params": PERIOD,
+            "max_age_minutes": 60,
+        },
+    },
 )
 ```
-
-`data_apps_refresh(data_app_id=...)` runs both GAQL queries again and
-re-renders the app; the window stays the last 30 days.
 
 ## Variants
 
