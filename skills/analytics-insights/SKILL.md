@@ -31,7 +31,7 @@ GSC and HyperSEO overlap on search-performance data. Rule of thumb: use GSC here
   - **Google Search Console** — search-performance data, sitemaps, URL inspection.
   - **BigQuery** — SQL queries against the GA4 export (or any other dataset).
 
-If `google_analytics_ga4_reports_run`, `google_tag_manager_tags_manage`, `google_search_console_performance_get` and `database_query` are all not found, the integration to connect is one of Google Analytics, Google Tag Manager, Google Search Console or Database (a BigQuery connection).
+If `google_analytics_ga4_reports_run`, `google_tag_manager_tags_list`, `google_search_console_performance_get` and `database_query` are all not found, the integration to connect is one of Google Analytics, Google Tag Manager, Google Search Console or Database (a BigQuery connection).
 
 ### How to run the tools in this skill
 
@@ -53,7 +53,7 @@ If a tool is not found: in Hyper chat, find its toolkit id with `discover_toolki
 | GA4 — properties & data streams | `google_analytics_ga4_properties_create`, `google_analytics_properties_update`, `google_analytics_properties_delete`, `google_analytics_data_streams_create`, `google_analytics_data_streams_list`, `google_analytics_data_streams_get`, `google_analytics_data_streams_update`, `google_analytics_data_streams_delete`, `google_analytics_data_retention_get` *(read-only — no update variant in MCP)*, `google_analytics_data_collection_acknowledge` |
 | GA4 — key events (conversions) | `google_analytics_key_events_create`, `google_analytics_key_events_list`, `google_analytics_key_events_get`, `google_analytics_key_events_update`, `google_analytics_key_events_delete` |
 | GA4 — custom metrics / dimensions | `google_analytics_custom_metrics_create`, `google_analytics_custom_metrics_list`, `google_analytics_custom_metrics_get`, `google_analytics_custom_metrics_update`, `google_analytics_custom_metrics_archive`, `google_analytics_custom_dimensions_create`, `google_analytics_custom_dimensions_list`, `google_analytics_custom_dimensions_get`, `google_analytics_custom_dimensions_update`, `google_analytics_custom_dimensions_archive` |
-| GTM | `google_tag_manager_accounts_manage`, `google_tag_manager_containers_manage`, `google_tag_manager_workspaces_manage`, `google_tag_manager_tags_manage`, `google_tag_manager_triggers_manage`, `google_tag_manager_variables_manage`, `google_tag_manager_built_in_variables_manage`, `google_tag_manager_folders_manage`, `google_tag_manager_environments_manage`, `google_tag_manager_versions_manage`, `google_tag_manager_version_headers_manage`, `google_tag_manager_user_permissions_manage`, `google_tag_manager_clients_manage`, `google_tag_manager_templates_manage`, `google_tag_manager_transformations_manage`, `google_tag_manager_zones_manage`, `google_tag_manager_destinations_manage` |
+| GTM | One tool per Tag Manager API v2 call, `google_tag_manager_<resource>_<action>`: `google_tag_manager_accounts_list`, `google_tag_manager_containers_list`, `google_tag_manager_container_snippet`, `google_tag_manager_workspaces_list`, `google_tag_manager_workspace_create`, `google_tag_manager_workspace_status_get`, `google_tag_manager_workspace_quick_preview`, `google_tag_manager_workspace_version_create`, `google_tag_manager_tags_list`, `google_tag_manager_tag_get`, `google_tag_manager_tag_create`, `google_tag_manager_tag_update`, `google_tag_manager_tag_delete`, `google_tag_manager_triggers_list`, `google_tag_manager_trigger_create`, `google_tag_manager_variables_list`, `google_tag_manager_variable_create`, `google_tag_manager_built_in_variables_list`, `google_tag_manager_folders_list`, `google_tag_manager_version_headers_list`, `google_tag_manager_version_get`, `google_tag_manager_version_live`, `google_tag_manager_version_publish`, `google_tag_manager_environments_list`, `google_tag_manager_user_permissions_list`. Clients, templates, transformations, zones, Google tag configs and destinations follow the same pattern. Writes ask the user to approve first. |
 | Google Search Console | `google_search_console_performance_get`, `google_search_console_sites_list`, `google_search_console_sitemaps_list`, `google_search_console_sitemaps_get`, `google_search_console_sitemaps_submit`, `google_search_console_sitemaps_delete`, `google_search_console_urls_submit` |
 | BigQuery | `bigquery_execute_query`, `bigquery_insert_rows` |
 
@@ -63,7 +63,7 @@ If a tool is not found: in Hyper chat, find its toolkit id with `discover_toolki
 2. **Date ranges are inclusive on both ends.** `start_date="2026-04-01"` and `end_date="2026-04-30"` returns 30 days, not 29. Same for relative dates: `7daysAgo` to `today` is 8 days, not 7.
 3. **GA4 sampling kicks in above ~10M events.** For high-volume properties, the GA4 API silently samples results. If precision matters (board reporting, financial attribution), use the **BigQuery GA4 export** instead — see [`references/bigquery-ga4-export.md`](./references/bigquery-ga4-export.md).
 4. **Conversions in GA4 are "key events".** GA4 renamed "conversions" to "key events" in 2024. The tools reflect this — use `google_analytics_key_events_create` to mark an event as a conversion. Don't get confused by older docs.
-5. **GTM changes need a workspace + version + publish.** Tags / triggers / variables created in a workspace are *not live* until the workspace is committed to a new version and that version is published. Use `google_tag_manager_workspaces_manage` → modify → `google_tag_manager_versions_manage` (create) → publish.
+5. **GTM changes need a workspace + version + publish.** Tags / triggers / variables created in a workspace are *not live* until the workspace is committed to a new version and that version is published. Use `google_tag_manager_workspace_create` → modify → `google_tag_manager_workspace_version_create` → `google_tag_manager_version_publish`.
 6. **GSC data has a 2–3 day lag.** Don't query "yesterday" in GSC and expect data — query 3+ days back for stable numbers. GA4 has a 24-48h lag for some metrics.
 7. **Apple Mail Privacy Protection inflates GA4 "engaged" sessions from email.** Don't trust email-driven engagement numbers in GA4 alone — cross-reference with the email provider's own click data.
 
@@ -135,14 +135,14 @@ google_analytics_key_events_create(
 3. **GTM-side setup** — create/update tags + triggers + variables in a workspace, then version + publish:
 
 ```
-google_tag_manager_workspaces_manage(operation="create", account_id="...", container_id="...", name="purchase-tracking-v3")
+google_tag_manager_workspace_create(accountsId="...", containersId="...", body={"name": "purchase-tracking-v3"})
 
-google_tag_manager_tags_manage(operation="create", workspace_path="...", tag_definition={...})
-google_tag_manager_triggers_manage(operation="create", workspace_path="...", trigger_definition={...})
-google_tag_manager_variables_manage(operation="create", workspace_path="...", variable_definition={...})
+google_tag_manager_tag_create(accountsId="...", containersId="...", workspacesId="...", body={...})
+google_tag_manager_trigger_create(accountsId="...", containersId="...", workspacesId="...", body={...})
+google_tag_manager_variable_create(accountsId="...", containersId="...", workspacesId="...", body={...})
 
-google_tag_manager_versions_manage(operation="create", workspace_path="...", version_name="purchase-tracking-v3")
-# then publish via the GTM UI or version operation
+google_tag_manager_workspace_version_create(accountsId="...", containersId="...", workspacesId="...", body={"name": "purchase-tracking-v3"})
+google_tag_manager_version_publish(accountsId="...", containersId="...", versionsId="...")
 ```
 
 4. **Validate** — see Phase A.
@@ -154,9 +154,9 @@ Most "our analytics is wrong" complaints are one of:
 | Symptom | Likely cause | How to confirm |
 | --- | --- | --- |
 | Conversion event not appearing in GA4 | Event firing in GTM but not reaching GA4 (wrong measurement ID, blocked by consent gate, ad blocker) | `google_analytics_ga4_reports_run` for `eventName=purchase` over the last 7d → if 0, check GTM |
-| Conversion count wildly off | Event firing on every page (not just confirmation), or duplicate tags | Audit GTM tags via `google_tag_manager_tags_manage(operation="list")`, check for multiple tags firing on the same trigger |
+| Conversion count wildly off | Event firing on every page (not just confirmation), or duplicate tags | Audit GTM tags via `google_tag_manager_tags_list`, check for multiple tags firing on the same trigger |
 | Revenue reported differently in GA4 vs the platform of record | Currency mismatch, refund handling, attribution window | Pull both side-by-side, look for refund / currency rows |
-| Suddenly mobile traffic dropped to ~0 | Tag firing only on desktop trigger, or a recent GTM publish broke the mobile container | `google_tag_manager_versions_manage(operation="list")` to find recent publishes, diff with previous version |
+| Suddenly mobile traffic dropped to ~0 | Tag firing only on desktop trigger, or a recent GTM publish broke the mobile container | `google_tag_manager_version_headers_list` to find recent publishes, diff with previous version |
 | GSC clicks ≠ GA4 organic sessions | Always different — different definitions. Don't try to reconcile exactly. | Expected; document and move on |
 
 Detailed audit walkthrough in [`references/gtm-audit.md`](./references/gtm-audit.md).

@@ -7,7 +7,7 @@ A standard auditing pass against an existing Google Tag Manager container. Run t
 - A new team has inherited a container someone else built.
 - The container has > 30 tags and nobody can remember what they all do.
 
-The Hyper MCP exposes the GTM API as `gtm_*` tools (note: the prefix is `gtm_*`, not `google_tag_manager_*`). Each tool is one entity with `operation` parameters (`get`, `list`, `create`, `update`, `delete`, etc.).
+Hyper exposes the Tag Manager API v2 as one `google_tag_manager_*` tool per API call (`google_tag_manager_tags_list`, `google_tag_manager_tag_get`, `google_tag_manager_tag_create`, ...). Each tool takes the IDs of its path (`accountsId`, `containersId`, `workspacesId`, `tagsId`, ...) and, for a write, a `body`. A read runs at once; a create, update, delete, revert or publish asks the user to approve first.
 
 ## Audit checklist
 
@@ -16,9 +16,9 @@ The 8 checks below cover ~95% of GTM problems.
 ### 1. Inventory: how many tags, triggers, variables?
 
 ```
-google_tag_manager_tags_manage(operation="list", workspace_path="accounts/123/containers/456/workspaces/789")
-google_tag_manager_triggers_manage(operation="list", workspace_path="...")
-google_tag_manager_variables_manage(operation="list", workspace_path="...")
+google_tag_manager_tags_list(accountsId="123", containersId="456", workspacesId="789")
+google_tag_manager_triggers_list(accountsId="123", containersId="456", workspacesId="789")
+google_tag_manager_variables_list(accountsId="123", containersId="456", workspacesId="789")
 ```
 
 Healthy ranges (rough — bigger sites legitimately have more):
@@ -39,7 +39,7 @@ Pull all tags, group by `type` + the trigger they fire on. Anything firing the s
 
 ```
 # Get all tags
-result = google_tag_manager_tags_manage(operation="list", workspace_path="...")
+result = google_tag_manager_tags_list(accountsId="123", containersId="456", workspacesId="789")
 
 # Look for duplicates: same type, same firing trigger, similar parameters
 # (No SQL here — just inspect the response)
@@ -103,15 +103,15 @@ Cleanup: create a `Constant` variable, replace every hard-coded reference. Criti
 If something broke "around last Tuesday," the publish history is the prime suspect.
 
 ```
-google_tag_manager_versions_manage(operation="list", container_path="accounts/123/containers/456")
-google_tag_manager_version_headers_manage(operation="list", container_path="accounts/123/containers/456")
+google_tag_manager_version_headers_list(accountsId="123", containersId="456")
+google_tag_manager_version_live(accountsId="123", containersId="456")
 ```
 
 Each version has a `publishedTimestamp` and a name. Find the version that was live during the breakage window. Diff against the previous version (the GTM UI does this best — the API can fetch both versions and you compare the JSON).
 
 ```
-google_tag_manager_versions_manage(operation="get", version_path="accounts/.../versions/12")
-google_tag_manager_versions_manage(operation="get", version_path="accounts/.../versions/11")
+google_tag_manager_version_get(accountsId="123", containersId="456", versionsId="12")
+google_tag_manager_version_get(accountsId="123", containersId="456", versionsId="11")
 ```
 
 If a tag / trigger / variable changed between v11 and v12 and v12 was the publish that broke things, you have your culprit.
@@ -122,16 +122,18 @@ GTM has a 4-stage workflow that exists for a reason — bypass it and you'll pub
 
 ```
 1. Workspace      ← edit here (sandboxed, doesn't affect live container)
-   google_tag_manager_workspaces_manage(operation="create", name="audit-2026-q2", ...)
+   google_tag_manager_workspace_create(accountsId="123", containersId="456", body={"name": "audit-2026-q2"})
 
 2. Preview         ← test in GTM Preview mode with the page open
-   (UI-only — no API operation, but the agent can tell the user to do this)
+   google_tag_manager_workspace_quick_preview(accountsId="123", containersId="456", workspacesId="789")
+   (compiles the workspace; testing on the live page stays in the GTM UI)
 
 3. Version         ← snapshot the workspace into a versioned set of changes
-   google_tag_manager_versions_manage(operation="create", workspace_path="...", name="audit-cleanup", notes="removed 12 unused tags")
+   google_tag_manager_workspace_version_create(accountsId="123", containersId="456", workspacesId="789", body={"name": "audit-cleanup", "notes": "removed 12 unused tags"})
 
 4. Publish         ← make the version live
-   (UI or version operation with publish=true)
+   google_tag_manager_version_publish(accountsId="123", containersId="456", versionsId="13")
+   (asks the user to approve; a Hyper Google sign-in lacks the publish scope, so publish in the GTM UI or on a Pipedream connection)
 ```
 
 **Never edit directly in the default workspace** if more than one person uses the container. Create a named workspace, do the work, version + publish, delete the workspace.
